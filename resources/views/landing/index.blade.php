@@ -1,3 +1,5 @@
+[file name]: index.blade.php
+[file content begin]
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -155,6 +157,48 @@
         /* Update icon colors */
         .fa-3x.text-primary { color: var(--primary-brown) !important; }
         .fa-2x.text-primary { color: var(--primary-brown) !important; }
+
+        /* Search Section Styles */
+        .search-section {
+            background: #f8f9fa;
+            padding: 80px 0;
+        }
+        
+        .search-card {
+            background: white;
+            border-radius: 15px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        
+        .document-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .document-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+        
+        .document-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .login-prompt {
+            background: linear-gradient(135deg, var(--light-brown) 0%, #fff5e6 100%);
+            border: 2px dashed var(--primary-brown);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -192,6 +236,109 @@
             </div>
         </section>
 
+        <!-- Search Section -->
+        <section id="search" class="search-section">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10">
+                        <div class="search-card">
+                            <div class="text-center mb-5">
+                                <h2 class="section-title display-5 fw-bold mb-3">Cari Dokumen SPMI</h2>
+                                <p class="lead text-muted">Temukan dokumen-dokumen SPMI yang tersedia secara publik</p>
+                            </div>
+                            
+                            <!-- Search Form -->
+                            <form action="{{ route('public.search') }}" method="GET" class="mb-5">
+                                <div class="input-group input-group-lg">
+                                    <input type="text" class="form-control" name="q" 
+                                           placeholder="Cari dokumen berdasarkan nama, deskripsi, atau unit kerja..." 
+                                           value="{{ request('q') }}">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search me-2"></i>Cari
+                                    </button>
+                                </div>
+                                <div class="form-text text-muted mt-2">
+                                    Gunakan kata kunci spesifik untuk hasil pencarian yang lebih akurat
+                                </div>
+                            </form>
+
+                            <!-- Search Results -->
+                            @if(request()->has('q'))
+                                <div class="search-results">
+                                    <h4 class="mb-4">
+                                        <i class="fas fa-search me-2"></i>
+                                        Hasil Pencarian untuk "{{ request('q') }}"
+                                        <span class="badge bg-primary ms-2">{{ $publicDokumens->count() }} dokumen ditemukan</span>
+                                    </h4>
+
+                                    @if($publicDokumens->count() > 0)
+                                        <div class="row">
+                                            @foreach($publicDokumens as $dokumen)
+                                                <div class="col-md-6 col-lg-4 mb-4">
+                                                    <div class="document-card text-center h-100">
+                                                        <div class="document-icon text-primary">
+                                                            <i class="{{ $dokumen->file_icon }}"></i>
+                                                        </div>
+                                                        <h6 class="fw-bold mb-2">{{ $dokumen->nama_dokumen }}</h6>
+                                                        <p class="text-muted small mb-2">
+                                                            <i class="fas fa-folder me-1"></i>
+                                                            {{ $dokumen->unitKerja->nama }}
+                                                        </p>
+                                                        <p class="text-muted small mb-3">
+                                                            <i class="fas fa-file me-1"></i>
+                                                            {{ $dokumen->file_size_formatted }}
+                                                        </p>
+                                                        <div class="d-flex justify-content-center gap-2">
+                                                            @if($dokumen->is_pdf)
+                                                                <a href="{{ route('public.dokumen.preview', $dokumen->id) }}" 
+                                                                   class="btn btn-outline-primary btn-sm" target="_blank">
+                                                                    <i class="fas fa-eye me-1"></i>Preview
+                                                                </a>
+                                                            @endif
+                                                            <a href="{{ route('public.dokumen.download', $dokumen->id) }}" 
+                                                               class="btn btn-outline-success btn-sm">
+                                                                <i class="fas fa-download me-1"></i>Download
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="text-center py-5">
+                                            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                                            <h5 class="text-muted">Tidak ada dokumen yang ditemukan</h5>
+                                            <p class="text-muted">Coba gunakan kata kunci yang berbeda</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            @else
+                                <!-- Default View - Show some public documents or info -->
+                                <div class="text-center py-4">
+                                    <div class="login-prompt">
+                                        <i class="fas fa-lock fa-3x text-primary mb-3"></i>
+                                        <h5 class="fw-bold mb-3">Akses Lengkap Dokumen SPMI</h5>
+                                        <p class="text-muted mb-4">
+                                            Untuk mengakses semua fitur termasuk upload, edit, dan manajemen dokumen lengkap, 
+                                            silakan login ke sistem SPMI Digital.
+                                        </p>
+                                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                            <a href="{{ route('login') }}" class="btn btn-primary">
+                                                <i class="fas fa-sign-in-alt me-2"></i>Login ke Sistem
+                                            </a>
+                                            <a href="{{ route('register') }}" class="btn btn-outline-primary">
+                                                <i class="fas fa-user-plus me-2"></i>Daftar Akun Baru
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- About Section -->
         <section id="about" class="about-section">
             <div class="container">
@@ -209,6 +356,9 @@
                         <div class="d-flex gap-3">
                             <a href="#features" class="btn btn-outline-primary btn-lg">
                                 <i class="fas fa-eye me-2"></i>Lihat Fitur
+                            </a>
+                            <a href="#search" class="btn btn-primary btn-lg">
+                                <i class="fas fa-search me-2"></i>Cari Dokumen
                             </a>
                         </div>
                     </div>
@@ -249,6 +399,15 @@
                 </div>
             </div>
         </section>
+
+        <!-- ... (sections lainnya tetap sama) ... -->
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+[file content end]
 
         <!-- Features Section -->
         <section id="features" class="py-5">
