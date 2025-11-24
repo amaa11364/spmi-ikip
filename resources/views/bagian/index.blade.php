@@ -157,7 +157,7 @@
 
             <div class="row g-4">
                 <!-- Bagian 1 -->
-                <div class="col-md-8 col-lg-4">
+              <div class="col-6 col-md-6 col-lg-4">
                     <div class="bagian-card">
                         <div class="card-body text-center">
                             <div class="bagian-icon">
@@ -172,7 +172,7 @@
                 </div>
 
                 <!-- Bagian 2 -->
-                <div class="col-md-6 col-lg-4">
+               <div class="col-6 col-md-6 col-lg-4">
                     <div class="bagian-card">
                         <div class="card-body text-center">
                             <div class="bagian-icon" style="background: var(--secondary-brown);">
@@ -187,7 +187,7 @@
                 </div>
 
                 <!-- Bagian 3 -->
-                <div class="col-md-6 col-lg-4">
+               <div class="col-6 col-md-6 col-lg-4">
                     <div class="bagian-card">
                         <div class="card-body text-center">
                             <div class="bagian-icon" style="background: var(--accent-brown);">
@@ -202,7 +202,7 @@
                 </div>
 
                 <!-- Bagian 4 -->
-                <div class="col-md-6 col-lg-4">
+              <div class="col-6 col-md-6 col-lg-4">
                     <div class="bagian-card">
                         <div class="card-body text-center">
                             <div class="bagian-icon" style="background: var(--dark-brown);">
@@ -217,7 +217,7 @@
                 </div>
 
                 <!-- Bagian 5 -->
-                <div class="col-md-6 col-lg-4">
+               <div class="col-6 col-md-6 col-lg-4">
                     <div class="bagian-card">
                         <div class="card-body text-center">
                             <div class="bagian-icon" style="background: #667eea;">
@@ -232,7 +232,7 @@
                 </div>
 
                 <!-- Bagian 6 -->
-                <div class="col-md-6 col-lg-4">
+               <div class="col-6 col-md-6 col-lg-4">
                     <div class="bagian-card">
                         <div class="card-body text-center">
                             <div class="bagian-icon" style="background: #f093fb;">

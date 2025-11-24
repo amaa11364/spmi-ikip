@@ -112,7 +112,7 @@
         <div class="container">
             <div class="row g-4">
                 <!-- UPT 1 -->
-                <div class="col-md-6 col-lg-3">
+               <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: var(--primary-brown);">
@@ -124,7 +124,7 @@
                 </div>
 
                 <!-- UPT 2 -->
-                <div class="col-md-6 col-lg-3">
+               <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: var(--secondary-brown);">
@@ -136,7 +136,7 @@
                 </div>
 
                 <!-- UPT 3 -->
-                <div class="col-md-6 col-lg-3">
+               <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: var(--accent-brown);">
@@ -148,7 +148,7 @@
                 </div>
 
                 <!-- UPT 4 -->
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: var(--dark-brown);">
@@ -160,7 +160,7 @@
                 </div>
 
                 <!-- UPT 5 -->
-                <div class="col-md-6 col-lg-3">
+                <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: #667eea;">
@@ -172,7 +172,7 @@
                 </div>
 
                 <!-- UPT 6 -->
-                <div class="col-md-6 col-lg-3">
+               <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: #f093fb;">
@@ -184,7 +184,7 @@
                 </div>
 
                 <!-- UPT 7 -->
-                <div class="col-md-6 col-lg-3">
+               <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: #4facfe;">
@@ -196,7 +196,7 @@
                 </div>
 
                 <!-- UPT 8 -->
-                <div class="col-md-6 col-lg-3">
+               <div class="col-6 col-md-6 col-lg-3">
                     <div class="upt-card">
                         <div class="card-body text-center">
                             <div class="upt-icon" style="background: #43e97b;">

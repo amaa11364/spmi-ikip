@@ -109,7 +109,7 @@
 
             <div class="row g-4">
                 <!-- Prodi 1 -->
-                <div class="col-md-6 col-lg-4">
+              <div class="col-6 col-md-6 col-lg-4">
                     <div class="prodi-card">
                         <div class="card-body text-center">
                             <div class="prodi-icon">
@@ -124,7 +124,7 @@
                 </div>
 
                 <!-- Prodi 2 -->
-                <div class="col-md-6 col-lg-4">
+              <div class="col-6 col-md-6 col-lg-4">
                     <div class="prodi-card">
                         <div class="card-body text-center">
                             <div class="prodi-icon" style="background: var(--secondary-brown);">
@@ -139,7 +139,7 @@
                 </div>
 
                 <!-- Prodi 3 -->
-                <div class="col-md-6 col-lg-4">
+              <div class="col-6 col-md-6 col-lg-4">
                     <div class="prodi-card">
                         <div class="card-body text-center">
                             <div class="prodi-icon" style="background: var(--accent-brown);">
@@ -154,7 +154,7 @@
                 </div>
 
                 <!-- Prodi 4 -->
-                <div class="col-md-6 col-lg-4">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="prodi-card">
                         <div class="card-body text-center">
                             <div class="prodi-icon" style="background: var(--dark-brown);">
@@ -169,7 +169,7 @@
                 </div>
 
                 <!-- Prodi 5 -->
-                <div class="col-md-6 col-lg-4">
+              <div class="col-6 col-md-6 col-lg-4">
                     <div class="prodi-card">
                         <div class="card-body text-center">
                             <div class="prodi-icon" style="background: #667eea;">
@@ -184,7 +184,7 @@
                 </div>
 
                 <!-- Prodi 6 -->
-                <div class="col-md-6 col-lg-4">
+           <div class="col-6 col-md-6 col-lg-4">
                     <div class="prodi-card">
                         <div class="card-body text-center">
                             <div class="prodi-icon" style="background: #f093fb;">

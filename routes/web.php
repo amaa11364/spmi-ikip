@@ -4,11 +4,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UploadController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\ProfileController;
 
-// ==================== LANDING PAGE ====================
+// ==================== LANDING PAGE & PUBLIC ROUTES ====================
 Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
 
-// ==================== PUBLIC PAGES ====================
 Route::get('/upt', function () {
     return view('upt.index');
 })->name('upt.index');
@@ -27,25 +28,73 @@ Route::get('/unit-kerja', function () {
 
 // ==================== AUTHENTICATION ROUTES ====================
 Route::get('/masuk', [AuthController::class, 'showLoginForm'])->name('masuk');
-Route::post('/masuk', [AuthController::class, 'masuk']);
+Route::post('/masuk', [AuthController::class, 'masuk'])->name('masuk.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// ==================== PROTECTED ROUTES (HARUS LOGIN) ====================
+// ==================== PROTECTED ROUTES (SETELAH LOGIN) ====================
 Route::middleware(['auth'])->group(function () {
-    // Dashboard
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
-    
-    Route::get('/home', function () {
-        return view('dashboard');
+    Route::prefix('admin')->group(function () {
+        // Dashboard Routes
+        Route::get('/dashboard', function () {
+            return view('dashboard');
+        })->name('dashboard');
     });
-    
-    // Upload Dokumen Routes - SEPARATED
-    Route::get('/upload-dokumen', [UploadController::class, 'create'])->name('upload-dokumen.create');
-    Route::post('/upload-dokumen', [UploadController::class, 'store'])->name('upload-dokumen.store');
-    Route::get('/dokumen-saya', [UploadController::class, 'index'])->name('dokumen-saya');
-    Route::delete('/dokumen-saya/{id}', [UploadController::class, 'destroy'])->name('dokumen-saya.destroy');
-    Route::get('/dokumen-saya/download/{id}', [UploadController::class, 'download'])->name('dokumen-saya.download');
-    Route::get('/dokumen-saya/preview/{id}', [UploadController::class, 'preview'])->name('dokumen-saya.preview');
 });
+    // ==================== ADMIN PREFIX ROUTES ====================
+    Route::prefix('admin')->group(function () {
+        
+        // Dashboard Routes
+        Route::get('/dashboard', function () {
+            return view('dashboard');
+        })->name('dashboard');
+        
+        Route::get('/home', function () {
+            return view('dashboard');
+        });
+
+        // Upload Dokumen Routes
+        Route::prefix('upload-dokumen')->group(function () {
+            Route::get('/', [UploadController::class, 'create'])->name('upload-dokumen.create');
+            Route::post('/', [UploadController::class, 'store'])->name('upload-dokumen.store');
+        });
+
+        // Dokumen Saya Routes
+        Route::prefix('dokumen-saya')->group(function () {
+            Route::get('/', [UploadController::class, 'index'])->name('dokumen-saya');
+            Route::delete('/{id}', [UploadController::class, 'destroy'])->name('dokumen-saya.destroy');
+            Route::get('/download/{id}', [UploadController::class, 'download'])->name('dokumen-saya.download');
+            Route::get('/preview/{id}', [UploadController::class, 'preview'])->name('dokumen-saya.preview');
+        });
+
+        Route::middleware(['auth'])->group(function () {
+            Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+            Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+            Route::delete('/profile/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
+        });
+
+        // ==================== SETTINGS ROUTES ====================
+        Route::prefix('settings')->group(function () {
+            
+            // IKU Management Routes
+            Route::prefix('iku')->group(function () {
+                Route::get('/', [SettingController::class, 'indexIku'])->name('settings.iku.index');
+                Route::get('/create', [SettingController::class, 'createIku'])->name('settings.iku.create');
+                Route::post('/', [SettingController::class, 'storeIku'])->name('settings.iku.store');
+                Route::get('/{id}/edit', [SettingController::class, 'editIku'])->name('settings.iku.edit');
+                Route::put('/{id}', [SettingController::class, 'updateIku'])->name('settings.iku.update');
+                Route::delete('/{id}', [SettingController::class, 'destroyIku'])->name('settings.iku.destroy');
+            });
+
+            // Unit Kerja Management Routes
+            Route::prefix('unit-kerja')->group(function () {
+                Route::get('/', [SettingController::class, 'indexUnitKerja'])->name('settings.unit-kerja.index');
+                Route::get('/create', [SettingController::class, 'createUnitKerja'])->name('settings.unit-kerja.create');
+                Route::post('/', [SettingController::class, 'storeUnitKerja'])->name('settings.unit-kerja.store');
+                Route::get('/{id}/edit', [SettingController::class, 'editUnitKerja'])->name('settings.unit-kerja.edit');
+                Route::put('/{id}', [SettingController::class, 'updateUnitKerja'])->name('settings.unit-kerja.update');
+                Route::delete('/{id}', [SettingController::class, 'destroyUnitKerja'])->name('settings.unit-kerja.destroy');
+            });
+            
+        }); 
+        
+    }); 

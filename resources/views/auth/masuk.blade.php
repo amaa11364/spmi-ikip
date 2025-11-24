@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #996600 0%, #7a5200 100%);
+            background: linear-gradient(135deg, #c79634ff 0%, #8b6925ff 100%);
             height: 100vh;
             display: flex;
             align-items: center;
@@ -34,19 +34,50 @@
             border-color: #996600;
             box-shadow: 0 0 0 0.2rem rgba(153, 102, 0, 0.25);
         }
+        .logo-section {
+            padding: 2.5rem 2rem 1rem 2rem;
+            text-align: center;
+            background: white;
+        }
+        .logo-container {
+            margin-bottom: 1rem;
+        }
+        .logo-img {
+            max-width: 80px;
+            height: auto;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        }
+        .brand-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #996600;
+            margin-bottom: 0.25rem;
+        }
+        .brand-subtitle {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
     </style>
 </head>
 <body>
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-5">
+          <div class="col-12 col-sm-10 col-md-8 col-lg-5">
                 <div class="login-card">
-                    <div class="login-header">
-                        <i class="fas fa-chart-line fa-3x mb-3"></i>
-                        <h2>Q-TRACK SPMI</h2>
-                        <p class="mb-0 opacity-90">Sistem Penjaminan Mutu Internal</p>
+                    <!-- Logo Section -->
+                    <div class="logo-section">
+                        <div class="logo-container">
+                            <img src="{{ asset('images/photos/25600_Logo-IKIP-warna.png') }}" alt="Q-TRACK Logo" class="logo-img">
+                        </div>
+                        <div class="brand-text">
+                            <div class="brand-name">SPMI</div>
+                            <div class="brand-subtitle">Sistem Penjaminan Mutu Internal</div>
+                        </div>
                     </div>
                     
+                    <!-- Login Form -->
                     <div class="p-4">
                         <form method="POST" action="{{ route('masuk') }}">
                             @csrf
@@ -101,7 +132,7 @@
                             </button>
 
                             <div class="text-center">
-                                <a href="{{ route('landing.page') }}" class="text-decoration-none">
+                                <a href="{{ route('landing.page') }}" class="text-decoration-none text-muted">
                                     <i class="fas fa-arrow-left me-1"></i>Kembali ke Beranda
                                 </a>
                             </div>

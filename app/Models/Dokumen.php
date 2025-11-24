@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +9,8 @@ class Dokumen extends Model
     use HasFactory;
 
     protected $fillable = [
-        'program_studi_id',
+        'unit_kerja_id',
+        'iku_id',
         'jenis_dokumen',
         'nama_dokumen',
         'file_path',
@@ -20,9 +20,16 @@ class Dokumen extends Model
         'uploaded_by'
     ];
 
-    public function programStudi()
+    protected $appends = ['file_size_formatted', 'file_icon', 'upload_time_ago', 'is_pdf'];
+
+    public function unitKerja()
     {
-        return $this->belongsTo(ProgramStudi::class, 'program_studi_id');
+        return $this->belongsTo(UnitKerja::class, 'unit_kerja_id');
+    }
+
+    public function iku()
+    {
+        return $this->belongsTo(Iku::class, 'iku_id');
     }
 
     public function uploader()

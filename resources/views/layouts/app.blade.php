@@ -163,6 +163,44 @@
             display: block;
             margin-top: 0;
         }
+        /* TAMBAHKAN DI DALAM <style> */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 100px 0 60px;
+    }
+    
+    .navbar {
+        padding: 0.5rem;
+    }
+    
+    .navbar-nav {
+        text-align: center;
+        margin-top: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 80px 0 40px;
+    }
+    
+    .hero-section h1.display-4 {
+        font-size: 2rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+    
+    .navbar-brand img {
+        height: 35px !important;
+    }
+    
+    .custom-footer .text-lg-end {
+        text-align: center !important;
+        margin-top: 1rem;
+    }
+}
     </style>
 </head>
 <body>
@@ -229,12 +267,12 @@
     <footer class="custom-footer py-5">
         <div class="container">
             <div class="row">
-                <div class="col-lg-6">
+                <div class="col-lg-6 col-12">
                     <h4 class="fw-bold mb-3">SPMI</h4>
                     <p class="mb-4">Sistem Penjaminan Mutu Internal - IKIP Siliwangi</p>
                     <p class="opacity-75">&copy; 2024 SPMI IKIP Siliwangi. All rights reserved.</p>
                 </div>
-                <div class="col-lg-6 text-lg-end">
+               <div class="col-lg-6 col-12 text-lg-end text-center mt-3 mt-lg-0">
                     <h6 class="fw-semibold mb-3">Kontak Kami</h6>
                     <p class="opacity-75 mb-2">
                         <i class="fas fa-envelope me-2"></i>spmi@ikipsiliwangi.ac.id
