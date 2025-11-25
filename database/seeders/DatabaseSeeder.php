@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             ProgramStudiSeeder::class,
             UnitKerjaSeeder::class,
             IkuSeeder::class,
+            DokumenPublikSeeder::class,
         ]);
     }
 }

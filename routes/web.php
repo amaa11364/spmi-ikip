@@ -1,3 +1,5 @@
+[file name]: web.php
+[file content begin]
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -9,6 +11,11 @@ use App\Http\Controllers\ProfileController;
 
 // ==================== LANDING PAGE & PUBLIC ROUTES ====================
 Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
+
+// Public Search Routes - TAMBAHKAN INI
+Route::get('/search', [LandingPageController::class, 'searchPublic'])->name('public.search');
+Route::get('/public/dokumen/{id}/preview', [LandingPageController::class, 'previewPublicDokumen'])->name('public.dokumen.preview');
+Route::get('/public/dokumen/{id}/download', [LandingPageController::class, 'downloadPublicDokumen'])->name('public.dokumen.download');
 
 Route::get('/upt', function () {
     return view('upt.index');
@@ -33,13 +40,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ==================== PROTECTED ROUTES (SETELAH LOGIN) ====================
 Route::middleware(['auth'])->group(function () {
-    Route::prefix('admin')->group(function () {
-        // Dashboard Routes
-        Route::get('/dashboard', function () {
-            return view('dashboard');
-        })->name('dashboard');
-    });
-});
+    
     // ==================== ADMIN PREFIX ROUTES ====================
     Route::prefix('admin')->group(function () {
         
@@ -66,11 +67,10 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/preview/{id}', [UploadController::class, 'preview'])->name('dokumen-saya.preview');
         });
 
-        Route::middleware(['auth'])->group(function () {
-            Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-            Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-            Route::delete('/profile/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
-        });
+        // Profile Routes
+        Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
 
         // ==================== SETTINGS ROUTES ====================
         Route::prefix('settings')->group(function () {
@@ -98,3 +98,5 @@ Route::middleware(['auth'])->group(function () {
         }); 
         
     }); 
+    
+});

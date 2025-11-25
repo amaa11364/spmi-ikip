@@ -1,5 +1,4 @@
-[file name]: index.blade.php
-[file content begin]
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -225,6 +224,9 @@
                             <a href="#about" class="btn btn-outline-light btn-lg">
                                 <i class="fas fa-info-circle me-2"></i>Pelajari Lebih Lanjut
                             </a>
+                              <a href="search?q" class="btn btn-outline-light btn-lg">
+                                <i class="fas fa-search me-2"></i>Cari Dokumen
+                            </a>
                         </div>
                     </div>
                     <div class="col-lg-6 text-center position-relative">
@@ -313,25 +315,7 @@
                                     @endif
                                 </div>
                             @else
-                                <!-- Default View - Show some public documents or info -->
-                                <div class="text-center py-4">
-                                    <div class="login-prompt">
-                                        <i class="fas fa-lock fa-3x text-primary mb-3"></i>
-                                        <h5 class="fw-bold mb-3">Akses Lengkap Dokumen SPMI</h5>
-                                        <p class="text-muted mb-4">
-                                            Untuk mengakses semua fitur termasuk upload, edit, dan manajemen dokumen lengkap, 
-                                            silakan login ke sistem SPMI Digital.
-                                        </p>
-                                        <div class="d-flex justify-content-center gap-3 flex-wrap">
-                                            <a href="{{ route('login') }}" class="btn btn-primary">
-                                                <i class="fas fa-sign-in-alt me-2"></i>Login ke Sistem
-                                            </a>
-                                            <a href="{{ route('register') }}" class="btn btn-outline-primary">
-                                                <i class="fas fa-user-plus me-2"></i>Daftar Akun Baru
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                               
                             @endif
                         </div>
                     </div>
@@ -400,14 +384,9 @@
             </div>
         </section>
 
-        <!-- ... (sections lainnya tetap sama) ... -->
+        
 
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-[file content end]
+    
 
         <!-- Features Section -->
         <section id="features" class="py-5">
