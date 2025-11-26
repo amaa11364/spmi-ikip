@@ -17,10 +17,17 @@ class Dokumen extends Model
         'file_name',
         'file_size',
         'file_extension',
-        'uploaded_by'
+        'uploaded_by',
+        'is_public' // tambahkan ini
     ];
 
     protected $appends = ['file_size_formatted', 'file_icon', 'upload_time_ago', 'is_pdf'];
+
+    // Scope untuk dokumen publik
+    public function scopePublic($query)
+    {
+        return $query->where('is_public', true);
+    }
 
     public function unitKerja()
     {

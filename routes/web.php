@@ -1,5 +1,3 @@
-[file name]: web.php
-[file content begin]
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -12,7 +10,6 @@ use App\Http\Controllers\ProfileController;
 // ==================== LANDING PAGE & PUBLIC ROUTES ====================
 Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
 
-// Public Search Routes - TAMBAHKAN INI
 Route::get('/search', [LandingPageController::class, 'searchPublic'])->name('public.search');
 Route::get('/public/dokumen/{id}/preview', [LandingPageController::class, 'previewPublicDokumen'])->name('public.dokumen.preview');
 Route::get('/public/dokumen/{id}/download', [LandingPageController::class, 'downloadPublicDokumen'])->name('public.dokumen.download');

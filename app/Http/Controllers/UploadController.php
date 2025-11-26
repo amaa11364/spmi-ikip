@@ -49,7 +49,8 @@ class UploadController extends Controller
                     'file_name' => $file->getClientOriginalName(),
                     'file_size' => $file->getSize(),
                     'file_extension' => $file->getClientOriginalExtension(),
-                    'uploaded_by' => Auth::id()
+                    'uploaded_by' => Auth::id(),
+                    'is_public' => $request->boolean('is_public') // TAMBAH INI
                 ]);
 
                 return redirect()->route('dokumen-saya')

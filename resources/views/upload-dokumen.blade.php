@@ -248,6 +248,18 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_public" id="is_public" value="1" checked>
+                        <label class="form-check-label" for="is_public">
+                            <strong>Jadikan dokumen publik</strong>
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        Dokumen dapat diakses oleh semua pengunjung tanpa login
+                    </div>
+                </div>
                 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
                     <button type="submit" class="btn btn-primary btn-lg px-5">

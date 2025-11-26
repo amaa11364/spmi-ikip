@@ -224,7 +224,7 @@
                             <a href="#about" class="btn btn-outline-light btn-lg">
                                 <i class="fas fa-info-circle me-2"></i>Pelajari Lebih Lanjut
                             </a>
-                              <a href="search?q" class="btn btn-outline-light btn-lg">
+                              <a href="#search" class="btn btn-outline-light btn-lg">
                                 <i class="fas fa-search me-2"></i>Cari Dokumen
                             </a>
                         </div>
@@ -265,58 +265,64 @@
                             </form>
 
                             <!-- Search Results -->
-                            @if(request()->has('q'))
-                                <div class="search-results">
-                                    <h4 class="mb-4">
-                                        <i class="fas fa-search me-2"></i>
-                                        Hasil Pencarian untuk "{{ request('q') }}"
-                                        <span class="badge bg-primary ms-2">{{ $publicDokumens->count() }} dokumen ditemukan</span>
-                                    </h4>
+                           <!-- Di dalam section search, bagian search results -->
+@if(request()->has('q'))
+    <div class="search-results">
+        <h4 class="mb-4">
+            <i class="fas fa-search me-2"></i>
+            Hasil Pencarian untuk "{{ request('q') }}"
+            <span class="badge bg-primary ms-2">{{ $publicDokumens->count() }} dokumen ditemukan</span>
+        </h4>
 
-                                    @if($publicDokumens->count() > 0)
-                                        <div class="row">
-                                            @foreach($publicDokumens as $dokumen)
-                                                <div class="col-md-6 col-lg-4 mb-4">
-                                                    <div class="document-card text-center h-100">
-                                                        <div class="document-icon text-primary">
-                                                            <i class="{{ $dokumen->file_icon }}"></i>
-                                                        </div>
-                                                        <h6 class="fw-bold mb-2">{{ $dokumen->nama_dokumen }}</h6>
-                                                        <p class="text-muted small mb-2">
-                                                            <i class="fas fa-folder me-1"></i>
-                                                            {{ $dokumen->unitKerja->nama }}
-                                                        </p>
-                                                        <p class="text-muted small mb-3">
-                                                            <i class="fas fa-file me-1"></i>
-                                                            {{ $dokumen->file_size_formatted }}
-                                                        </p>
-                                                        <div class="d-flex justify-content-center gap-2">
-                                                            @if($dokumen->is_pdf)
-                                                                <a href="{{ route('public.dokumen.preview', $dokumen->id) }}" 
-                                                                   class="btn btn-outline-primary btn-sm" target="_blank">
-                                                                    <i class="fas fa-eye me-1"></i>Preview
-                                                                </a>
-                                                            @endif
-                                                            <a href="{{ route('public.dokumen.download', $dokumen->id) }}" 
-                                                               class="btn btn-outline-success btn-sm">
-                                                                <i class="fas fa-download me-1"></i>Download
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <div class="text-center py-5">
-                                            <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                                            <h5 class="text-muted">Tidak ada dokumen yang ditemukan</h5>
-                                            <p class="text-muted">Coba gunakan kata kunci yang berbeda</p>
-                                        </div>
-                                    @endif
-                                </div>
-                            @else
-                               
-                            @endif
+        @if($publicDokumens->count() > 0)
+            <div class="row">
+                @foreach($publicDokumens as $dokumen)
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="document-card text-center h-100">
+                            <div class="document-icon text-primary">
+                                <i class="{{ $dokumen->file_icon }}"></i>
+                            </div>
+                            <h6 class="fw-bold mb-2">{{ $dokumen->nama_dokumen }}</h6>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-folder me-1"></i>
+                                {{ $dokumen->unitKerja->nama }}
+                            </p>
+                            <p class="text-muted small mb-3">
+                                <i class="fas fa-file me-1"></i>
+                                {{ $dokumen->file_size_formatted }}
+                            </p>
+                            <div class="d-flex justify-content-center gap-2">
+                                @if($dokumen->is_pdf)
+                                    <a href="{{ route('public.dokumen.preview', $dokumen->id) }}" 
+                                       class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fas fa-eye me-1"></i>Preview
+                                    </a>
+                                @endif
+                                <a href="{{ route('public.dokumen.download', $dokumen->id) }}" 
+                                   class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted">Tidak ada dokumen yang ditemukan</h5>
+                <p class="text-muted">Coba gunakan kata kunci yang berbeda</p>
+            </div>
+        @endif
+    </div>
+@else
+    <!-- Tampilkan pesan default ketika belum mencari -->
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <h5 class="text-muted">Cari Dokumen SPMI</h5>
+        <p class="text-muted">Gunakan form di atas untuk mencari dokumen SPMI yang tersedia untuk umum</p>
+    </div>
+@endif
                         </div>
                     </div>
                 </div>
