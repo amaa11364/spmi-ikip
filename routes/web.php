@@ -6,13 +6,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\DokumenPublikController;
 
 // ==================== LANDING PAGE & PUBLIC ROUTES ====================
 Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
-
-Route::get('/search', [LandingPageController::class, 'searchPublic'])->name('public.search');
-Route::get('/public/dokumen/{id}/preview', [LandingPageController::class, 'previewPublicDokumen'])->name('public.dokumen.preview');
-Route::get('/public/dokumen/{id}/download', [LandingPageController::class, 'downloadPublicDokumen'])->name('public.dokumen.download');
 
 Route::get('/upt', function () {
     return view('upt.index');
@@ -48,6 +46,14 @@ Route::middleware(['auth'])->group(function () {
         
         Route::get('/home', function () {
             return view('dashboard');
+        });
+
+        // **NEW: Search Routes (Protected)**
+        Route::prefix('search')->group(function () {
+            Route::get('/', [SearchController::class, 'index'])->name('search.index');
+            Route::get('/results', [SearchController::class, 'search'])->name('search.results');
+            Route::get('/dokumen/{id}/preview', [SearchController::class, 'preview'])->name('search.dokumen.preview');
+            Route::get('/dokumen/{id}/download', [SearchController::class, 'download'])->name('search.dokumen.download');
         });
 
         // Upload Dokumen Routes
@@ -90,6 +96,15 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/{id}/edit', [SettingController::class, 'editUnitKerja'])->name('settings.unit-kerja.edit');
                 Route::put('/{id}', [SettingController::class, 'updateUnitKerja'])->name('settings.unit-kerja.update');
                 Route::delete('/{id}', [SettingController::class, 'destroyUnitKerja'])->name('settings.unit-kerja.destroy');
+            });
+
+            // **NEW: Search Routes (Protected)**
+            Route::prefix('search')->group(function () {
+                Route::get('/', [SearchController::class, 'index'])->name('search.index');
+                Route::get('/results', [SearchController::class, 'search'])->name('search.results');
+                Route::get('/ajax-search', [SearchController::class, 'ajaxSearch'])->name('search.ajax');
+                Route::get('/dokumen/{id}/preview', [SearchController::class, 'preview'])->name('search.dokumen.preview');
+                Route::get('/dokumen/{id}/download', [SearchController::class, 'download'])->name('search.dokumen.download');
             });
             
         }); 

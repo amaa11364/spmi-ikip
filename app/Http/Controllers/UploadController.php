@@ -2,66 +2,72 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Dokumen;
 use App\Models\UnitKerja;
 use App\Models\Iku;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Str;
 
 class UploadController extends Controller
 {
     public function create()
-    {
-        $unitKerjas = UnitKerja::where('status', true)->get();
-        $ikus = Iku::where('status', true)->get();
-        
-        // Otomatis true karena semua route setelah login pakai /admin/
-        $isAdmin = true;
-        
-        return view('upload-dokumen', compact('unitKerjas', 'ikus', 'isAdmin'));
-    }
+{
+    $unitKerjas = UnitKerja::where('status', true)->get();
+    $ikus = Iku::where('status', true)->get();
+    
+    return view('upload-dokumen', compact('unitKerjas', 'ikus'));
+}
 
-    public function store(Request $request)
-    {
+   public function store(Request $request)
+{
+    try {
         $request->validate([
             'unit_kerja_id' => 'required|exists:unit_kerjas,id',
             'iku_id' => 'required|exists:ikus,id',
+            'jenis_dokumen' => 'required|string|max:255',
             'nama_dokumen' => 'required|string|max:255',
-            'file_dokumen' => 'required|file|mimes:pdf,doc,docx,xls,xlsx|max:10240' // DIUBAH: hanya format doc, pdf, excel
-        ], [
-            'file_dokumen.mimes' => 'Format file harus PDF, DOC, DOCX, XLS, atau XLSX.',
-            'file_dokumen.max' => 'Ukuran file maksimal 10MB.'
+            'dokumen_file' => 'required|file|max:10240', // 10MB max
+            'is_public' => 'boolean'
         ]);
 
-        try {
-            if ($request->hasFile('file_dokumen')) {
-                $file = $request->file('file_dokumen');
-                $fileName = time() . '_' . $file->getClientOriginalName();
-                $filePath = $file->storeAs('uploads/dokumen', $fileName, 'public');
+        // Handle file upload
+        if ($request->hasFile('dokumen_file')) {
+            $file = $request->file('dokumen_file');
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            
+            // Generate unique filename
+            $fileName = time() . '_' . Str::random(10) . '.' . $extension;
+            
+            // Store file dengan path yang konsisten
+            $filePath = $file->storeAs('dokumen', $fileName, 'local');
+            
+            // Create dokumen record
+            Dokumen::create([
+                'unit_kerja_id' => $request->unit_kerja_id,
+                'iku_id' => $request->iku_id,
+                'jenis_dokumen' => $request->jenis_dokumen,
+                'nama_dokumen' => $request->nama_dokumen,
+                'file_path' => $filePath,
+                'file_name' => $originalName,
+                'file_size' => $file->getSize(),
+                'file_extension' => $extension,
+                'uploaded_by' => auth()->id(),
+                'is_public' => $request->is_public ?? false
+            ]);
 
-                Dokumen::create([
-                    'unit_kerja_id' => $request->unit_kerja_id,
-                    'iku_id' => $request->iku_id,
-                    'jenis_dokumen' => 'dokumen_mutu',
-                    'nama_dokumen' => $request->nama_dokumen,
-                    'file_path' => $filePath,
-                    'file_name' => $file->getClientOriginalName(),
-                    'file_size' => $file->getSize(),
-                    'file_extension' => $file->getClientOriginalExtension(),
-                    'uploaded_by' => Auth::id(),
-                    'is_public' => $request->boolean('is_public') // TAMBAH INI
-                ]);
-
-                return redirect()->route('dokumen-saya')
-                    ->with('success', 'Dokumen berhasil diupload!');
-            }
-        } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage());
+            return redirect()->route('dokumen-saya')
+                ->with('success', 'Dokumen berhasil diupload!');
         }
 
-        return back()->with('error', 'Gagal mengupload dokumen.');
+        return back()->with('error', 'Tidak ada file yang diupload.');
+        
+    } catch (\Exception $e) {
+        return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage());
     }
+}
 
     public function index(Request $request)
     {

@@ -224,105 +224,11 @@
                             <a href="#about" class="btn btn-outline-light btn-lg">
                                 <i class="fas fa-info-circle me-2"></i>Pelajari Lebih Lanjut
                             </a>
-                              <a href="#search" class="btn btn-outline-light btn-lg">
-                                <i class="fas fa-search me-2"></i>Cari Dokumen
-                            </a>
                         </div>
                     </div>
                     <div class="col-lg-6 text-center position-relative">
                         <div class="hero-visual">
                             <i class="fas fa-chart-network fa-10x text-light opacity-20"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Search Section -->
-        <section id="search" class="search-section">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div class="col-lg-10">
-                        <div class="search-card">
-                            <div class="text-center mb-5">
-                                <h2 class="section-title display-5 fw-bold mb-3">Cari Dokumen SPMI</h2>
-                                <p class="lead text-muted">Temukan dokumen-dokumen SPMI yang tersedia secara publik</p>
-                            </div>
-                            
-                            <!-- Search Form -->
-                            <form action="{{ route('public.search') }}" method="GET" class="mb-5">
-                                <div class="input-group input-group-lg">
-                                    <input type="text" class="form-control" name="q" 
-                                           placeholder="Cari dokumen berdasarkan nama, deskripsi, atau unit kerja..." 
-                                           value="{{ request('q') }}">
-                                    <button class="btn btn-primary" type="submit">
-                                        <i class="fas fa-search me-2"></i>Cari
-                                    </button>
-                                </div>
-                                <div class="form-text text-muted mt-2">
-                                    Gunakan kata kunci spesifik untuk hasil pencarian yang lebih akurat
-                                </div>
-                            </form>
-
-                            <!-- Search Results -->
-                           <!-- Di dalam section search, bagian search results -->
-@if(request()->has('q'))
-    <div class="search-results">
-        <h4 class="mb-4">
-            <i class="fas fa-search me-2"></i>
-            Hasil Pencarian untuk "{{ request('q') }}"
-            <span class="badge bg-primary ms-2">{{ $publicDokumens->count() }} dokumen ditemukan</span>
-        </h4>
-
-        @if($publicDokumens->count() > 0)
-            <div class="row">
-                @foreach($publicDokumens as $dokumen)
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="document-card text-center h-100">
-                            <div class="document-icon text-primary">
-                                <i class="{{ $dokumen->file_icon }}"></i>
-                            </div>
-                            <h6 class="fw-bold mb-2">{{ $dokumen->nama_dokumen }}</h6>
-                            <p class="text-muted small mb-2">
-                                <i class="fas fa-folder me-1"></i>
-                                {{ $dokumen->unitKerja->nama }}
-                            </p>
-                            <p class="text-muted small mb-3">
-                                <i class="fas fa-file me-1"></i>
-                                {{ $dokumen->file_size_formatted }}
-                            </p>
-                            <div class="d-flex justify-content-center gap-2">
-                                @if($dokumen->is_pdf)
-                                    <a href="{{ route('public.dokumen.preview', $dokumen->id) }}" 
-                                       class="btn btn-outline-primary btn-sm" target="_blank">
-                                        <i class="fas fa-eye me-1"></i>Preview
-                                    </a>
-                                @endif
-                                <a href="{{ route('public.dokumen.download', $dokumen->id) }}" 
-                                   class="btn btn-outline-success btn-sm">
-                                    <i class="fas fa-download me-1"></i>Download
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <div class="text-center py-5">
-                <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                <h5 class="text-muted">Tidak ada dokumen yang ditemukan</h5>
-                <p class="text-muted">Coba gunakan kata kunci yang berbeda</p>
-            </div>
-        @endif
-    </div>
-@else
-    <!-- Tampilkan pesan default ketika belum mencari -->
-    <div class="text-center py-5">
-        <i class="fas fa-search fa-4x text-muted mb-3"></i>
-        <h5 class="text-muted">Cari Dokumen SPMI</h5>
-        <p class="text-muted">Gunakan form di atas untuk mencari dokumen SPMI yang tersedia untuk umum</p>
-    </div>
-@endif
                         </div>
                     </div>
                 </div>
@@ -346,9 +252,6 @@
                         <div class="d-flex gap-3">
                             <a href="#features" class="btn btn-outline-primary btn-lg">
                                 <i class="fas fa-eye me-2"></i>Lihat Fitur
-                            </a>
-                            <a href="#search" class="btn btn-primary btn-lg">
-                                <i class="fas fa-search me-2"></i>Cari Dokumen
                             </a>
                         </div>
                     </div>

@@ -261,7 +261,7 @@
                     </div>
                 </div>
                 
-                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4 mb-3">
                     <button type="submit" class="btn btn-primary btn-lg px-5">
                         <i class="fas fa-upload me-2"></i>Upload Dokumen
                     </button>

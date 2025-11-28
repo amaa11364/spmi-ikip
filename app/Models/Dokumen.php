@@ -18,15 +18,21 @@ class Dokumen extends Model
         'file_size',
         'file_extension',
         'uploaded_by',
-        'is_public' // tambahkan ini
+        'is_public'
     ];
 
-    protected $appends = ['file_size_formatted', 'file_icon', 'upload_time_ago', 'is_pdf'];
+    protected $appends = ['file_size_formatted', 'file_icon', 'upload_time_ago', 'is_pdf', 'file_exists'];
 
     // Scope untuk dokumen publik
     public function scopePublic($query)
     {
         return $query->where('is_public', true);
+    }
+
+    // Cek apakah file exists
+    public function getFileExistsAttribute()
+    {
+        return \Storage::exists($this->file_path);
     }
 
     public function unitKerja()

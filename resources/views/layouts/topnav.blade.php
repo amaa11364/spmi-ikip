@@ -1,48 +1,53 @@
 <nav class="navbar-custom">
     <div class="container-fluid">
-        <div class="d-flex align-items-center w-100">
-            <!-- Search Box -->
-            <div class="search-box me-auto">
-                <i class="fas fa-search text-muted me-2"></i>
-                <input type="text" placeholder="Search...">
+        <div class="d-flex align-items-center w-100 justify-content-between">
+            <!-- Left Side - Navigation Links -->
+            <div class="d-flex align-items-center">
+                @auth
+                <div class="nav-links d-flex align-items-center">
+                    <a class="nav-link-item me-4 active" href="{{ route('search.index') }}">
+                        <i class="fas fa-search me-1"></i>Pencarian
+                    </a>
+                </div>
+                @endauth
             </div>
             
-         <!-- User Profile Dropdown -->
-<div class="user-profile dropdown" id="userProfileDropdown">
-    <div class="d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
-        <div class="user-avatar avatar-color-{{ auth()->user()->id % 6 }}"
-             style="@if(auth()->user()->avatar && auth()->user()->getAvatarUrl()) background-image: url('{{ auth()->user()->getAvatarUrl() }}'); background-size: cover; @endif">
-            @if(!auth()->user()->avatar || !auth()->user()->getAvatarUrl())
-                {{ auth()->user()->getInitials() }}
-            @endif
-        </div>
-        <div class="user-info">
-            <div class="fw-semibold">{{ auth()->user()->name }}</div>
-            <small class="text-muted">
-                {{ auth()->user()->role ?? 'Administrator' }}
-            </small>
-        </div>
-        <i class="fas fa-chevron-down ms-2 text-muted small"></i>
-    </div>
-    
-    <!-- Dropdown Menu -->
-    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileDropdown">
-        <li>
-            <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                <i class="fas fa-user-edit me-2"></i> Edit Profil
-            </a>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li>
-            <form method="POST" action="{{ route('logout') }}" id="logoutForm">
-                @csrf
-                <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
-                    <i class="fas fa-sign-out-alt me-2"></i> Logout
-                </a>
-            </form>
-        </li>
-    </ul>
-</div>
+            <!-- Right Side - User Profile -->
+            <div class="user-profile dropdown" id="userProfileDropdown">
+                <div class="d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="user-avatar avatar-color-{{ auth()->user()->id % 6 }}"
+                         style="@if(auth()->user()->avatar && auth()->user()->getAvatarUrl()) background-image: url('{{ auth()->user()->getAvatarUrl() }}'); background-size: cover; @endif">
+                        @if(!auth()->user()->avatar || !auth()->user()->getAvatarUrl())
+                            {{ auth()->user()->getInitials() }}
+                        @endif
+                    </div>
+                    <div class="user-info">
+                        <div class="fw-semibold">{{ auth()->user()->name }}</div>
+                        <small class="text-muted">
+                            {{ auth()->user()->role ?? 'Administrator' }}
+                        </small>
+                    </div>
+                    <i class="fas fa-chevron-down ms-2 text-muted small"></i>
+                </div>
+                
+                <!-- Dropdown Menu -->
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileDropdown">
+                    <li>
+                        <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                            <i class="fas fa-user-edit me-2"></i> Edit Profil
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}" id="logoutForm">
+                            @csrf
+                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
+                                <i class="fas fa-sign-out-alt me-2"></i> Logout
+                            </a>
+                        </form>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </nav>
@@ -55,35 +60,33 @@
         border-bottom: 1px solid #e9ecef;
     }
     
-    .search-box {
-        position: relative;
-        max-width: 500px;
-        width: 100%;
+    .nav-links {
+        gap: 1.5rem;
     }
     
-    .search-box input {
-        width: 100%;
-        padding: 10px 15px 10px 40px;
-        border-radius: 25px;
-        border: 1px solid #e9ecef;
-        background-color: #f8f9fa;
+    .nav-link-item {
+        color: #495057;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 8px;
         transition: all 0.3s ease;
-        font-size: 0.9rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
     }
     
-    .search-box input:focus {
-        outline: none;
-        border-color: var(--primary-brown);
-        background-color: white;
-        box-shadow: 0 0 0 0.2rem rgba(153, 102, 0, 0.1);
+    .nav-link-item:hover {
+        background-color: rgba(153, 102, 0, 0.1);
+        color: var(--primary-brown);
     }
     
-    .search-box i {
-        position: absolute;
-        left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #6c757d;
+    .nav-link-item.active {
+        background-color: var(--primary-brown);
+        color: white;
+    }
+    
+    .nav-link-item i {
+        margin-right: 8px;
     }
     
     .user-profile {
@@ -180,14 +183,21 @@
             padding: 1rem;
         }
         
-        .search-box {
-            max-width: 300px;
-            margin-right: 15px;
+        .nav-links {
+            gap: 1rem;
         }
         
-        .search-box input {
-            padding: 8px 15px 8px 35px;
-            font-size: 0.85rem;
+        .nav-link-item {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .nav-link-item span {
+            display: none;
+        }
+        
+        .nav-link-item i {
+            margin-right: 0;
         }
         
         .user-info {
@@ -211,12 +221,12 @@
             padding: 0.75rem 1rem;
         }
         
-        .search-box {
-            max-width: 200px;
+        .nav-links {
+            gap: 0.5rem;
         }
         
-        .search-box input {
-            padding: 6px 12px 6px 35px;
+        .nav-link-item {
+            padding: 5px 8px;
             font-size: 0.8rem;
         }
         
@@ -229,16 +239,6 @@
         .dropdown-menu {
             min-width: 180px;
             right: -10px !important;
-        }
-    }
-    
-    @media (max-width: 400px) {
-        .search-box {
-            max-width: 150px;
-        }
-        
-        .search-box input::placeholder {
-            font-size: 0.75rem;
         }
     }
     
@@ -287,20 +287,8 @@
         });
     });
     
-    // Search functionality (optional)
-    document.querySelector('.search-box input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const searchTerm = this.value.trim();
-            if (searchTerm) {
-                // Implement search functionality here
-                console.log('Searching for:', searchTerm);
-                // window.location.href = '/search?q=' + encodeURIComponent(searchTerm);
-            }
-        }
-    });
-    
     // Logout confirmation
-    document.getElementById('logoutForm').addEventListener('submit', function(e) {
+    document.getElementById('logoutForm')?.addEventListener('submit', function(e) {
         if (!confirm('Apakah Anda yakin ingin logout?')) {
             e.preventDefault();
         }
