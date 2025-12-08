@@ -57,59 +57,6 @@
     .btn-primary:hover {
         background: linear-gradient(135deg, var(--dark-brown) 0%, var(--primary-brown) 100%);
     }
-    .upload-container {
-        background: white;
-        border-radius: 15px;
-        padding: 2rem;
-        box-shadow: 0 5px 25px rgba(0,0,0,0.1);
-        border: 2px dashed #e9ecef;
-        transition: all 0.3s ease;
-    }
-    
-    .upload-container:hover {
-        border-color: var(--primary-brown);
-    }
-    
-    .upload-icon {
-        font-size: 4rem;
-        color: var(--primary-brown);
-        margin-bottom: 1rem;
-    }
-    
-    .file-info {
-        background: var(--light-brown);
-        border-radius: 10px;
-        padding: 1rem;
-        margin-top: 1rem;
-    }
-    
-    .form-label {
-        font-weight: 600;
-        color: #495057;
-    }
-    
-    .form-control, .form-select {
-        border-radius: 10px;
-        padding: 10px 15px;
-        border: 1px solid #e9ecef;
-    }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: var(--primary-brown);
-        box-shadow: 0 0 0 0.2rem rgba(153, 102, 0, 0.25);
-    }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--secondary-brown) 100%);
-        border: none;
-        border-radius: 10px;
-        padding: 10px 25px;
-        font-weight: 600;
-    }
-    
-    .btn-primary:hover {
-        background: linear-gradient(135deg, var(--dark-brown) 0%, var(--primary-brown) 100%);
-    }
     
     /* Hanya responsive */
     @media (max-width: 768px) {
@@ -148,7 +95,6 @@
 <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
-           
             <div>
                 <a href="{{ route('dokumen-saya') }}" class="btn btn-outline-primary me-2">
                     <i class="fas fa-folder me-2"></i>Dokumen Saya
@@ -215,11 +161,31 @@
                     </div>
                 </div>
 
-                <!-- INPUT UPLOAD FILE -->
+                <!-- RADIO BUTTON JENIS UPLOAD -->
                 <div class="mb-4">
+                    <label class="form-label">Jenis Upload <span class="text-danger">*</span></label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="jenis_upload" id="jenis_file" value="file" checked>
+                        <label class="form-check-label" for="jenis_file">
+                            Upload File
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="jenis_upload" id="jenis_link" value="link">
+                        <label class="form-check-label" for="jenis_link">
+                            Sertakan Link
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        Pilih apakah akan mengupload file atau menyertakan link dokumen
+                    </div>
+                </div>
+
+                <!-- INPUT UPLOAD FILE -->
+                <div class="mb-4" id="fileUploadSection">
                     <label for="file_dokumen" class="form-label">File Dokumen <span class="text-danger">*</span></label>
                     <input type="file" class="form-control" id="file_dokumen" name="file_dokumen" 
-                           accept=".pdf,.doc,.docx,.xls,.xlsx" required>
+                           accept=".pdf,.doc,.docx,.xls,.xlsx">
                     <div class="form-text">
                         Format file yang didukung: PDF, DOC, DOCX, XLS, XLSX. Maksimal ukuran: 10MB.
                     </div>
@@ -228,13 +194,26 @@
                     @enderror
                 </div>
 
-                <!-- INPUT NAMA DOKUMEN (OTOMATIS DARI NAMA FILE) -->
+                <!-- INPUT LINK DOKUMEN -->
+                <div class="mb-4 d-none" id="linkUploadSection">
+                    <label for="link_dokumen" class="form-label">Link Dokumen <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="link_dokumen" name="link_dokumen" 
+                           placeholder="https://example.com/dokumen.pdf">
+                    <div class="form-text">
+                        Masukkan URL lengkap dokumen (contoh: Google Drive, Dropbox, dll)
+                    </div>
+                    @error('link_dokumen')
+                        <div class="text-danger small">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <!-- INPUT NAMA DOKUMEN -->
                 <div class="mb-4">
                     <label for="nama_dokumen" class="form-label">Nama Dokumen <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="nama_dokumen" name="nama_dokumen" 
-                           placeholder="Nama dokumen akan terisi otomatis" readonly required>
+                           placeholder="Nama dokumen akan terisi otomatis" required>
                     <div class="form-text">
-                        Nama dokumen akan terisi otomatis dari nama file
+                        Beri nama yang jelas untuk dokumen ini
                     </div>
                 </div>
 
@@ -277,7 +256,33 @@
 
 @push('scripts')
 <script>
-    // File info preview dan auto-fill nama dokumen
+    // Toggle antara file upload dan link
+    document.querySelectorAll('input[name="jenis_upload"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const fileSection = document.getElementById('fileUploadSection');
+            const linkSection = document.getElementById('linkUploadSection');
+            const fileInput = document.getElementById('file_dokumen');
+            const linkInput = document.getElementById('link_dokumen');
+            const namaDokumenInput = document.getElementById('nama_dokumen');
+            
+            if (this.value === 'file') {
+                fileSection.classList.remove('d-none');
+                linkSection.classList.add('d-none');
+                fileInput.required = true;
+                linkInput.required = false;
+                namaDokumenInput.placeholder = "Nama dokumen akan terisi otomatis";
+            } else {
+                fileSection.classList.add('d-none');
+                linkSection.classList.remove('d-none');
+                fileInput.required = false;
+                linkInput.required = true;
+                namaDokumenInput.placeholder = "Masukkan nama dokumen";
+                namaDokumenInput.value = ''; // Clear value ketika switch ke link
+            }
+        });
+    });
+
+    // File info preview dan auto-fill nama dokumen (hanya untuk file upload)
     document.getElementById('file_dokumen').addEventListener('change', function(e) {
         const file = e.target.files[0];
         const fileInfo = document.getElementById('fileInfo');
@@ -352,10 +357,18 @@
 
     // Validasi sebelum submit form
     document.getElementById('uploadForm').addEventListener('submit', function(e) {
-        const fileInput = document.getElementById('file_dokumen');
-        const file = fileInput.files[0];
+        const jenisUpload = document.querySelector('input[name="jenis_upload"]:checked').value;
         
-        if (file) {
+        if (jenisUpload === 'file') {
+            const fileInput = document.getElementById('file_dokumen');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                e.preventDefault();
+                alert('Silakan pilih file untuk diupload.');
+                return false;
+            }
+            
             const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
             const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
             
@@ -370,6 +383,21 @@
                 alert('Ukuran file terlalu besar. Maksimal 10MB.');
                 return false;
             }
+        } else {
+            const linkInput = document.getElementById('link_dokumen');
+            if (!linkInput.value) {
+                e.preventDefault();
+                alert('Silakan masukkan link dokumen.');
+                return false;
+            }
+        }
+
+        // Validasi nama dokumen
+        const namaDokumenInput = document.getElementById('nama_dokumen');
+        if (!namaDokumenInput.value.trim()) {
+            e.preventDefault();
+            alert('Silakan isi nama dokumen.');
+            return false;
         }
     });
 </script>

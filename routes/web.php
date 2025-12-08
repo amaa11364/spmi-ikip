@@ -9,6 +9,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DokumenPublikController;
 
+// ==================== DOKUMEN PUBLIK ROUTES (TANPA LOGIN) - HARUS PALING ATAS ====================
+Route::get('/dokumen-publik', [DokumenPublikController::class, 'index'])->name('dokumen-publik.index');
+Route::get('/dokumen-publik/{id}', [DokumenPublikController::class, 'show'])->name('dokumen-publik.show');
+
 // ==================== LANDING PAGE & PUBLIC ROUTES ====================
 Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
 
@@ -48,7 +52,7 @@ Route::middleware(['auth'])->group(function () {
             return view('dashboard');
         });
 
-        // **NEW: Search Routes (Protected)**
+        // Search Routes (Protected)
         Route::prefix('search')->group(function () {
             Route::get('/', [SearchController::class, 'index'])->name('search.index');
             Route::get('/results', [SearchController::class, 'search'])->name('search.results');
@@ -96,15 +100,6 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/{id}/edit', [SettingController::class, 'editUnitKerja'])->name('settings.unit-kerja.edit');
                 Route::put('/{id}', [SettingController::class, 'updateUnitKerja'])->name('settings.unit-kerja.update');
                 Route::delete('/{id}', [SettingController::class, 'destroyUnitKerja'])->name('settings.unit-kerja.destroy');
-            });
-
-            // **NEW: Search Routes (Protected)**
-            Route::prefix('search')->group(function () {
-                Route::get('/', [SearchController::class, 'index'])->name('search.index');
-                Route::get('/results', [SearchController::class, 'search'])->name('search.results');
-                Route::get('/ajax-search', [SearchController::class, 'ajaxSearch'])->name('search.ajax');
-                Route::get('/dokumen/{id}/preview', [SearchController::class, 'preview'])->name('search.dokumen.preview');
-                Route::get('/dokumen/{id}/download', [SearchController::class, 'download'])->name('search.dokumen.download');
             });
             
         }); 

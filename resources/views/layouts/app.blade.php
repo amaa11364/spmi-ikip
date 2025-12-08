@@ -17,6 +17,7 @@
         
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
         }
         
         .hero-section {
@@ -54,12 +55,6 @@
             gap: 10px;
         }
         
-        .navbar-logo {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-        }
-        
         .nav-link {
             color: #374151 !important;
             font-weight: 500;
@@ -91,10 +86,6 @@
             color: white;
         }
         
-        .dropdown-toggle::after {
-            margin-left: 0.5rem;
-        }
-        
         .btn-primary {
             background: linear-gradient(135deg, var(--secondary-brown), var(--primary-brown));
             border: none;
@@ -110,27 +101,7 @@
             box-shadow: 0 10px 20px rgba(153, 102, 0, 0.3);
         }
 
-        /* Logo fallback styling */
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-fallback {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary-brown), var(--dark-brown));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        /* Footer Styling - SOLUSI FIX */
+        /* Footer Styling */
         .custom-footer {
             background: rgba(255, 255, 255, 0.95) !important;
             backdrop-filter: blur(10px);
@@ -163,57 +134,115 @@
             display: block;
             margin-top: 0;
         }
-        /* TAMBAHKAN DI DALAM <style> */
-@media (max-width: 768px) {
-    .hero-section {
-        padding: 100px 0 60px;
-    }
-    
-    .navbar {
-        padding: 0.5rem;
-    }
-    
-    .navbar-nav {
-        text-align: center;
-        margin-top: 1rem;
-    }
-}
 
-@media (max-width: 576px) {
-    .hero-section {
-        padding: 80px 0 40px;
-    }
-    
-    .hero-section h1.display-4 {
-        font-size: 2rem;
-    }
-    
-    .navbar-brand {
-        font-size: 1.1rem;
-    }
-    
-    .navbar-brand img {
-        height: 35px !important;
-    }
-    
-    .custom-footer .text-lg-end {
-        text-align: center !important;
-        margin-top: 1rem;
-    }
-}
+        /* Main content styling */
+        .main-content {
+            min-height: calc(100vh - 200px);
+            padding: 2rem 0;
+        }
+
+        /* Card styling */
+        .custom-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .custom-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+
+        /* Table styling */
+        .table-custom {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .table-custom thead th {
+            background: var(--primary-brown);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+        }
+        
+        .table-custom tbody td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-color: #e9ecef;
+        }
+        
+        .table-custom tbody tr:hover {
+            background-color: rgba(153, 102, 0, 0.05);
+        }
+
+        /* Badge styling */
+        .iku-badge {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 100px 0 60px;
+            }
+            
+            .navbar {
+                padding: 0.5rem;
+            }
+            
+            .navbar-nav {
+                text-align: center;
+                margin-top: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem 0;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-section {
+                padding: 80px 0 40px;
+            }
+            
+            .hero-section h1.display-4 {
+                font-size: 2rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .navbar-brand img {
+                height: 35px !important;
+            }
+            
+            .custom-footer .text-lg-end {
+                text-align: center !important;
+                margin-top: 1rem;
+            }
+        }
     </style>
+    @stack('styles')
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
            <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}">
-                {{-- Logo IKIP --}}
                 <img src="{{ asset('images/photos/25600_Logo-IKIP-warna.png') }}"
                     alt="Logo IKIP"
                     style="height:40px; width:auto; object-fit:contain;">
-
-                {{-- Teks APK SPMI --}}
                 <span class="fw-bold">SPMI</span>
             </a>
             
@@ -223,13 +252,20 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <!-- Menu Home -->
                     <li class="nav-item">
                         <a class="nav-link fw-medium" href="{{ route('landing.page') }}">
                             <i class="fas fa-home me-1"></i>Home
                         </a>
                     </li>
-                    <!-- Dropdown Unit Kerja -->
+                    @auth
+                    <!-- Menu untuk user yang sudah login -->
+                    @else
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('dokumen-publik.index') }}">
+                            <i class="fas fa-globe me-1"></i>Dokumen Publik
+                        </a>
+                    </li>
+                    @endauth
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fw-medium" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-building me-1"></i>Unit Kerja
@@ -258,11 +294,13 @@
     </nav>
 
     <!-- Main Content -->
-    <main style="padding-top: 76px;">
-        @yield('content')
+    <main class="main-content" style="padding-top: 76px;">
+        <div class="container">
+            @yield('content')
+        </div>
     </main>
 
-    <!-- Footer - DIPERBAIKI -->
+    <!-- Footer -->
     <footer class="custom-footer py-5">
         <div class="container">
             <div class="row">
@@ -298,10 +336,8 @@
             var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
                 return new bootstrap.Dropdown(dropdownToggleEl)
             });
-
-            // Debug logo path
-            console.log('Logo path:', "{{ asset('images/photos/LOGO-IKIP.png') }}");
         });
     </script>
+    @stack('scripts')
 </body>
 </html>

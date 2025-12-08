@@ -293,7 +293,29 @@
             </div>
         </section>
 
-        
+        <!-- Di bagian menu atau content landing page, tambahkan: -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="fw-bold mb-3">
+                    <i class="fas fa-globe me-2 text-warning"></i>Dokumen Publik SPMI
+                </h3>
+                <p class="text-muted mb-4">
+                    Akses dokumen SPMI yang tersedia untuk umum. Lihat berbagai dokumen, 
+                    laporan, dan informasi sistem penjaminan mutu internal kami.
+                </p>
+               <!-- Ganti link yang salah -->
+                <a href="{{ route('dokumen-publik.index') }}" class="btn btn-warning btn-lg">
+                    <i class="fas fa-external-link-alt me-2"></i>Lihat Dokumen Publik
+                </a>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-folder-open fa-6x text-muted opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</section>
 
     
 

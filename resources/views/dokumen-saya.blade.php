@@ -241,6 +241,28 @@
                     </span>
                 </div>
                 @endif
+
+                <!-- Di dalam file-card (grid view) tambahkan setelah badge IKU -->
+@if($dokumen->jenis_upload === 'link')
+<div class="mb-2 text-center">
+    <span class="badge bg-warning text-dark" title="Dokumen Link">
+        <i class="fas fa-link me-1"></i>Link
+    </span>
+</div>
+@endif
+
+<!-- Di dalam list view tambahkan kolom untuk jenis upload -->
+<div class="col-md-1 col-2 text-center">
+    @if($dokumen->jenis_upload === 'link')
+    <span class="badge bg-warning text-dark" title="Dokumen Link">
+        <i class="fas fa-link"></i>
+    </span>
+    @else
+    <span class="badge bg-info text-white" title="Dokumen File">
+        <i class="fas fa-file"></i>
+    </span>
+    @endif
+</div>
                 
                 <h6 class="fw-bold text-truncate" title="{{ $dokumen->nama_dokumen }}">
                     {{ $dokumen->nama_dokumen }}
