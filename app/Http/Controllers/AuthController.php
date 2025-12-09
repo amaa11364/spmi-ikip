@@ -21,8 +21,11 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            // Redirect ke admin dashboard setelah login
-            return redirect()->route('dashboard')->with('success', 'Login berhasil!');
+            
+            // Redirect ke URL yang diminta atau default ke dashboard
+            $redirectTo = $request->input('redirect_to') ?: route('dashboard');
+            
+            return redirect($redirectTo)->with('success', 'Login berhasil!');
         }
 
         return back()->withErrors([

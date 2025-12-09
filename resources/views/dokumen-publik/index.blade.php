@@ -114,22 +114,12 @@
 
     /* Pastikan tabel tetap konsisten meski data sedikit */
     .table-custom {
-        min-height: 400px; /* Beri tinggi minimum */
+        min-height: 400px;
     }
 
     .table-custom tbody {
         min-height: 300px;
     }
-
-    /* Pastikan lebar kolom konsisten */
-    .table-custom th:nth-child(1) { width: 50px; }   /* Icon */
-    .table-custom th:nth-child(2) { width: 25%; }    /* Nama Dokumen */
-    .table-custom th:nth-child(3) { width: 15%; }    /* Unit Kerja */
-    .table-custom th:nth-child(4) { width: 10%; }    /* IKU */
-    .table-custom th:nth-child(5) { width: 10%; }    /* Ukuran */
-    .table-custom th:nth-child(6) { width: 15%; }    /* Uploader */
-    .table-custom th:nth-child(7) { width: 15%; }    /* Tanggal */
-    .table-custom th:nth-child(8) { width: 120px; }  /* Aksi */
 
     /* Mobile card view */
     .mobile-card {
@@ -171,6 +161,35 @@
     .btn-responsive {
         padding: 0.5rem 1rem;
         font-size: 0.875rem;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        display: none;
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-brown);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     /* Mobile optimizations */
@@ -256,6 +275,11 @@
 @endpush
 
 @section('content')
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+</div>
+
 <!-- Public Header -->
 <div class="public-header">
     <div class="row align-items-center">
@@ -277,7 +301,8 @@
                 <a href="{{ route('landing.page') }}" class="btn btn-light btn-responsive me-2 mb-2 mb-md-0">
                     <i class="fas fa-home me-2"></i>Beranda
                 </a>
-                <a href="{{ route('masuk') }}" class="btn btn-outline-light btn-responsive">
+                <a href="{{ route('masuk') }}" class="btn btn-outline-light btn-responsive"
+                   onclick="sessionStorage.setItem('login_redirect', window.location.href)">
                     <i class="fas fa-sign-in-alt me-2"></i>Login
                 </a>
             @endauth
@@ -300,7 +325,7 @@
 
 <!-- Search & Filter Section -->
 <div class="filter-section">
-    <form action="{{ route('dokumen-publik.index') }}" method="GET" class="row g-3 align-items-end">
+    <form id="searchForm" class="row g-3 align-items-end">
         <div class="col-md-8 col-12">
             <label class="form-label fw-semibold">Cari Dokumen</label>
             <div class="input-group">
@@ -308,7 +333,7 @@
                        placeholder="Ketik nama dokumen, jenis, unit kerja, atau IKU..." 
                        value="{{ request('search') }}"
                        autocomplete="off">
-                <button type="submit" class="btn btn-primary">
+                <button type="button" class="btn btn-primary" id="searchButton">
                     <i class="fas fa-search me-1"></i>Cari
                 </button>
             </div>
@@ -349,11 +374,11 @@
                 
                 <div class="col-md-4 col-12 d-flex align-items-end">
                     <div class="d-flex gap-2 w-100">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
+                        <button type="button" class="btn btn-primary flex-grow-1" id="applyFilter">
                             <i class="fas fa-filter me-1"></i>Terapkan Filter
                         </button>
                         @if(request()->hasAny(['search', 'unit_kerja', 'iku_id']))
-                            <a href="{{ route('dokumen-publik.index') }}" class="btn btn-outline-danger">
+                            <a href="{{ route('dokumen-publik.index') }}" class="btn btn-outline-danger" id="resetFilter">
                                 <i class="fas fa-times"></i>
                             </a>
                         @endif
@@ -368,23 +393,23 @@
 <div class="results-info">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h5 class="mb-0">
+            <h5 class="mb-0" id="resultsText">
                 @if(request()->hasAny(['search', 'unit_kerja', 'iku_id']))
                     <i class="fas fa-search me-2"></i>
                     Hasil Pencarian
                     @if(request('search'))
                         untuk "{{ request('search') }}"
                     @endif
-                    <span class="badge bg-primary ms-2">{{ $dokumens->count() }} dokumen ditemukan</span>
+                    <span class="badge bg-primary ms-2" id="resultsCount">{{ $dokumens->total() }} dokumen ditemukan</span>
                 @else
                     <i class="fas fa-files me-2"></i>
                     Semua Dokumen Publik
-                    <span class="badge bg-success ms-2">{{ $dokumens->count() }} dokumen</span>
+                    <span class="badge bg-success ms-2" id="resultsCount">{{ $dokumens->total() }} dokumen</span>
                 @endif
             </h5>
         </div>
         @if(request()->hasAny(['search', 'unit_kerja', 'iku_id']))
-            <a href="{{ route('dokumen-publik.index') }}" class="btn btn-outline-secondary btn-sm">
+            <a href="{{ route('dokumen-publik.index') }}" class="btn btn-outline-secondary btn-sm" id="resetResults">
                 <i class="fas fa-times me-1"></i>Reset
             </a>
         @endif
@@ -406,309 +431,19 @@
                 <th class="actions-cell">Aksi</th>
             </tr>
         </thead>
-        <tbody>
-            @forelse($dokumens as $dokumen)
-            <tr>
-                <td class="file-icon-cell">
-                    <i class="{{ $dokumen->file_icon }} file-icon"></i>
-                </td>
-                <td>
-                    <div class="document-name">{{ $dokumen->nama_dokumen }}</div>
-                    <div class="document-type">{{ $dokumen->jenis_dokumen }}</div>
-                </td>
-                <td>{{ $dokumen->unitKerja->nama }}</td>
-                <td>
-                    @if($dokumen->iku)
-                    <span class="iku-badge" title="{{ $dokumen->iku->nama }}">
-                        {{ $dokumen->iku->kode }}
-                    </span>
-                    @else
-                    <span class="text-muted">-</span>
-                    @endif
-                </td>
-                <td>{{ $dokumen->file_size_formatted }}</td>
-                <td>{{ $dokumen->uploader->name }}</td>
-                <td>{{ $dokumen->upload_time_ago }}</td>
-                <td class="actions-cell">
-                    <div class="btn-group btn-group-sm">
-                        <button type="button" class="btn btn-outline-primary" 
-                                data-bs-toggle="modal" data-bs-target="#detailModal{{ $dokumen->id }}">
-                            <i class="fas fa-info-circle"></i>
-                        </button>
-                        @if($dokumen->is_pdf)
-                        <button type="button" class="btn btn-outline-info require-login" 
-                                data-dokumen-id="{{ $dokumen->id }}" data-action="preview">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        @endif
-                        <button type="button" class="btn btn-outline-success require-login" 
-                                data-dokumen-id="{{ $dokumen->id }}" data-action="download">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-
-            <!-- Detail Modal -->
-            <div class="modal fade" id="detailModal{{ $dokumen->id }}" tabindex="-1">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                <i class="fas fa-info-circle me-2"></i>Detail Dokumen
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-3 text-center mb-3">
-                                    <i class="{{ $dokumen->file_icon }} fa-4x text-primary"></i>
-                                </div>
-                                <div class="col-md-9">
-                                    <h5 class="fw-bold">{{ $dokumen->nama_dokumen }}</h5>
-                                    <p class="text-muted">{{ $dokumen->deskripsi ?: 'Tidak ada deskripsi' }}</p>
-                                    
-                                    <div class="row mt-3">
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-folder me-1"></i>
-                                                <strong>Unit Kerja:</strong><br>
-                                                {{ $dokumen->unitKerja->nama }}
-                                            </small>
-                                        </div>
-                                        <div class="col-6">
-                                            @if($dokumen->iku)
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-chart-line me-1"></i>
-                                                <strong>IKU:</strong><br>
-                                                {{ $dokumen->iku->kode }} - {{ $dokumen->iku->nama }}
-                                            </small>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row mt-2">
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-file me-1"></i>
-                                                <strong>Ukuran:</strong><br>
-                                                {{ $dokumen->file_size_formatted }}
-                                            </small>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-user me-1"></i>
-                                                <strong>Uploader:</strong><br>
-                                                {{ $dokumen->uploader->name }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row mt-2">
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-calendar me-1"></i>
-                                                <strong>Tanggal Upload:</strong><br>
-                                                {{ $dokumen->created_at->format('d M Y') }}
-                                            </small>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-clock me-1"></i>
-                                                <strong>Jenis:</strong><br>
-                                                {{ $dokumen->jenis_dokumen }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                            @if($dokumen->is_pdf)
-                            <button type="button" class="btn btn-info require-login" 
-                                    data-dokumen-id="{{ $dokumen->id }}" data-action="preview">
-                                <i class="fas fa-eye me-1"></i>Preview
-                            </button>
-                            @endif
-                            <button type="button" class="btn btn-success require-login" 
-                                    data-dokumen-id="{{ $dokumen->id }}" data-action="download">
-                                <i class="fas fa-download me-1"></i>Download
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @empty
-            <tr>
-                <td colspan="8">
-                    <div class="no-documents">
-                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">
-                            @if(request()->hasAny(['search', 'unit_kerja', 'iku_id']))
-                                Tidak ada dokumen yang sesuai dengan pencarian
-                            @else
-                                Belum ada dokumen publik
-                            @endif
-                        </h5>
-                        <p class="text-muted">
-                            @if(request()->hasAny(['search', 'unit_kerja', 'iku_id']))
-                                Coba ubah kata kunci atau filter pencarian Anda
-                            @else
-                                Dokumen akan ditampilkan di sini ketika tersedia
-                            @endif
-                        </p>
-                    </div>
-                </td>
-            </tr>
-            @endforelse
+        <tbody id="dokumenTableBody">
+            @include('dokumen-publik.partials.dokumen-list')
         </tbody>
     </table>
 </div>
 
-<!-- Mobile Card View -->
-<div class="mobile-card-view">
-    @forelse($dokumens as $dokumen)
-    <div class="mobile-card">
-        <div class="mobile-card-header">
-            <i class="{{ $dokumen->file_icon }} mobile-file-icon"></i>
-            <div class="mobile-document-info">
-                <h6 class="document-name mb-1">{{ $dokumen->nama_dokumen }}</h6>
-                <small class="document-type d-block">{{ $dokumen->jenis_dokumen }}</small>
-                <div class="mt-1">
-                    <small class="text-muted">
-                        <i class="fas fa-folder me-1"></i>{{ $dokumen->unitKerja->nama }}
-                    </small>
-                    @if($dokumen->iku)
-                    <small class="text-muted ms-2">
-                        <i class="fas fa-chart-line me-1"></i>{{ $dokumen->iku->kode }}
-                    </small>
-                    @endif
-                </div>
-                <div class="mt-1">
-                    <small class="text-muted">
-                        <i class="fas fa-user me-1"></i>{{ $dokumen->uploader->name }}
-                    </small>
-                    <small class="text-muted ms-2">
-                        <i class="fas fa-clock me-1"></i>{{ $dokumen->upload_time_ago }}
-                    </small>
-                </div>
-            </div>
-        </div>
-        
-        <div class="mobile-actions">
-            <button type="button" class="btn btn-outline-primary btn-sm" 
-                    data-bs-toggle="modal" data-bs-target="#detailModal{{ $dokumen->id }}">
-                <i class="fas fa-info-circle"></i>
-            </button>
-            @if($dokumen->is_pdf)
-            <button type="button" class="btn btn-outline-info btn-sm require-login" 
-                    data-dokumen-id="{{ $dokumen->id }}" data-action="preview">
-                <i class="fas fa-eye"></i>
-            </button>
-            @endif
-            <button type="button" class="btn btn-outline-success btn-sm require-login" 
-                    data-dokumen-id="{{ $dokumen->id }}" data-action="download">
-                <i class="fas fa-download"></i>
-            </button>
-        </div>
-    </div>
-    @empty
-    <div class="no-documents">
-        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-        <h5 class="text-muted">
-            @if(request()->hasAny(['search', 'unit_kerja', 'iku_id']))
-                Tidak ada dokumen yang sesuai dengan pencarian
-            @else
-                Belum ada dokumen publik
-            @endif
-        </h5>
-        <p class="text-muted">
-            @if(request()->hasAny(['search', 'unit_kerja', 'iku_id']))
-                Coba ubah kata kunci atau filter pencarian Anda
-            @else
-                Dokumen akan ditampilkan di sini ketika tersedia
-            @endif
-        </p>
-    </div>
-    @endforelse
+<!-- Mobile Card Container -->
+<div id="mobileCardView" class="d-md-none"></div>
+
+<!-- Pagination Container -->
+<div id="paginationContainer">
+    @include('dokumen-publik.partials.pagination')
 </div>
-
-<!-- Pagination Simple -->
-@if($dokumens->hasPages())
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-center">
-            <nav aria-label="Page navigation">
-                <ul class="pagination pagination-sm mb-0">
-                    {{-- Previous Page --}}
-                    @if ($dokumens->onFirstPage())
-                        <li class="page-item disabled">
-                            <span class="page-link">‹</span>
-                        </li>
-                    @else
-                        <li class="page-item">
-                            <a class="page-link" href="{{ $dokumens->previousPageUrl() }}">‹</a>
-                        </li>
-                    @endif
-
-                    {{-- Page Numbers --}}
-                    @php
-                        $current = $dokumens->currentPage();
-                        $last = $dokumens->lastPage();
-                        $start = max(1, $current - 1);
-                        $end = min($last, $current + 1);
-                    @endphp
-
-                    @if($start > 1)
-                        <li class="page-item">
-                            <a class="page-link" href="{{ $dokumens->url(1) }}">1</a>
-                        </li>
-                        @if($start > 2)
-                            <li class="page-item disabled">
-                                <span class="page-link">...</span>
-                            </li>
-                        @endif
-                    @endif
-
-                    @for ($page = $start; $page <= $end; $page++)
-                        <li class="page-item {{ $page == $current ? 'active' : '' }}">
-                            <a class="page-link" href="{{ $dokumens->url($page) }}">{{ $page }}</a>
-                        </li>
-                    @endfor
-
-                    @if($end < $last)
-                        @if($end < $last - 1)
-                            <li class="page-item disabled">
-                                <span class="page-link">...</span>
-                            </li>
-                        @endif
-                        <li class="page-item">
-                            <a class="page-link" href="{{ $dokumens->url($last) }}">{{ $last }}</a>
-                        </li>
-                    @endif
-
-                    {{-- Next Page --}}
-                    @if ($dokumens->hasMorePages())
-                        <li class="page-item">
-                            <a class="page-link" href="{{ $dokumens->nextPageUrl() }}">›</a>
-                        </li>
-                    @else
-                        <li class="page-item disabled">
-                            <span class="page-link">›</span>
-                        </li>
-                    @endif
-                </ul>
-            </nav>
-        </div>
-        <div class="text-center mt-2">
-            <small class="text-muted">
-                Halaman {{ $dokumens->currentPage() }} dari {{ $dokumens->lastPage() }}
-            </small>
-        </div>
-    </div>
-</div>
-@endif
 
 <!-- Login Required Modal -->
 <div class="modal fade login-modal" id="loginModal" tabindex="-1">
@@ -728,7 +463,8 @@
                     Silakan login untuk melanjutkan.
                 </p>
                 <div class="d-grid gap-2">
-                    <a href="{{ route('masuk') }}" class="btn btn-primary">
+                    <a href="{{ route('masuk') }}" class="btn btn-primary" 
+                       onclick="sessionStorage.setItem('login_redirect', window.location.href)">
                         <i class="fas fa-sign-in-alt me-2"></i>Login Sekarang
                     </a>
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -743,47 +479,428 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const filterToggle = document.getElementById('filterToggle');
-        const advancedFilters = document.getElementById('advancedFilters');
+// ============================================
+// DOKUMEN PUBLIK MANAGER - SIMPLIFIED VERSION
+// ============================================
 
-        // Toggle advanced filters
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Dokumen Publik Manager initialized');
+    
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Auto-load data if there are search params in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasSearchParams = urlParams.has('search') || 
+                           urlParams.has('unit_kerja') || 
+                           urlParams.has('iku_id');
+    
+    if (hasSearchParams) {
+        console.log('🔄 Auto-loading data from URL params');
+        loadData();
+    }
+});
+
+// ============================================
+// SETUP EVENT LISTENERS
+// ============================================
+
+function setupEventListeners() {
+    // Filter toggle
+    const filterToggle = document.getElementById('filterToggle');
+    const advancedFilters = document.getElementById('advancedFilters');
+    
+    if (filterToggle && advancedFilters) {
         filterToggle.addEventListener('click', function() {
-            advancedFilters.style.display = advancedFilters.style.display === 'none' ? 'block' : 'none';
+            const isHidden = advancedFilters.style.display === 'none';
+            advancedFilters.style.display = isHidden ? 'block' : 'none';
             filterToggle.classList.toggle('active');
-            
-            if (filterToggle.classList.contains('active')) {
-                filterToggle.innerHTML = '<i class="fas fa-times me-2"></i>Tutup Filter';
-            } else {
-                filterToggle.innerHTML = '<i class="fas fa-filter me-2"></i>Filter Lanjutan';
+            filterToggle.innerHTML = isHidden 
+                ? '<i class="fas fa-times me-2"></i>Tutup Filter'
+                : '<i class="fas fa-filter me-2"></i>Filter Lanjutan';
+        });
+    }
+    
+    // Search input - enter key
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadData();
             }
         });
-
-        // Auto submit form when filter changes
-        document.getElementById('unitKerjaFilter')?.addEventListener('change', function() {
-            this.form.submit();
+        
+        // Real-time search with debounce
+        let searchTimer;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    loadData();
+                }
+            }, 500);
         });
+    }
+    
+    // Search button
+    const searchButton = document.getElementById('searchButton');
+    if (searchButton) {
+        searchButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadData();
+        });
+    }
+    
+    // Apply filter button
+    const applyFilter = document.getElementById('applyFilter');
+    if (applyFilter) {
+        applyFilter.addEventListener('click', function(e) {
+            e.preventDefault();
+            loadData();
+        });
+    }
+    
+    // Reset buttons
+    const resetButtons = document.querySelectorAll('#resetFilter, #resetResults');
+    resetButtons.forEach(button => {
+        if (button) {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                resetFilters();
+            });
+        }
+    });
+    
+    // Filter changes
+    const unitFilter = document.getElementById('unitKerjaFilter');
+    const ikuFilter = document.getElementById('ikuFilter');
+    
+    if (unitFilter) {
+        unitFilter.addEventListener('change', function() {
+            loadData();
+        });
+    }
+    
+    if (ikuFilter) {
+        ikuFilter.addEventListener('change', function() {
+            loadData();
+        });
+    }
+}
 
-        document.getElementById('ikuFilter')?.addEventListener('change', function() {
-            this.form.submit();
+// ============================================
+// MAIN DATA LOADING FUNCTION
+// ============================================
+
+function loadData(page = 1) {
+    console.log('🔍 Loading data...');
+    
+    // Show loading
+    showLoading(true);
+    
+    // Get search values
+    const search = document.getElementById('searchInput')?.value || '';
+    const unitKerja = document.getElementById('unitKerjaFilter')?.value || '';
+    const iku = document.getElementById('ikuFilter')?.value || '';
+    
+    // Build URL
+    const url = '{{ route("dokumen-publik.index") }}';
+    const params = new URLSearchParams();
+    
+    if (search) params.append('search', search);
+    if (unitKerja) params.append('unit_kerja', unitKerja);
+    if (iku) params.append('iku_id', iku);
+    if (page > 1) params.append('page', page);
+    params.append('ajax', '1');
+    
+    const requestUrl = `${url}?${params.toString()}`;
+    
+    console.log('📡 Request URL:', requestUrl);
+    
+    // Update browser URL
+    updateBrowserURL(search, unitKerja, iku, page);
+    
+    // Make AJAX request
+    fetch(requestUrl, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        cache: 'no-store'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ Response received:', { 
+            success: data.success,
+            total: data.total,
+            htmlLength: data.html?.length || 0
         });
         
-        // Show advanced filters if filters are active
-        @if(request()->hasAny(['unit_kerja', 'iku_id']))
-            advancedFilters.style.display = 'block';
-            filterToggle.classList.add('active');
-            filterToggle.innerHTML = '<i class="fas fa-times me-2"></i>Tutup Filter';
-        @endif
-
-        // Handle login required buttons
-        const requireLoginButtons = document.querySelectorAll('.require-login');
-        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-
-        requireLoginButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                loginModal.show();
-            });
-        });
+        if (data.success) {
+            // Update table body
+            updateTableBody(data.html);
+            
+            // Update mobile cards
+            updateMobileCards(data.html);
+            
+            // Update pagination
+            updatePagination(data.pagination);
+            
+            // Update results info
+            updateResultsInfo(data.total, search);
+            
+            // Re-attach dynamic event listeners
+            attachDynamicEventListeners();
+        } else {
+            showError('Gagal memuat data: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('❌ AJAX Error:', error);
+        showError('Gagal memuat data: ' + error.message);
+    })
+    .finally(() => {
+        showLoading(false);
     });
+}
+
+// ============================================
+// PAGINATION HANDLER
+// ============================================
+
+function handlePagination(event, pageUrl) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    console.log('📄 Handling pagination:', pageUrl);
+    
+    // Extract page number from URL
+    const url = new URL(pageUrl, window.location.origin);
+    const page = url.searchParams.get('page') || 1;
+    
+    // Load data for the page
+    loadData(page);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    return false;
+}
+
+// ============================================
+// UI UPDATE FUNCTIONS
+// ============================================
+
+function updateTableBody(html) {
+    const tableBody = document.getElementById('dokumenTableBody');
+    if (tableBody) {
+        tableBody.innerHTML = html;
+        console.log('🔄 Table body updated');
+    }
+}
+
+function updateMobileCards(html) {
+    // Create temporary element to parse HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    // Find all mobile cards in the response
+    const mobileCards = temp.querySelectorAll('.mobile-card');
+    const mobileContainer = document.getElementById('mobileCardView');
+    
+    if (mobileContainer && mobileCards.length > 0) {
+        mobileContainer.innerHTML = '';
+        mobileCards.forEach(card => {
+            mobileContainer.appendChild(card.cloneNode(true));
+        });
+        console.log('📱 Mobile cards updated:', mobileCards.length);
+    }
+}
+
+function updatePagination(paginationHtml) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    if (paginationContainer) {
+        paginationContainer.innerHTML = paginationHtml || '';
+        console.log('🔗 Pagination updated');
+    }
+}
+
+function updateResultsInfo(total, search) {
+    const resultsCount = document.getElementById('resultsCount');
+    const resultsText = document.getElementById('resultsText');
+    
+    if (resultsCount) {
+        resultsCount.textContent = `${total} dokumen ditemukan`;
+    }
+    
+    if (resultsText) {
+        const unitKerja = document.getElementById('unitKerjaFilter')?.value || '';
+        const iku = document.getElementById('ikuFilter')?.value || '';
+        
+        if (search || unitKerja || iku) {
+            let text = '<i class="fas fa-search me-2"></i>Hasil Pencarian';
+            
+            if (search) {
+                text += ` untuk "${search}"`;
+            }
+            
+            text += ` <span class="badge bg-primary ms-2">${total} dokumen</span>`;
+            resultsText.innerHTML = text;
+        } else {
+            resultsText.innerHTML = `<i class="fas fa-files me-2"></i>Semua Dokumen Publik <span class="badge bg-success ms-2">${total} dokumen</span>`;
+        }
+    }
+}
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+function showLoading(show) {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const searchButton = document.getElementById('searchButton');
+    
+    if (loadingOverlay) {
+        loadingOverlay.style.display = show ? 'flex' : 'none';
+    }
+    
+    if (searchButton) {
+        if (show) {
+            searchButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
+            searchButton.disabled = true;
+        } else {
+            searchButton.innerHTML = '<i class="fas fa-search me-1"></i>Cari';
+            searchButton.disabled = false;
+        }
+    }
+}
+
+function showError(message) {
+    // Create error alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Error!</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert after results info
+    const resultsInfo = document.querySelector('.results-info');
+    if (resultsInfo) {
+        resultsInfo.parentNode.insertBefore(alertDiv, resultsInfo.nextSibling);
+    }
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+function resetFilters() {
+    // Reset form values
+    if (document.getElementById('searchInput')) {
+        document.getElementById('searchInput').value = '';
+    }
+    if (document.getElementById('unitKerjaFilter')) {
+        document.getElementById('unitKerjaFilter').value = '';
+    }
+    if (document.getElementById('ikuFilter')) {
+        document.getElementById('ikuFilter').value = '';
+    }
+    
+    // Hide advanced filters
+    const advancedFilters = document.getElementById('advancedFilters');
+    const filterToggle = document.getElementById('filterToggle');
+    if (advancedFilters && filterToggle) {
+        advancedFilters.style.display = 'none';
+        filterToggle.classList.remove('active');
+        filterToggle.innerHTML = '<i class="fas fa-filter me-2"></i>Filter Lanjutan';
+    }
+    
+    // Update URL
+    window.history.replaceState({}, '', '{{ route("dokumen-publik.index") }}');
+    
+    // Load data
+    loadData();
+}
+
+function updateBrowserURL(search, unitKerja, iku, page = 1) {
+    const params = new URLSearchParams();
+    
+    if (search) params.set('search', search);
+    if (unitKerja) params.set('unit_kerja', unitKerja);
+    if (iku) params.set('iku_id', iku);
+    if (page > 1) params.set('page', page);
+    
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+    
+    console.log('🔗 URL updated:', newUrl);
+}
+
+function attachDynamicEventListeners() {
+    // Attach pagination links
+    document.querySelectorAll('.page-link[href]').forEach(link => {
+        link.removeEventListener('click', handlePaginationClick);
+        link.addEventListener('click', handlePaginationClick);
+    });
+    
+    // Attach require-login buttons
+    const loginModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal'));
+    document.querySelectorAll('.require-login').forEach(button => {
+        button.removeEventListener('click', handleRequireLogin);
+        button.addEventListener('click', handleRequireLogin);
+    });
+    
+    // Attach detail modal buttons
+    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+        button.removeEventListener('click', handleModalOpen);
+        button.addEventListener('click', handleModalOpen);
+    });
+    
+    console.log('🔗 Dynamic event listeners attached');
+}
+
+function handlePaginationClick(e) {
+    e.preventDefault();
+    handlePagination(e, this.href);
+}
+
+function handleRequireLogin() {
+    sessionStorage.setItem('login_redirect', window.location.href);
+    const loginModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal'));
+    loginModal.show();
+}
+
+function handleModalOpen() {
+    const target = this.getAttribute('data-bs-target');
+    const modal = bootstrap.Modal.getOrCreateInstance(document.querySelector(target));
+    modal.show();
+}
+
+// ============================================
+// GLOBAL EXPORTS
+// ============================================
+
+// Export functions for inline onclick attributes
+window.handlePagination = function(event, url) {
+    event.preventDefault();
+    handlePagination(event, url);
+};
+
+window.performSearch = function() {
+    loadData();
+};
+
+console.log('✅ Dokumen Publik Manager ready!');
 </script>
 @endpush

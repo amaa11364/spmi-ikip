@@ -58,13 +58,12 @@
             color: #6c757d;
             margin-bottom: 0;
         }
-        
     </style>
 </head>
 <body>
     <div class="container">
         <div class="row justify-content-center">
-          <div class="col-12 col-sm-10 col-md-8 col-lg-5">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-5">
                 <div class="login-card">
                     <!-- Logo Section -->
                     <div class="logo-section">
@@ -79,8 +78,16 @@
                     
                     <!-- Login Form -->
                     <div class="p-4">
-                        <form method="POST" action="{{ route('masuk') }}">
+                        <form method="POST" action="{{ route('masuk.post') }}">
                             @csrf
+                            
+                            {{-- Redirect URL setelah login --}}
+                            @php
+                                $redirectTo = session('login_redirect') ?? 
+                                             (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '') ?? 
+                                             route('dokumen-publik.index');
+                            @endphp
+                            <input type="hidden" name="redirect_to" value="{{ $redirectTo }}">
                             
                             @if ($errors->any())
                                 <div class="alert alert-danger">
@@ -89,6 +96,12 @@
                                             <li>{{ $error }}</li>
                                         @endforeach
                                     </ul>
+                                </div>
+                            @endif
+
+                            @if (session('success'))
+                                <div class="alert alert-success">
+                                    {{ session('success') }}
                                 </div>
                             @endif
 
@@ -144,5 +157,18 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set redirect URL dari sessionStorage jika ada
+        document.addEventListener('DOMContentLoaded', function() {
+            const redirectInput = document.querySelector('input[name="redirect_to"]');
+            const loginRedirect = sessionStorage.getItem('login_redirect');
+            
+            if (loginRedirect && redirectInput) {
+                redirectInput.value = loginRedirect;
+                // Bersihkan sessionStorage setelah digunakan
+                sessionStorage.removeItem('login_redirect');
+            }
+        });
+    </script>
 </body>
 </html>
