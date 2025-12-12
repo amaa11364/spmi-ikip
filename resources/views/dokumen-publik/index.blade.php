@@ -670,6 +670,9 @@ function loadData(page = 1) {
         });
         
         if (data.success) {
+            // Hapus modal lama sebelum menambahkan yang baru
+            document.querySelectorAll('.dynamic-modal').forEach(modal => modal.remove());
+
             // Update table body
             updateTableBody(data.html);
             

@@ -89,7 +89,7 @@
         </div>
 
         <!-- Detail Modal -->
-        <div class="modal fade" id="detailModal{{ $dokumen->id }}" tabindex="-1">
+        <div class="modal fade dynamic-modal" id="detailModal{{ $dokumen->id }}" tabindex="-1">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
