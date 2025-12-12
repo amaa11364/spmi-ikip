@@ -301,9 +301,7 @@
 
     <!-- Main Content -->
     <main class="main-content" style="padding-top: 76px;">
-        <div class="container">
-            @yield('content')
-        </div>
+        @yield('content')
     </main>
 
     <!-- Footer -->

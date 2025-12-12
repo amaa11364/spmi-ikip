@@ -462,65 +462,7 @@
             </div>
         </div>
     </section>
-
-        <!-- About Section -->
-        <section id="about" class="about-section">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-lg-6">
-                        <h2 class="section-title display-5 fw-bold">Tentang Aplikasi SPMI</h2>
-                        <p class="lead text-dark mb-4">
-                            Aplikasi SPMI adalah solusi digital inovatif yang dirancang khusus 
-                            untuk membantu perguruan tinggi dan institusi pendidikan dalam 
-                            mengelola Sistem Penjaminan Mutu Internal secara efektif dan efisien.
-                        </p>
-                        <p class="text-dark mb-4 fs-5">
-                            Transformasi proses manual menjadi sistem digital yang terintegrasi.
-                        </p>
-                        <div class="d-flex gap-3">
-                            <a href="#features" class="btn btn-outline-primary btn-lg">
-                                <i class="fas fa-eye me-2"></i>Lihat Fitur
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-lg-6 text-center">
-                        <div class="about-visual mt-5 mt-lg-0">
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <div class="program-card p-4 text-center">
-                                        <i class="fas fa-bolt fa-3x text-primary mb-3"></i>
-                                        <h5 class="fw-semibold">Efisien</h5>
-                                        <p class="text-muted mb-0">Proses lebih cepat</p>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="program-card p-4 text-center">
-                                        <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
-                                        <h5 class="fw-semibold">Akurat</h5>
-                                        <p class="text-muted mb-0">Data real-time</p>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="program-card p-4 text-center">
-                                        <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
-                                        <h5 class="fw-semibold">Aman</h5>
-                                        <p class="text-muted mb-0">Data terproteksi</p>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="program-card p-4 text-center">
-                                        <i class="fas fa-sync fa-3x text-primary mb-3"></i>
-                                        <h5 class="fw-semibold">Terintegrasi</h5>
-                                        <p class="text-muted mb-0">Sistem menyeluruh</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
+`
         <div class="container">
         <div class="row">
             <!-- Berita Section (Left Column) -->
@@ -617,7 +559,7 @@
                     
                     @auth
                         <div class="text-center mt-3">
-                            <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-primary btn-sm">
+                            <a href="{{ route('dashboard') }}" class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-cog me-1"></i>Kelola Jadwal
                             </a>
                         </div>
