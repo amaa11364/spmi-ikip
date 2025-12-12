@@ -75,6 +75,7 @@
             background-size: cover;
         }
         
+        
         .program-card {
             background: white;
             border-radius: 15px;
@@ -170,26 +171,255 @@
             border: 1px solid #e9ecef;
         }
         
-        .document-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
-            margin-bottom: 1rem;
+        /* Berita Section */
+    .berita-section {
+        margin-bottom: 40px;
+    }
+    
+    .berita-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #e9ecef;
+    }
+    
+    .berita-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .berita-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .berita-content {
+        padding: 1.5rem;
+    }
+    
+    .berita-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+    }
+    
+    .berita-title:hover {
+        color: var(--primary-brown);
+    }
+    
+    .berita-excerpt {
+        color: #6c757d;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+    
+    .berita-meta {
+        font-size: 0.875rem;
+        color: #adb5bd;
+        display: flex;
+        align-items: center;
+    }
+    
+    .berita-meta i {
+        margin-right: 0.5rem;
+    }
+    
+    /* Jadwal Sidebar */
+    .jadwal-sidebar {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .jadwal-header {
+        border-bottom: 2px solid var(--primary-brown);
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .jadwal-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .jadwal-item:hover {
+        background: #f8f9fa;
+        border-color: var(--primary-brown);
+    }
+    
+    .jadwal-date {
+        min-width: 50px;
+        text-align: center;
+        margin-right: 1rem;
+        background: var(--light-brown);
+        border-radius: 8px;
+        padding: 0.5rem;
+    }
+    
+    .jadwal-day {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--primary-brown);
+        line-height: 1;
+    }
+    
+    .jadwal-month {
+        font-size: 0.75rem;
+        color: var(--secondary-brown);
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+    
+    .jadwal-info {
+        flex: 1;
+    }
+    
+    .jadwal-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+    }
+    
+    .jadwal-details {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .jadwal-details i {
+        margin-right: 0.25rem;
+    }
+    
+    .jadwal-empty {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #6c757d;
+    }
+    
+    .jadwal-empty i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+    
+    /* Section Header */
+    .section-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--primary-brown);
+    }
+    
+    .section-title {
+        color: var(--dark-brown);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-right: 0.75rem;
+        color: var(--primary-brown);
+    }
+    
+    /* View More Link */
+    .view-more {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+    
+    /* Dokumen Publik Section */
+    .dokumen-section {
+        background: #f8f9fa;
+        padding: 80px 0;
+        margin-top: 40px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-section {
+            padding: 100px 0 60px;
+            text-align: center;
         }
         
-        .document-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        .jadwal-sidebar {
+            position: static;
+            margin-top: 2rem;
+            max-height: none;
         }
         
-        .document-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+        .berita-image {
+            height: 180px;
         }
         
+        .section-header {
+            text-align: center;
+        }
+        
+        .section-title {
+            justify-content: center;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .hero-section {
+            padding: 80px 0 40px;
+        }
+        
+        .berita-card {
+            margin-bottom: 1.5rem;
+        }
+        
+        .jadwal-date {
+            min-width: 45px;
+            margin-right: 0.75rem;
+        }
+        
+        .jadwal-day {
+            font-size: 1.1rem;
+        }
+    }
+    
+    /* Jadwal Scrollbar */
+    .jadwal-sidebar::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .jadwal-sidebar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+    
+    .jadwal-sidebar::-webkit-scrollbar-thumb {
+        background: var(--primary-brown);
+        border-radius: 3px;
+    }
+    
+    .jadwal-sidebar::-webkit-scrollbar-thumb:hover {
+        background: var(--dark-brown);
+    }
+    /* Login Prompt Styles */
         .login-prompt {
             background: linear-gradient(135deg, var(--light-brown) 0%, #fff5e6 100%);
             border: 2px dashed var(--primary-brown);
@@ -292,31 +522,134 @@
             </div>
         </section>
 
-        <!-- Di bagian menu atau content landing page, tambahkan: -->
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h3 class="fw-bold mb-3">
-                    <i class="fas fa-globe me-2 text-warning"></i>Dokumen Publik SPMI
-                </h3>
-                <p class="text-muted mb-4">
-                    Akses dokumen SPMI yang tersedia untuk umum. Lihat berbagai dokumen, 
-                    laporan, dan informasi sistem penjaminan mutu internal kami.
-                </p>
-               <!-- Ganti link yang salah -->
-                <a href="{{ route('dokumen-publik.index') }}" class="btn btn-warning btn-lg">
-                    <i class="fas fa-external-link-alt me-2"></i>Lihat Dokumen Publik
-                </a>
+        <div class="container">
+        <div class="row">
+            <!-- Berita Section (Left Column) -->
+            <div class="col-lg-8">
+                <div class="berita-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-newspaper"></i>Berita Terbaru
+                        </h2>
+                        <p class="text-muted mb-0">Informasi dan kegiatan terbaru dari SPMI</p>
+                    </div>
+                    
+                    @if($beritas->count() > 0)
+                        <div class="row g-4">
+                            @foreach($beritas as $berita)
+                            <div class="col-md-6">
+                                <a href="{{ route('berita.show', $berita->slug) }}" class="text-decoration-none">
+                                    <div class="berita-card">
+                                        <img src="{{ $berita->gambar_url }}" alt="{{ $berita->judul }}" class="berita-image">
+                                        <div class="berita-content">
+                                            <h3 class="berita-title">{{ Str::limit($berita->judul, 60) }}</h3>
+                                            <p class="berita-excerpt">{{ $berita->excerpt }}</p>
+                                            <div class="berita-meta">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                <span>{{ $berita->created_at->format('d M Y') }}</span>
+                                                <span class="mx-2">•</span>
+                                                <i class="fas fa-eye"></i>
+                                                <span>{{ $berita->views }} views</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            @endforeach
+                        </div>
+                        
+                        <div class="view-more">
+                            <a href="{{ route('berita.index') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-list me-2"></i>Lihat Semua Berita
+                            </a>
+                        </div>
+                    @else
+                        <div class="text-center py-5">
+                            <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">Belum ada berita</h5>
+                            <p class="text-muted">Berita akan ditampilkan di sini</p>
+                        </div>
+                    @endif
+                </div>
             </div>
-            <div class="col-md-4 text-center">
-                <i class="fas fa-folder-open fa-6x text-muted opacity-50"></i>
+            
+            <!-- Jadwal Sidebar (Right Column) -->
+            <div class="col-lg-4">
+                <div class="jadwal-sidebar">
+                    <div class="jadwal-header">
+                        <h2 class="section-title mb-0">
+                            <i class="fas fa-calendar-alt"></i>Jadwal Kegiatan
+                        </h2>
+                        <p class="text-muted mb-0 mt-1">Jadwal mendatang</p>
+                    </div>
+                    
+                    @if($jadwals->count() > 0)
+                        <div class="jadwal-list">
+                            @foreach($jadwals as $jadwal)
+                            <div class="jadwal-item">
+                                <div class="jadwal-date">
+                                    <div class="jadwal-day">{{ $jadwal->hari }}</div>
+                                    <div class="jadwal-month">{{ $jadwal->bulanSingkat }}</div>
+                                </div>
+                                <div class="jadwal-info">
+                                    <div class="jadwal-title">{{ $jadwal->kegiatan }}</div>
+                                    <div class="jadwal-details">
+                                        @if($jadwal->waktu)
+                                            <i class="fas fa-clock"></i>
+                                            <span>{{ $jadwal->waktu->format('H:i') }}</span>
+                                            <span class="mx-1">•</span>
+                                        @endif
+                                        @if($jadwal->tempat)
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span>{{ $jadwal->tempat }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="jadwal-empty">
+                            <i class="fas fa-calendar-times"></i>
+                            <h5 class="text-muted">Tidak ada jadwal</h5>
+                            <p class="text-muted">Jadwal akan ditampilkan di sini</p>
+                        </div>
+                    @endif
+                    
+                    @auth
+                        <div class="text-center mt-3">
+                            <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-cog me-1"></i>Kelola Jadwal
+                            </a>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
-</section>
 
-    
+    <!-- Dokumen Publik Section -->
+    <section class="dokumen-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h3 class="fw-bold mb-3">
+                        <i class="fas fa-globe me-2 text-warning"></i>Dokumen Publik SPMI
+                    </h3>
+                    <p class="text-muted mb-4">
+                        Akses dokumen SPMI yang tersedia untuk umum. Lihat berbagai dokumen, 
+                        laporan, dan informasi sistem penjaminan mutu internal kami.
+                    </p>
+                    <a href="{{ route('dokumen-publik.index') }}" class="btn btn-warning btn-lg">
+                        <i class="fas fa-external-link-alt me-2"></i>Lihat Dokumen Publik
+                    </a>
+                </div>
+                <div class="col-md-4 text-center">
+                    <i class="fas fa-folder-open fa-6x text-muted opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </section>
 
         <!-- Features Section -->
         <section id="features" class="py-5">

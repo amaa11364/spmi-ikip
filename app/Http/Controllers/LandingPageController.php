@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Dokumen;
 use App\Models\UnitKerja;
 use App\Models\Iku;
+use App\Models\HeroContent;
+use App\Models\Berita;
+use App\Models\Jadwal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -33,8 +36,48 @@ class LandingPageController extends Controller
                 ->get();
         }
 
-        return view('landing.index', compact('publicDokumens', 'searchTerm'));
+        // Ambil data untuk landing page
+        $heroContent = HeroContent::active()->first();
+        $beritas = Berita::latestNews()->get();
+        $jadwals = Jadwal::upcoming()->get();
+
+        return view('landing.index', compact(
+            'publicDokumens', 
+            'searchTerm',
+            'heroContent',
+            'beritas',
+            'jadwals'
+        ));
     }
+
+    public function beritaIndex()
+    {
+        $beritas = Berita::published()
+            ->latest()
+            ->paginate(12);
+
+        return view('landing.berita.index', compact('beritas'));
+    }
+
+    public function beritaShow($slug)
+    {
+        $berita = Berita::where('slug', $slug)
+            ->published()
+            ->firstOrFail();
+
+        // Increment views
+        $berita->increment('views');
+
+        // Berita terkait (exclude current)
+        $related = Berita::published()
+            ->where('id', '!=', $berita->id)
+            ->latest()
+            ->limit(3)
+            ->get();
+
+        return view('landing.berita.show', compact('berita', 'related'));
+    }
+    
 
     public function searchPublic(Request $request)
     {
