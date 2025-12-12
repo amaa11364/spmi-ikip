@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - APK SPMI</title>
+    
+    <!-- Bootstrap CSS via CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Font Awesome via CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --primary-brown: #996600;
@@ -324,20 +330,43 @@
             </div>
         </div>
     </footer>
-
+    
+    <!-- Bootstrap JS via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Debug: Pastikan Bootstrap tersedia
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('🌐 App layout loaded');
             console.log('Bootstrap loaded:', typeof bootstrap !== 'undefined');
             
-            // Initialize dropdowns
-            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'))
+            if (typeof bootstrap === 'undefined') {
+                console.error('❌ Bootstrap tidak terload!');
+            } else {
+                console.log('✅ Bootstrap components available:');
+                console.log('  - Modal:', typeof bootstrap.Modal !== 'undefined');
+                console.log('  - Dropdown:', typeof bootstrap.Dropdown !== 'undefined');
+                console.log('  - Tooltip:', typeof bootstrap.Tooltip !== 'undefined');
+                console.log('  - Popover:', typeof bootstrap.Popover !== 'undefined');
+            }
+            
+            // Export bootstrap ke window object untuk akses global
+            window.bootstrap = bootstrap;
+            
+            // Inisialisasi dropdowns
+            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
             var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-                return new bootstrap.Dropdown(dropdownToggleEl)
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
+            
+            // Inisialisasi tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         });
     </script>
+    
     @stack('scripts')
 </body>
 </html>

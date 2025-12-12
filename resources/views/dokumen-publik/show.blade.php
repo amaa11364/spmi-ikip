@@ -365,20 +365,21 @@
                             <i class="fas fa-exclamation-triangle me-2"></i>File Tidak Tersedia
                         </button>
                     @endif
-                @else
-                    <!-- Untuk tamu/guest -->
-                    @if($dokumen->is_pdf)
-                    <button type="button" class="btn btn-info btn-lg action-btn require-login" 
-                            data-dokumen-id="{{ $dokumen->id }}" data-action="preview">
-                        <i class="fas fa-eye me-2"></i>Preview Dokumen
-                    </button>
-                    @endif
-                    
-                    <button type="button" class="btn btn-success btn-lg action-btn require-login" 
-                            data-dokumen-id="{{ $dokumen->id }}" data-action="download">
-                        <i class="fas fa-download me-2"></i>Download Dokumen
-                    </button>
-                @endauth
+                {{-- Di show.blade.php bagian Action Panel --}}
+@else
+    <!-- Untuk tamu/guest -->
+    @if($dokumen->is_pdf)
+    <a href="{{ route('masuk') }}?redirect={{ urlencode(route('dokumen-publik.show', $dokumen->id)) }}&action=preview&source=public" 
+       class="btn btn-info btn-lg action-btn">
+        <i class="fas fa-eye me-2"></i>Preview Dokumen
+    </a>
+    @endif
+    
+    <a href="{{ route('masuk') }}?redirect={{ urlencode(route('dokumen-publik.show', $dokumen->id)) }}&action=download&source=public" 
+       class="btn btn-success btn-lg action-btn">
+        <i class="fas fa-download me-2"></i>Download Dokumen
+    </a>
+@endauth
                 
                 <a href="{{ route('dokumen-publik.index') }}" class="btn btn-outline-secondary btn-lg">
                     <i class="fas fa-arrow-left me-2"></i>Kembali ke Daftar
@@ -480,115 +481,44 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Handle login required buttons for guests
-        const requireLoginButtons = document.querySelectorAll('.require-login');
-        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-
-        requireLoginButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Simpan URL saat ini ke sessionStorage untuk redirect setelah login
-                sessionStorage.setItem('login_redirect', window.location.href);
-                loginModal.show();
-            });
-        });
-
-        // Handle file download for authenticated users
-        const downloadButtons = document.querySelectorAll('[data-action="download"]');
-        downloadButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const dokumenId = this.getAttribute('data-dokumen-id');
-                
-                @if(auth()->check())
-                    // Jika sudah login, redirect ke download
-                    window.location.href = "{{ route('dokumen-saya.download', '') }}/" + dokumenId;
-                @else
-                    // Jika belum login, tampilkan modal login
-                    sessionStorage.setItem('login_redirect', window.location.href);
-                    loginModal.show();
-                @endif
-            });
-        });
-
-        // Handle PDF preview for authenticated users
-        const previewButtons = document.querySelectorAll('[data-action="preview"]');
-        previewButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const dokumenId = this.getAttribute('data-dokumen-id');
-                
-                @if(auth()->check())
-                    // Jika sudah login, buka preview di tab baru
-                    window.open("{{ route('dokumen-saya.preview', '') }}/" + dokumenId, '_blank');
-                @else
-                    // Jika belum login, tampilkan modal login
-                    sessionStorage.setItem('login_redirect', window.location.href);
-                    loginModal.show();
-                @endif
-            });
-        });
-
-        // Handle download for logged-in users with direct links
-        const directDownloadLinks = document.querySelectorAll('a[download]');
-        directDownloadLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Simpan status download di localStorage
-                localStorage.setItem('last_downloaded_file', this.getAttribute('download'));
-                
-                // Optional: Track download analytics
-                const fileName = this.getAttribute('download');
-                const fileType = fileName.split('.').pop().toUpperCase();
-                
-                console.log(`Download started: ${fileName} (${fileType})`);
-                
-                // Anda bisa menambahkan analytics tracking di sini
-                // Contoh: fetch('/api/track-download', { method: 'POST', body: JSON.stringify({ file: fileName }) });
-            });
-        });
-
-        // Check if file exists and show appropriate message
-        @if(!$dokumen->file_exists)
-            // Tampilkan alert jika file tidak tersedia
-            setTimeout(() => {
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-warning alert-dismissible fade show mt-3';
-                alertDiv.innerHTML = `
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>Perhatian!</strong> File dokumen ini tidak tersedia di server.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                document.querySelector('.detail-header').after(alertDiv);
-            }, 1000);
-        @endif
-
-        // Smooth scroll untuk anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
-            });
-        });
-
-        // Tambahkan loading state untuk tombol aksi
-        const actionButtons = document.querySelectorAll('.action-btn');
-        actionButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
-                this.disabled = true;
-                
-                // Reset setelah 3 detik (fallback)
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                }, 3000);
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dokumen Detail Manager initialized');
+    
+    // Inisialisasi modal login
+    const loginModalElement = document.getElementById('loginModal');
+    let loginModal = null;
+    
+    if (loginModalElement) {
+        loginModal = new bootstrap.Modal(loginModalElement);
+        console.log('Login modal initialized');
+    }
+    
+    // FIX UTAMA: Event delegation untuk semua tombol require-login
+    document.addEventListener('click', function(e) {
+        const requireLoginBtn = e.target.closest('.require-login');
+        if (requireLoginBtn && loginModal) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Tombol require-login diklik');
+            
+            // Simpan URL untuk redirect setelah login
+            sessionStorage.setItem('login_redirect', window.location.href);
+            
+            // Tampilkan modal login
+            loginModal.show();
+            return false;
+        }
+    });
+    
+    // Handle direct download links
+    document.querySelectorAll('a[download]').forEach(link => {
+        link.addEventListener('click', function() {
+            console.log('Download started:', this.getAttribute('download'));
         });
     });
+    
+    console.log('Dokumen Detail Manager ready!');
+});
 </script>
 @endpush

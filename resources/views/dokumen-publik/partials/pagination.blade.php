@@ -12,7 +12,7 @@
                     @else
                         <li class="page-item">
                             <a class="page-link" href="{{ $dokumens->previousPageUrl() }}" 
-                               onclick="handlePagination(event, '{{ $dokumens->previousPageUrl() }}')">‹</a>
+                               onclick="return window.handlePaginationGlobal(event, '{{ $dokumens->previousPageUrl() }}')">‹</a>
                         </li>
                     @endif
 
@@ -27,7 +27,7 @@
                     @if($start > 1)
                         <li class="page-item">
                             <a class="page-link" href="{{ $dokumens->url(1) }}" 
-                               onclick="handlePagination(event, '{{ $dokumens->url(1) }}')">1</a>
+                               onclick="return window.handlePaginationGlobal(event, '{{ $dokumens->url(1) }}')">1</a>
                         </li>
                         @if($start > 2)
                             <li class="page-item disabled">
@@ -36,10 +36,10 @@
                         @endif
                     @endif
 
-                    @for ($page = $start; $page <= $end; $page++)
-                        <li class="page-item {{ $page == $current ? 'active' : '' }}">
-                            <a class="page-link" href="{{ $dokumens->url($page) }}" 
-                               onclick="handlePagination(event, '{{ $dokumens->url($page) }}')">{{ $page }}</a>
+                    @for ($i = $start; $i <= $end; $i++)
+                        <li class="page-item {{ $i == $current ? 'active' : '' }}">
+                            <a class="page-link" href="{{ $dokumens->url($i) }}" 
+                               onclick="return window.handlePaginationGlobal(event, '{{ $dokumens->url($i) }}')">{{ $i }}</a>
                         </li>
                     @endfor
 
@@ -51,7 +51,7 @@
                         @endif
                         <li class="page-item">
                             <a class="page-link" href="{{ $dokumens->url($last) }}" 
-                               onclick="handlePagination(event, '{{ $dokumens->url($last) }}')">{{ $last }}</a>
+                               onclick="return window.handlePaginationGlobal(event, '{{ $dokumens->url($last) }}')">{{ $last }}</a>
                         </li>
                     @endif
 
@@ -59,7 +59,7 @@
                     @if ($dokumens->hasMorePages())
                         <li class="page-item">
                             <a class="page-link" href="{{ $dokumens->nextPageUrl() }}" 
-                               onclick="handlePagination(event, '{{ $dokumens->nextPageUrl() }}')">›</a>
+                               onclick="return window.handlePaginationGlobal(event, '{{ $dokumens->nextPageUrl() }}')">›</a>
                         </li>
                     @else
                         <li class="page-item disabled">

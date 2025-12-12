@@ -438,7 +438,9 @@
 </div>
 
 <!-- Mobile Card Container -->
-<div id="mobileCardView" class="d-md-none"></div>
+<div id="mobileCardView" class="d-md-none">
+    <!-- Mobile cards akan diisi via JS -->
+</div>
 
 <!-- Pagination Container -->
 <div id="paginationContainer">
@@ -446,14 +448,14 @@
 </div>
 
 <!-- Login Required Modal -->
-<div class="modal fade login-modal" id="loginModal" tabindex="-1">
+<div class="modal fade login-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">
+                <h5 class="modal-title" id="loginModalLabel">
                     <i class="fas fa-lock me-2"></i>Login Diperlukan
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <i class="fas fa-user-lock fa-3x text-warning mb-3"></i>
@@ -463,8 +465,7 @@
                     Silakan login untuk melanjutkan.
                 </p>
                 <div class="d-grid gap-2">
-                    <a href="{{ route('masuk') }}" class="btn btn-primary" 
-                       onclick="sessionStorage.setItem('login_redirect', window.location.href)">
+                    <a href="{{ route('masuk') }}" class="btn btn-primary" id="loginRedirectBtn">
                         <i class="fas fa-sign-in-alt me-2"></i>Login Sekarang
                     </a>
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
@@ -480,32 +481,49 @@
 @push('scripts')
 <script>
 // ============================================
-// DOKUMEN PUBLIK MANAGER - SIMPLIFIED VERSION
+// GLOBAL FUNCTIONS FOR INLINE ONCLICK
 // ============================================
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Dokumen Publik Manager initialized');
+// Function untuk pagination links di blade template
+window.handlePaginationGlobal = function(event, url) {
+    event.preventDefault();
+    event.stopPropagation();
     
-    // Setup event listeners
-    setupEventListeners();
+    console.log('📄 Handling pagination via inline onclick:', url);
     
-    // Auto-load data if there are search params in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasSearchParams = urlParams.has('search') || 
-                           urlParams.has('unit_kerja') || 
-                           urlParams.has('iku_id');
+    // Extract page number from URL
+    const urlObj = new URL(url, window.location.origin);
+    const page = urlObj.searchParams.get('page') || 1;
     
-    if (hasSearchParams) {
-        console.log('🔄 Auto-loading data from URL params');
-        loadData();
-    }
-});
+    // Load data for the page
+    loadData(page);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    return false;
+};
+
+// Function untuk search button
+window.performSearch = function() {
+    loadData();
+};
+
+// ============================================
+// DOKUMEN PUBLIK MANAGER
+// ============================================
+
+// Deklarasi variabel global
+let loginModal = null;
+let currentPage = 1;
 
 // ============================================
 // SETUP EVENT LISTENERS
 // ============================================
 
 function setupEventListeners() {
+    console.log('🔄 Setting up event listeners');
+    
     // Filter toggle
     const filterToggle = document.getElementById('filterToggle');
     const advancedFilters = document.getElementById('advancedFilters');
@@ -587,6 +605,14 @@ function setupEventListeners() {
             loadData();
         });
     }
+    
+    // Login redirect button in modal
+    const loginRedirectBtn = document.getElementById('loginRedirectBtn');
+    if (loginRedirectBtn) {
+        loginRedirectBtn.addEventListener('click', function() {
+            sessionStorage.setItem('login_redirect', window.location.href);
+        });
+    }
 }
 
 // ============================================
@@ -594,7 +620,8 @@ function setupEventListeners() {
 // ============================================
 
 function loadData(page = 1) {
-    console.log('🔍 Loading data...');
+    console.log('🔍 Loading data, page:', page);
+    currentPage = page;
     
     // Show loading
     showLoading(true);
@@ -714,12 +741,20 @@ function updateMobileCards(html) {
     const mobileCards = temp.querySelectorAll('.mobile-card');
     const mobileContainer = document.getElementById('mobileCardView');
     
-    if (mobileContainer && mobileCards.length > 0) {
-        mobileContainer.innerHTML = '';
-        mobileCards.forEach(card => {
-            mobileContainer.appendChild(card.cloneNode(true));
-        });
-        console.log('📱 Mobile cards updated:', mobileCards.length);
+    if (mobileContainer) {
+        if (mobileCards.length > 0) {
+            mobileContainer.innerHTML = '';
+            mobileCards.forEach(card => {
+                mobileContainer.appendChild(card.cloneNode(true));
+            });
+            console.log('📱 Mobile cards updated:', mobileCards.length);
+        } else {
+            // If no mobile cards found, check for no-documents message
+            const noDocuments = temp.querySelector('.no-documents');
+            if (noDocuments) {
+                mobileContainer.innerHTML = noDocuments.outerHTML;
+            }
+        }
     }
 }
 
@@ -848,59 +883,96 @@ function updateBrowserURL(search, unitKerja, iku, page = 1) {
 }
 
 function attachDynamicEventListeners() {
-    // Attach pagination links
-    document.querySelectorAll('.page-link[href]').forEach(link => {
-        link.removeEventListener('click', handlePaginationClick);
-        link.addEventListener('click', handlePaginationClick);
+    console.log('🔗 Attaching dynamic event listeners');
+    
+    // Event delegation untuk require-login buttons
+    document.addEventListener('click', function(e) {
+        const requireLoginBtn = e.target.closest('.require-login');
+        if (requireLoginBtn && loginModal) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('🔐 Require-login button clicked');
+            
+            // Simpan URL untuk redirect
+            sessionStorage.setItem('login_redirect', window.location.href);
+            
+            // Tampilkan modal login
+            loginModal.show();
+            
+            return false;
+        }
     });
     
-    // Attach require-login buttons
-    const loginModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal'));
-    document.querySelectorAll('.require-login').forEach(button => {
-        button.removeEventListener('click', handleRequireLogin);
-        button.addEventListener('click', handleRequireLogin);
+    // Attach pagination links
+    document.querySelectorAll('.page-link[href]').forEach(link => {
+        // Hapus event listener lama jika ada
+        const newLink = link.cloneNode(true);
+        link.parentNode.replaceChild(newLink, link);
+        
+        // Tambah event listener baru
+        newLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            const pageUrl = this.href;
+            const urlObj = new URL(pageUrl, window.location.origin);
+            const page = urlObj.searchParams.get('page') || 1;
+            loadData(page);
+        });
     });
     
     // Attach detail modal buttons
     document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
-        button.removeEventListener('click', handleModalOpen);
-        button.addEventListener('click', handleModalOpen);
+        button.addEventListener('click', function(e) {
+            const target = this.getAttribute('data-bs-target');
+            const modalElement = document.querySelector(target);
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        });
     });
     
-    console.log('🔗 Dynamic event listeners attached');
-}
-
-function handlePaginationClick(e) {
-    e.preventDefault();
-    handlePagination(e, this.href);
-}
-
-function handleRequireLogin() {
-    sessionStorage.setItem('login_redirect', window.location.href);
-    const loginModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('loginModal'));
-    loginModal.show();
-}
-
-function handleModalOpen() {
-    const target = this.getAttribute('data-bs-target');
-    const modal = bootstrap.Modal.getOrCreateInstance(document.querySelector(target));
-    modal.show();
+    console.log('✅ Dynamic event listeners attached');
 }
 
 // ============================================
-// GLOBAL EXPORTS
+// INITIALIZATION
 // ============================================
 
-// Export functions for inline onclick attributes
-window.handlePagination = function(event, url) {
-    event.preventDefault();
-    handlePagination(event, url);
-};
-
-window.performSearch = function() {
-    loadData();
-};
-
-console.log('✅ Dokumen Publik Manager ready!');
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Dokumen Publik Manager initialized');
+    console.log('Bootstrap available:', typeof bootstrap !== 'undefined');
+    
+    // Inisialisasi modal login
+    const loginModalElement = document.getElementById('loginModal');
+    if (loginModalElement) {
+        loginModal = new bootstrap.Modal(loginModalElement);
+        console.log('✅ Login modal initialized');
+    } else {
+        console.error('❌ Login modal element not found');
+    }
+    
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Auto-load data if there are search params in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasSearchParams = urlParams.has('search') || 
+                           urlParams.has('unit_kerja') || 
+                           urlParams.has('iku_id');
+    
+    if (hasSearchParams) {
+        console.log('🔄 Auto-loading data from URL params');
+        loadData();
+    }
+    
+    // Initial load mobile cards from existing HTML
+    const tableBody = document.getElementById('dokumenTableBody');
+    if (tableBody) {
+        updateMobileCards(tableBody.innerHTML);
+    }
+    
+    console.log('✅ Dokumen Publik Manager ready!');
+});
 </script>
 @endpush

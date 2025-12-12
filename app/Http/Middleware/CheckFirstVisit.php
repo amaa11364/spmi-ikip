@@ -6,8 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class CheckFirstVisit
-{
+class CheckFirstVisit{
     public function handle(Request $request, Closure $next): Response
     {
         // Skip untuk request AJAX dan route selain landing page
