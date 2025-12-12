@@ -6,7 +6,7 @@
 <!-- Main Content -->
 <!-- Hero Section -->
 <section id="home" class="hero-section">
-    <div class="container">
+    <div class="container-fluid">
         <div class="row align-items-center">
                 <div class="col-lg-6 col-md-12 position-relative text-center text-lg-start">
                     <h1 class="display-4 fw-bold mb-3">SPMI</h1>
