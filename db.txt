@@ -1,0 +1,3 @@
+db: spmidev
+u: spmitea
+p: ZSNAsItNKuG5NV8j9qa2
