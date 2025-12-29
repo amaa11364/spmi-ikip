@@ -38,6 +38,18 @@ Route::get('/unit-kerja', function () {
     return view('unit-kerja.index');
 })->name('unit-kerja.index');
 
+Route::get('/tentang/profil', function () {
+    return view('tentang.profil');
+})->name('tentang.profil');
+
+Route::get('/tentang/visi-misi', function () {
+    return view('tentang.visi-misi');
+})->name('tentang.visi-misi');
+
+Route::get('/tentang/struktur-organisasi', function () {
+    return view('tentang.sotk');
+})->name('tentang.sotk');
+
 // ==================== AUTHENTICATION ROUTES ====================
 Route::get('/masuk', [AuthController::class, 'showLoginForm'])->name('masuk');
 Route::post('/masuk', [AuthController::class, 'masuk'])->name('masuk.post');

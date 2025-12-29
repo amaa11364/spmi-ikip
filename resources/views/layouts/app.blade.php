@@ -270,6 +270,31 @@
                             <i class="fas fa-home me-1"></i>Home
                         </a>
                     </li>
+                    
+                    <!-- MENU BARU: Tentang Kami - DITAMBAHKAN SETELAH HOME -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-medium" href="#" id="navbarTentangKami" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-info-circle me-1"></i>Tentang Kami
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarTentangKami">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('tentang.profil') }}">
+                                    <i class="fas fa-user-circle me-2"></i>Profil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('tentang.visi-misi') }}">
+                                    <i class="fas fa-bullseye me-2"></i>Visi & Misi
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('tentang.sotk') }}">
+                                    <i class="fas fa-sitemap me-2"></i>Struktur Organisasi
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    
                     @auth
                     <!-- Menu untuk user yang sudah login -->
                     @else

@@ -443,7 +443,7 @@
     </style>
 </head>
 <body>
-    @extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Home')
 
