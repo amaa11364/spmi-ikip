@@ -489,8 +489,6 @@ window.handlePaginationGlobal = function(event, url) {
     event.preventDefault();
     event.stopPropagation();
     
-    console.log('📄 Handling pagination via inline onclick:', url);
-    
     // Extract page number from URL
     const urlObj = new URL(url, window.location.origin);
     const page = urlObj.searchParams.get('page') || 1;
@@ -522,8 +520,6 @@ let currentPage = 1;
 // ============================================
 
 function setupEventListeners() {
-    console.log('🔄 Setting up event listeners');
-    
     // Filter toggle
     const filterToggle = document.getElementById('filterToggle');
     const advancedFilters = document.getElementById('advancedFilters');
@@ -620,7 +616,6 @@ function setupEventListeners() {
 // ============================================
 
 function loadData(page = 1) {
-    console.log('🔍 Loading data, page:', page);
     currentPage = page;
     
     // Show loading
@@ -643,8 +638,6 @@ function loadData(page = 1) {
     
     const requestUrl = `${url}?${params.toString()}`;
     
-    console.log('📡 Request URL:', requestUrl);
-    
     // Update browser URL
     updateBrowserURL(search, unitKerja, iku, page);
     
@@ -663,12 +656,6 @@ function loadData(page = 1) {
         return response.json();
     })
     .then(data => {
-        console.log('✅ Response received:', { 
-            success: data.success,
-            total: data.total,
-            htmlLength: data.html?.length || 0
-        });
-        
         if (data.success) {
             // Hapus modal lama sebelum menambahkan yang baru
             document.querySelectorAll('.dynamic-modal').forEach(modal => modal.remove());
@@ -692,7 +679,6 @@ function loadData(page = 1) {
         }
     })
     .catch(error => {
-        console.error('❌ AJAX Error:', error);
         showError('Gagal memuat data: ' + error.message);
     })
     .finally(() => {
@@ -707,8 +693,6 @@ function loadData(page = 1) {
 function handlePagination(event, pageUrl) {
     event.preventDefault();
     event.stopPropagation();
-    
-    console.log('📄 Handling pagination:', pageUrl);
     
     // Extract page number from URL
     const url = new URL(pageUrl, window.location.origin);
@@ -731,7 +715,6 @@ function updateTableBody(html) {
     const tableBody = document.getElementById('dokumenTableBody');
     if (tableBody) {
         tableBody.innerHTML = html;
-        console.log('🔄 Table body updated');
     }
 }
 
@@ -750,7 +733,6 @@ function updateMobileCards(html) {
             mobileCards.forEach(card => {
                 mobileContainer.appendChild(card.cloneNode(true));
             });
-            console.log('📱 Mobile cards updated:', mobileCards.length);
         } else {
             // If no mobile cards found, check for no-documents message
             const noDocuments = temp.querySelector('.no-documents');
@@ -765,7 +747,6 @@ function updatePagination(paginationHtml) {
     const paginationContainer = document.getElementById('paginationContainer');
     if (paginationContainer) {
         paginationContainer.innerHTML = paginationHtml || '';
-        console.log('🔗 Pagination updated');
     }
 }
 
@@ -881,21 +862,15 @@ function updateBrowserURL(search, unitKerja, iku, page = 1) {
     
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
-    
-    console.log('🔗 URL updated:', newUrl);
 }
 
 function attachDynamicEventListeners() {
-    console.log('🔗 Attaching dynamic event listeners');
-    
     // Event delegation untuk require-login buttons
     document.addEventListener('click', function(e) {
         const requireLoginBtn = e.target.closest('.require-login');
         if (requireLoginBtn && loginModal) {
             e.preventDefault();
             e.stopPropagation();
-            
-            console.log('🔐 Require-login button clicked');
             
             // Simpan URL untuk redirect
             sessionStorage.setItem('login_redirect', window.location.href);
@@ -934,8 +909,6 @@ function attachDynamicEventListeners() {
             }
         });
     });
-    
-    console.log('✅ Dynamic event listeners attached');
 }
 
 // ============================================
@@ -943,16 +916,10 @@ function attachDynamicEventListeners() {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Dokumen Publik Manager initialized');
-    console.log('Bootstrap available:', typeof bootstrap !== 'undefined');
-    
     // Inisialisasi modal login
     const loginModalElement = document.getElementById('loginModal');
     if (loginModalElement) {
         loginModal = new bootstrap.Modal(loginModalElement);
-        console.log('✅ Login modal initialized');
-    } else {
-        console.error('❌ Login modal element not found');
     }
     
     // Setup event listeners
@@ -965,7 +932,6 @@ document.addEventListener('DOMContentLoaded', function() {
                            urlParams.has('iku_id');
     
     if (hasSearchParams) {
-        console.log('🔄 Auto-loading data from URL params');
         loadData();
     }
     
@@ -974,8 +940,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tableBody) {
         updateMobileCards(tableBody.innerHTML);
     }
-    
-    console.log('✅ Dokumen Publik Manager ready!');
 });
 </script>
 @endpush
