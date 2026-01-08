@@ -37,59 +37,113 @@
             background-color: #f8fafc;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
         }
         
-        .sidebar {
+        /* ===== LAYOUT CONTAINER ===== */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* ===== SIDEBAR ===== */
+        .sidebar-wrapper {
+            width: 250px;
+            min-width: 250px;
             background: linear-gradient(180deg, var(--primary-brown) 0%, var(--dark-brown) 100%);
             color: white;
-            min-height: 100vh;
-            padding: 0;
             position: fixed;
-            width: 250px;
+            left: 0;
+            top: 0;
+            bottom: 0;
             z-index: 1000;
+            overflow-y: auto; /* INI YANG BIKIN BISA SCROLL */
             transition: all 0.3s ease;
+        }
+        
+        /* ===== MAIN CONTENT ===== */
+        .main-content-wrapper {
+            flex: 1;
+            margin-left: 250px;
+            min-height: 100vh;
+            background-color: #f8fafc;
+            transition: all 0.3s ease;
+        }
+        
+        /* ===== CONTENT AREA ===== */
+        .content-area {
+            padding: 2rem;
+            min-height: calc(100vh - 70px);
+        }
+        
+        /* ===== SIDEBAR INNER STYLING ===== */
+        .sidebar-inner {
+            padding: 0;
         }
         
         .sidebar-header {
             padding: 2rem 1.5rem;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.1);
         }
         
         .sidebar-menu {
             padding: 1rem 0;
+            height: calc(100vh - 180px); /* TINGGI MENU YANG BISA DISCROLL */
+            overflow-y: auto;
         }
         
         .sidebar-menu .nav-link {
             color: rgba(255,255,255,0.8);
             padding: 12px 1.5rem;
-            margin: 4px 0;
+            margin: 2px 0;
             border-radius: 0;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            border-left: 3px solid transparent;
         }
         
         .sidebar-menu .nav-link:hover,
         .sidebar-menu .nav-link.active {
             background: rgba(255,255,255,0.1);
             color: white;
-            border-left: 4px solid white;
+            border-left: 3px solid white;
         }
         
         .sidebar-menu .nav-link i {
             width: 20px;
             margin-right: 10px;
+            text-align: center;
         }
         
-        .main-content {
-            margin-left: 250px;
-            padding: 0;
-            min-height: 100vh;
-            transition: all 0.3s ease;
+        .sidebar-menu .text-muted {
+            color: rgba(255,255,255,0.6) !important;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
         
+        .sidebar-menu .nav-link.text-danger:hover {
+            background: rgba(220, 53, 69, 0.2);
+            color: #ff6b6b !important;
+            border-left: 3px solid #ff6b6b;
+        }
+        
+        /* ===== TOP NAVBAR ===== */
         .navbar-custom {
             background: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             padding: 1rem 2rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 999;
         }
         
         .search-box {
@@ -133,28 +187,34 @@
         .avatar-color-4 { background: #ddaa00; }
         .avatar-color-5 { background: #eebb00; }
 
-        /* Content specific styles */
-        .content-area {
-            padding: 2rem;
+        /* ===== SCROLLBAR STYLING ===== */
+        .sidebar-wrapper::-webkit-scrollbar {
+            width: 6px;
         }
         
-        /* Welcome Card */
-        .welcome-card {
-            background: linear-gradient(135deg, var(--primary-brown) 0%, var(--secondary-brown) 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+        .sidebar-wrapper::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
         }
         
-        .stats-badge {
+        .sidebar-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 3px;
+        }
+        
+        .sidebar-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        /* Untuk menu scroll */
+        .sidebar-menu::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .sidebar-menu::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.2);
-            border-radius: 25px;
-            padding: 8px 20px;
-            font-size: 0.9rem;
         }
         
-        /* Mobile Styles */
+        /* ===== MOBILE STYLES ===== */
         .mobile-menu-btn {
             display: none;
             position: fixed;
@@ -168,23 +228,41 @@
             color: white;
         }
         
+        /* Overlay untuk mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+        }
+        
         @media (max-width: 991.98px) {
-            .sidebar {
+            .sidebar-wrapper {
                 left: -100%;
                 top: 0;
                 z-index: 1050;
                 width: 280px;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.2);
             }
             
-            .sidebar.show {
+            .sidebar-wrapper.show {
                 left: 0;
             }
             
-            .main-content {
+            .main-content-wrapper {
                 margin-left: 0 !important;
+                width: 100%;
             }
             
             .mobile-menu-btn {
+                display: block;
+            }
+            
+            .sidebar-overlay.active {
                 display: block;
             }
             
@@ -198,8 +276,8 @@
                 padding: 1rem;
             }
             
-            .welcome-card {
-                padding: 1.5rem;
+            .navbar-custom {
+                padding: 1rem;
             }
             
             .search-box input {
@@ -209,6 +287,8 @@
         
         @media (max-width: 576px) {
             .navbar-custom {
+                flex-direction: column;
+                height: auto;
                 padding: 1rem;
             }
             
@@ -225,81 +305,160 @@
                 width: 100%;
                 justify-content: center;
             }
+            
+            .mobile-menu-btn {
+                top: 10px;
+                left: 10px;
+            }
+        }
+        
+        /* ===== CARD STYLING ===== */
+        .custom-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .custom-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+        
+        /* ===== FLASH MESSAGES ===== */
+        .alert {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
     </style>
     @stack('styles')
 </head>
 <body>
-    <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" id="mobileMenuBtn">
-        <i class="fas fa-bars"></i>
-    </button>
-
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            @include('layouts.sidebar')
-
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 main-content">
-                <!-- Top Navigation -->
-                @include('layouts.topnav')
-
-                <!-- Content Area -->
-                <div class="content-area">
-                    @yield('content')
+    <div class="app-container">
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+        
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar-wrapper" id="sidebar">
+            <div class="sidebar-inner">
+                <div class="sidebar-header">
+                    <div class="d-flex flex-column align-items-center text-center">
+                        <div class="logo-container mb-3">
+                            <img src="{{ asset('images/photos/25600_Logo-IKIP-warna.png') }}" 
+                                 alt="IKIP Logo" 
+                                 class="logo-img" 
+                                 style="max-width: 70px; height: auto; filter: brightness(0) invert(1);">
+                        </div>
+                        <h4 class="fw-bold mb-1">SPMI</h4>
+                        <small class="opacity-75">SPMI Digital</small>
+                    </div>
                 </div>
+                
+                <nav class="sidebar-menu">
+                    @include('layouts.sidebar')
+                </nav>
             </div>
-        </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content-wrapper">
+            <!-- Top Navigation -->
+            @include('layouts.topnav')
+            
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Flash Messages -->
+                @if(session('success'))
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                @endif
+                
+                @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                @endif
+                
+                <!-- Main Content -->
+                @yield('content')
+            </div>
+        </main>
     </div>
 
-    <!-- Bootstrap JS via CDN -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Pastikan Bootstrap tersedia
-        if (typeof bootstrap === 'undefined') {
-            console.error('❌ Bootstrap tidak terload di admin layout!');
-        } else {
-            console.log('✅ Bootstrap loaded in admin layout');
-        }
-        
         // Mobile sidebar toggle
-        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('show');
-        });
-
-        // Auto-close sidebar on link click in mobile
-        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth < 992) {
-                    document.querySelector('.sidebar').classList.remove('show');
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            // Toggle sidebar
+            if (mobileBtn) {
+                mobileBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    sidebar.classList.toggle('show');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.toggle('active');
+                    }
+                });
+            }
+            
+            // Close sidebar when clicking overlay
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('active');
+                });
+            }
+            
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth < 992 && 
+                    !sidebar.contains(event.target) && 
+                    !mobileBtn.contains(event.target) &&
+                    sidebar.classList.contains('show')) {
+                    sidebar.classList.remove('show');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove('active');
+                    }
                 }
             });
-        });
-
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.querySelector('.sidebar');
-            const mobileBtn = document.getElementById('mobileMenuBtn');
             
-            if (window.innerWidth < 992 && 
-                !sidebar.contains(event.target) && 
-                !mobileBtn.contains(event.target) &&
-                sidebar.classList.contains('show')) {
-                sidebar.classList.remove('show');
-            }
-        });
-        
-        // Inisialisasi Bootstrap components
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🏢 Admin layout loaded');
-            
-            // Inisialisasi dropdowns
-            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
-            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-                return new bootstrap.Dropdown(dropdownToggleEl);
+            // Auto-close sidebar on window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 992) {
+                    sidebar.classList.remove('show');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.remove('active');
+                    }
+                }
             });
+            
+            // Inisialisasi Bootstrap components
+            if (typeof bootstrap !== 'undefined') {
+                // Inisialisasi dropdowns
+                var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+                var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                    return new bootstrap.Dropdown(dropdownToggleEl);
+                });
+            }
+            
+            console.log('✅ Layout loaded with scrollable sidebar');
         });
     </script>
     

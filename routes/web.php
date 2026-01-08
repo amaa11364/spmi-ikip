@@ -58,6 +58,42 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // ==================== PROTECTED ROUTES (SETELAH LOGIN) ====================
 Route::middleware(['auth'])->group(function () {
     
+        // ==================== SPMI ROUTES ====================
+    Route::prefix('spmi')->name('spmi.')->group(function () {
+        
+        // PENETAPAN
+        Route::prefix('penetapan')->name('penetapan.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPenetapan'])->name('index');
+            Route::get('/{id}', [\App\Http\Controllers\SpmController::class, 'showPenetapan'])->name('show');
+        });
+        
+        // PELAKSANAAN
+        Route::prefix('pelaksanaan')->name('pelaksanaan.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPelaksanaan'])->name('index');
+        });
+        
+        // EVALUASI
+        Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexEvaluasi'])->name('index');
+            Route::get('/{type}', [\App\Http\Controllers\SpmController::class, 'showEvaluasi'])->name('show');
+        });
+        
+        // PENGENDALIAN
+        Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPengendalian'])->name('index');
+        });
+        
+        // PENINGKATAN
+        Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPeningkatan'])->name('index');
+        });
+        
+        // AKREDITASI
+        Route::prefix('akreditasi')->name('akreditasi.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexAkreditasi'])->name('index');
+        });
+    });
+    
     // ==================== ADMIN ROUTES ====================
     Route::middleware(['admin'])->prefix('admin')->group(function () {
         
@@ -96,6 +132,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
+
+        
 
         // ==================== SETTINGS ROUTES ====================
         Route::prefix('settings')->group(function () {
