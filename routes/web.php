@@ -8,8 +8,9 @@ use App\Http\Controllers\SettingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DokumenPublikController;
-use App\Http\Controllers\BeritaController; // Tambah ini
-use App\Http\Controllers\JadwalController; // Tambah ini
+use App\Http\Controllers\BeritaController;
+use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\SpmController; // Pastikan sudah ada
 
 // ==================== DOKUMEN PUBLIK ROUTES (TANPA LOGIN) - HARUS PALING ATAS ====================
 Route::get('/dokumen-publik', [DokumenPublikController::class, 'index'])->name('dokumen-publik.index');
@@ -58,39 +59,74 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // ==================== PROTECTED ROUTES (SETELAH LOGIN) ====================
 Route::middleware(['auth'])->group(function () {
     
-        // ==================== SPMI ROUTES ====================
+    // ==================== SPMI ROUTES (CRUD LENGKAP) ====================
     Route::prefix('spmi')->name('spmi.')->group(function () {
         
-        // PENETAPAN
+        // ===== PENETAPAN SPMI - CRUD LENGKAP =====
         Route::prefix('penetapan')->name('penetapan.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPenetapan'])->name('index');
-            Route::get('/{id}', [\App\Http\Controllers\SpmController::class, 'showPenetapan'])->name('show');
+            // List all & show detail
+            Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
+            Route::get('/{id}', [SpmController::class, 'showPenetapan'])->name('show');
+            
+            // CRUD operations
+            Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
+            Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
+            Route::get('/{id}/edit', [SpmController::class, 'editPenetapan'])->name('edit');
+            Route::put('/{id}', [SpmController::class, 'updatePenetapan'])->name('update');
+            Route::delete('/{id}', [SpmController::class, 'destroyPenetapan'])->name('destroy');
+            
+            // Restore soft deleted
+            Route::post('/{id}/restore', [SpmController::class, 'restorePenetapan'])->name('restore');
+            
+            // Document management
+            Route::post('/{id}/upload', [SpmController::class, 'uploadDokumenPenetapan'])->name('upload');
+            Route::get('/{id}/download', [SpmController::class, 'downloadDokumenPenetapan'])->name('download');
+            Route::get('/{id}/preview', [SpmController::class, 'previewDokumenPenetapan'])->name('preview');
+            Route::delete('/{id}/dokumen', [SpmController::class, 'hapusDokumenPenetapan'])->name('dokumen.hapus');
+            
+            // Status management
+            Route::put('/{id}/status-dokumen', [SpmController::class, 'updateStatusDokumen'])->name('status.update');
+            
+            // Export & Report
+            Route::get('/export/excel', [SpmController::class, 'exportExcelPenetapan'])->name('export.excel');
+            Route::get('/export/pdf', [SpmController::class, 'exportPdfPenetapan'])->name('export.pdf');
         });
         
-        // PELAKSANAAN
+        // ===== PELAKSANAAN =====
         Route::prefix('pelaksanaan')->name('pelaksanaan.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPelaksanaan'])->name('index');
+            Route::get('/', [SpmController::class, 'indexPelaksanaan'])->name('index');
         });
         
-        // EVALUASI
+        // ===== EVALUASI =====
         Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexEvaluasi'])->name('index');
-            Route::get('/{type}', [\App\Http\Controllers\SpmController::class, 'showEvaluasi'])->name('show');
+            Route::get('/', [SpmController::class, 'indexEvaluasi'])->name('index');
+            Route::get('/{type}', [SpmController::class, 'showEvaluasi'])->name('show');
         });
         
-        // PENGENDALIAN
+        // ===== PENGENDALIAN =====
         Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPengendalian'])->name('index');
+            Route::get('/', [SpmController::class, 'indexPengendalian'])->name('index');
         });
         
-        // PENINGKATAN
+        // ===== PENINGKATAN =====
         Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexPeningkatan'])->name('index');
+            Route::get('/', [SpmController::class, 'indexPeningkatan'])->name('index');
         });
         
-        // AKREDITASI
+        // ===== AKREDITASI =====
         Route::prefix('akreditasi')->name('akreditasi.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\SpmController::class, 'indexAkreditasi'])->name('index');
+            Route::get('/', [SpmController::class, 'indexAkreditasi'])->name('index');
+        });
+        
+        // ===== SPMI DASHBOARD =====
+        Route::get('/dashboard', function () {
+            return view('dashboard.spmi.dashboard');
+        })->name('dashboard');
+        
+        // ===== API ENDPOINTS (untuk AJAX) =====
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/penetapan/data', [SpmController::class, 'getPenetapanData'])->name('penetapan.data');
+            Route::get('/penetapan/statistics', [SpmController::class, 'getPenetapanStatistics'])->name('penetapan.statistics');
         });
     });
     
@@ -133,8 +169,6 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
 
-        
-
         // ==================== SETTINGS ROUTES ====================
         Route::prefix('settings')->group(function () {
             
@@ -158,6 +192,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('/{id}', [SettingController::class, 'destroyUnitKerja'])->name('settings.unit-kerja.destroy');
             });
             
+            // SPMI Settings (Optional)
+            Route::prefix('spmi')->group(function () {
+                Route::get('/', [SettingController::class, 'indexSpm'])->name('settings.spmi.index');
+                Route::put('/update', [SettingController::class, 'updateSpm'])->name('settings.spmi.update');
+            });
+            
         }); 
         
         // Berita Management Routes
@@ -165,6 +205,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [BeritaController::class, 'index'])->name('admin.berita.index');
             Route::get('/create', [BeritaController::class, 'create'])->name('admin.berita.create');
             Route::post('/', [BeritaController::class, 'store'])->name('admin.berita.store');
+            Route::get('/{id}/edit', [BeritaController::class, 'edit'])->name('admin.berita.edit');
+            Route::put('/{id}', [BeritaController::class, 'update'])->name('admin.berita.update');
+            Route::delete('/{id}', [BeritaController::class, 'destroy'])->name('admin.berita.destroy');
         });
 
         // Jadwal Management Routes  
@@ -172,7 +215,21 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [JadwalController::class, 'index'])->name('admin.jadwal.index');
             Route::get('/create', [JadwalController::class, 'create'])->name('admin.jadwal.create');
             Route::post('/', [JadwalController::class, 'store'])->name('admin.jadwal.store');
+            Route::get('/{id}/edit', [JadwalController::class, 'edit'])->name('admin.jadwal.edit');
+            Route::put('/{id}', [JadwalController::class, 'update'])->name('admin.jadwal.update');
+            Route::delete('/{id}', [JadwalController::class, 'destroy'])->name('admin.jadwal.destroy');
+        });
+        
+        // Report & Analytics Routes
+        Route::prefix('reports')->group(function () {
+            Route::get('/spmi-penetapan', [SpmController::class, 'reportPenetapan'])->name('reports.spmi-penetapan');
+            Route::get('/spmi-summary', [SpmController::class, 'reportSummary'])->name('reports.spmi-summary');
         });
         
     });
+});
+
+// ==================== ERROR PAGES ====================
+Route::fallback(function () {
+    return response()->view('errors.404', [], 404);
 });
