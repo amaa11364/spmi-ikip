@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Dokumen;
 use App\Models\UnitKerja;
 use App\Models\Iku;
+use App\Models\PenetapanSPM;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth; 
@@ -12,6 +13,9 @@ use Illuminate\Support\Str;
 
 class UploadController extends Controller
 {
+    /**
+     * Show the form for creating a new resource.
+     */
     public function create()
     {
         $unitKerjas = UnitKerja::where('status', true)->get();
@@ -19,7 +23,57 @@ class UploadController extends Controller
         
         return view('upload-dokumen', compact('unitKerjas', 'ikus'));
     }
+    
+    /**
+     * Show the form for creating with context.
+     */
+    public function createWithContext(Request $request, $context = null, $id = null)
+    {
+        $unitKerjas = UnitKerja::where('status', true)->get();
+        $ikus = Iku::where('status', true)->get();
+        
+        $data = compact('unitKerjas', 'ikus');
+        
+        // Set konteks berdasarkan parameter
+        switch ($context) {
+            case 'spmi-penetapan':
+                if ($id) {
+                    $penetapan = PenetapanSPM::find($id);
+                    $data['context'] = 'spmi-penetapan';
+                    $data['penetapanId'] = $id;
+                    $data['komponenNama'] = $penetapan->nama_komponen ?? '';
+                    $data['tahun'] = $penetapan->tahun ?? date('Y');
+                    $data['tipePenetapan'] = $penetapan->tipe_penetapan ?? '';
+                }
+                break;
+                
+            case 'spmi-pelaksanaan':
+                $data['context'] = 'spmi-pelaksanaan';
+                break;
+                
+            case 'spmi-evaluasi':
+                $data['context'] = 'spmi-evaluasi';
+                break;
+                
+            case 'spmi-pengendalian':
+                $data['context'] = 'spmi-pengendalian';
+                break;
+                
+            case 'spmi-peningkatan':
+                $data['context'] = 'spmi-peningkatan';
+                break;
+                
+            default:
+                $data['context'] = 'general';
+                break;
+        }
+        
+        return view('upload-dokumen', $data);
+    }
 
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(Request $request)
     {
         try {
@@ -35,12 +89,42 @@ class UploadController extends Controller
             // Validasi conditional berdasarkan jenis upload
             if ($request->jenis_upload === 'file') {
                 $request->validate([
-                    'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx'
+                    'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png'
                 ]);
             } else {
                 $request->validate([
                     'link_dokumen' => 'required|max:500'
                 ]);
+            }
+
+            // Handle metadata berdasarkan konteks
+            $metadata = [];
+            $tahapan = null;
+            
+            // Konteks SPMI Penetapan
+            if ($request->has('penetapan_id')) {
+                $penetapan = PenetapanSPM::find($request->penetapan_id);
+                if ($penetapan) {
+                    $metadata = [
+                        'penetapan_id' => $penetapan->id,
+                        'nama_komponen' => $penetapan->nama_komponen,
+                        'tipe_penetapan' => $penetapan->tipe_penetapan,
+                        'tahun' => $penetapan->tahun,
+                        'kode_penetapan' => $penetapan->kode_penetapan,
+                    ];
+                    $tahapan = 'penetapan';
+                }
+            }
+            
+            // Konteks tahapan SPMI lainnya
+            if ($request->has('tahapan') && in_array($request->tahapan, ['pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
+                $tahapan = $request->tahapan;
+                $metadata['tahapan'] = $tahapan;
+            }
+            
+            // Tambahkan metadata lainnya jika ada
+            if ($request->has('metadata')) {
+                $metadata = array_merge($metadata, $request->metadata);
             }
 
             // Handle berdasarkan jenis upload
@@ -51,29 +135,58 @@ class UploadController extends Controller
                     $originalName = $file->getClientOriginalName();
                     $extension = $file->getClientOriginalExtension();
                     
+                    // Generate folder path berdasarkan konteks
+                    $folderPath = 'dokumen';
+                    if ($tahapan) {
+                        $folderPath .= '/' . $tahapan;
+                    }
+                    if (isset($metadata['tipe_penetapan']) && isset($metadata['tahun'])) {
+                        $folderPath .= '/' . $metadata['tipe_penetapan'] . '/' . $metadata['tahun'];
+                    }
+                    
                     // Generate unique filename
                     $fileName = time() . '_' . Str::random(10) . '.' . $extension;
                     
                     // Store file dengan path yang konsisten
-                    $filePath = $file->storeAs('dokumen', $fileName, 'public');
+                    $filePath = $file->storeAs($folderPath, $fileName, 'public');
                     
                     // Create dokumen record
-                    Dokumen::create([
+                    $dokumen = Dokumen::create([
                         'unit_kerja_id' => $request->unit_kerja_id,
                         'iku_id' => $request->iku_id,
-                        'jenis_dokumen' => 'File Upload',
+                        'jenis_dokumen' => $request->jenis_dokumen ?? 'File Upload',
                         'nama_dokumen' => $request->nama_dokumen,
+                        'keterangan' => $request->keterangan,
                         'file_path' => $filePath,
                         'file_name' => $originalName,
                         'file_size' => $file->getSize(),
                         'file_extension' => $extension,
                         'jenis_upload' => 'file',
                         'uploaded_by' => auth()->id(),
-                        'is_public' => $request->is_public ?? false
+                        'is_public' => $request->is_public ?? false,
+                        'tahapan' => $tahapan,
+                        'metadata' => !empty($metadata) ? json_encode($metadata) : null
                     ]);
 
-                    return redirect()->route('dokumen-saya')
-                        ->with('success', 'Dokumen berhasil diupload!');
+                    // Jika ada penetapan_id, update status dokumen penetapan
+                    if (isset($metadata['penetapan_id'])) {
+                        $penetapan = PenetapanSPM::find($metadata['penetapan_id']);
+                        if ($penetapan) {
+                            $penetapan->update([
+                                'status_dokumen' => 'valid',
+                                'tanggal_penetapan' => now(),
+                            ]);
+                        }
+                    }
+
+                    // Redirect berdasarkan konteks
+                    if (isset($metadata['penetapan_id'])) {
+                        return redirect()->route('spmi.penetapan.show', $metadata['penetapan_id'])
+                            ->with('success', 'Dokumen berhasil diupload ke repository penetapan!');
+                    } else {
+                        return redirect()->route('dokumen-saya')
+                            ->with('success', 'Dokumen berhasil diupload!');
+                    }
                 } else {
                     return back()->with('error', 'File tidak valid atau gagal diupload.');
                 }
@@ -85,22 +198,31 @@ class UploadController extends Controller
                 }
 
                 // Create dokumen record untuk link
-                Dokumen::create([
+                $dokumen = Dokumen::create([
                     'unit_kerja_id' => $request->unit_kerja_id,
                     'iku_id' => $request->iku_id,
                     'jenis_dokumen' => 'Link External',
                     'nama_dokumen' => $request->nama_dokumen,
+                    'keterangan' => $request->keterangan,
                     'file_path' => $link,
                     'file_name' => 'Link External',
                     'file_size' => 0,
                     'file_extension' => 'link',
                     'jenis_upload' => 'link',
                     'uploaded_by' => auth()->id(),
-                    'is_public' => $request->is_public ?? false
+                    'is_public' => $request->is_public ?? false,
+                    'tahapan' => $tahapan,
+                    'metadata' => !empty($metadata) ? json_encode($metadata) : null
                 ]);
 
-                return redirect()->route('dokumen-saya')
-                    ->with('success', 'Link dokumen berhasil disimpan!');
+                // Redirect berdasarkan konteks
+                if (isset($metadata['penetapan_id'])) {
+                    return redirect()->route('spmi.penetapan.show', $metadata['penetapan_id'])
+                        ->with('success', 'Link dokumen berhasil ditambahkan ke repository penetapan!');
+                } else {
+                    return redirect()->route('dokumen-saya')
+                        ->with('success', 'Link dokumen berhasil disimpan!');
+                }
             }
             
         } catch (\Exception $e) {
@@ -123,6 +245,10 @@ class UploadController extends Controller
 
         if ($request->has('iku_id') && $request->iku_id != '') {
             $query->where('iku_id', $request->iku_id);
+        }
+        
+        if ($request->has('tahapan') && $request->tahapan != '') {
+            $query->where('tahapan', $request->tahapan);
         }
 
         $dokumens = $query->orderBy('created_at', 'desc')->get();

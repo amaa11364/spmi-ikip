@@ -1,4 +1,3 @@
-{{-- resources/views/layouts/sidebar.blade.php --}}
 <ul class="nav flex-column">
     <li class="nav-item">
         <a class="nav-link {{ request()->is('dashboard') || request()->is('admin/dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">

@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             IkuSeeder::class,
             HeroContentSeeder::class,
             AdminUserSeeder::class,
+            PenetapanSPMSeeder::class,
         ]);
     }
 }

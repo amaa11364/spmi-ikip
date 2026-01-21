@@ -10,9 +10,9 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DokumenPublikController;
 use App\Http\Controllers\BeritaController;
 use App\Http\Controllers\JadwalController;
-use App\Http\Controllers\SpmController; // Pastikan sudah ada
+use App\Http\Controllers\SpmController;
 
-// ==================== DOKUMEN PUBLIK ROUTES (TANPA LOGIN) - HARUS PALING ATAS ====================
+// ==================== DOKUMEN PUBLIK ROUTES (TANPA LOGIN) ====================
 Route::get('/dokumen-publik', [DokumenPublikController::class, 'index'])->name('dokumen-publik.index');
 Route::get('/dokumen-publik/{id}', [DokumenPublikController::class, 'show'])->name('dokumen-publik.show');
 
@@ -56,6 +56,24 @@ Route::get('/masuk', [AuthController::class, 'showLoginForm'])->name('masuk');
 Route::post('/masuk', [AuthController::class, 'masuk'])->name('masuk.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// ==================== UPLOAD DOKUMEN DENGAN KONTEKS ====================
+Route::middleware(['auth'])->prefix('upload')->group(function () {
+    Route::get('/spmi/penetapan/{id}', [UploadController::class, 'createWithContext'])
+        ->name('upload.spmi-penetapan');
+    
+    Route::get('/spmi/pelaksanaan', [UploadController::class, 'createWithContext'])
+        ->name('upload.spmi-pelaksanaan');
+    
+    Route::get('/spmi/evaluasi', [UploadController::class, 'createWithContext'])
+        ->name('upload.spmi-evaluasi');
+    
+    Route::get('/spmi/pengendalian', [UploadController::class, 'createWithContext'])
+        ->name('upload.spmi-pengendalian');
+    
+    Route::get('/spmi/peningkatan', [UploadController::class, 'createWithContext'])
+        ->name('upload.spmi-peningkatan');
+});
+
 // ==================== PROTECTED ROUTES (SETELAH LOGIN) ====================
 Route::middleware(['auth'])->group(function () {
     
@@ -64,18 +82,22 @@ Route::middleware(['auth'])->group(function () {
         
         // ===== PENETAPAN SPMI - CRUD LENGKAP =====
         Route::prefix('penetapan')->name('penetapan.')->group(function () {
-            // List all & show detail
-            Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
-            Route::get('/{id}', [SpmController::class, 'showPenetapan'])->name('show');
-            
-            // CRUD operations
-            Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
-            Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
-            Route::get('/{id}/edit', [SpmController::class, 'editPenetapan'])->name('edit');
-            Route::put('/{id}', [SpmController::class, 'updatePenetapan'])->name('update');
-            Route::delete('/{id}', [SpmController::class, 'destroyPenetapan'])->name('destroy');
-            
-            // Restore soft deleted
+    // ===== AJAX ROUTES (LETAKKAN DI AWAL) =====
+    Route::get('/{id}/detail', [SpmController::class, 'getPenetapanData'])->name('ajax.detail');
+    Route::get('/{id}/edit-form', [SpmController::class, 'getEditForm'])->name('ajax.edit-form');
+    Route::put('/{id}/ajax-update', [SpmController::class, 'updateAjax'])->name('ajax.update');
+    Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenList'])->name('ajax.dokumen-list');
+    
+    // ===== MAIN CRUD ROUTES =====
+    Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
+    Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
+    Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
+    Route::get('/{id}', [SpmController::class, 'showPenetapan'])->name('show');
+    Route::get('/{id}/edit', [SpmController::class, 'editPenetapan'])->name('edit');
+    Route::put('/{id}', [SpmController::class, 'updatePenetapan'])->name('update');
+    Route::delete('/{id}', [SpmController::class, 'destroyPenetapan'])->name('destroy');
+    
+    // Restore soft deleted
             Route::post('/{id}/restore', [SpmController::class, 'restorePenetapan'])->name('restore');
             
             // Document management
@@ -90,6 +112,12 @@ Route::middleware(['auth'])->group(function () {
             // Export & Report
             Route::get('/export/excel', [SpmController::class, 'exportExcelPenetapan'])->name('export.excel');
             Route::get('/export/pdf', [SpmController::class, 'exportPdfPenetapan'])->name('export.pdf');
+            
+            // AJAX endpoints
+            Route::get('/{id}/detail', [SpmController::class, 'getPenetapanData'])->name('ajax.detail');
+            Route::get('/{id}/edit-form', [SpmController::class, 'getEditForm'])->name('ajax.edit-form');
+            Route::put('/{id}/ajax-update', [SpmController::class, 'updateAjax'])->name('ajax.update');
+            Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenList'])->name('ajax.dokumen-list');
         });
         
         // ===== PELAKSANAAN =====

@@ -10,47 +10,71 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class SpmController extends Controller
 {
     // ==================== PENETAPAN SPMI (CRUD LENGKAP) ====================
     
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource - Repository View
      */
     public function indexPenetapan(Request $request)
     {
         // Query dengan filter
-        $query = PenetapanSPM::query();
+        $query = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku']);
         
         // Filter pencarian
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('nama_komponen', 'like', '%' . $search . '%')
-                  ->orWhere('deskripsi', 'like', '%' . $search . '%');
+                  ->orWhere('deskripsi', 'like', '%' . $search . '%')
+                  ->orWhere('kode_penetapan', 'like', '%' . $search . '%');
             });
         }
         
         // Filter tipe
-        if ($request->has('tipe') && $request->tipe != '') {
+        if ($request->has('tipe') && $request->tipe != '' && $request->tipe != 'all') {
             $query->where('tipe_penetapan', $request->tipe);
         }
         
         // Filter status
-        if ($request->has('status') && $request->status != '') {
+        if ($request->has('status') && $request->status != '' && $request->status != 'all') {
             $query->where('status', $request->status);
         }
         
+        // Filter status dokumen
+        if ($request->has('status_dokumen') && $request->status_dokumen != '' && $request->status_dokumen != 'all') {
+            $query->where('status_dokumen', $request->status_dokumen);
+        }
+        
         // Filter tahun
-        if ($request->has('tahun') && $request->tahun != '') {
+        if ($request->has('tahun') && $request->tahun != '' && $request->tahun != 'all') {
             $query->where('tahun', $request->tahun);
         }
         
-        $penetapan = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Filter unit kerja
+        if ($request->has('unit_kerja_id') && $request->unit_kerja_id != '' && $request->unit_kerja_id != 'all') {
+            $query->where('unit_kerja_id', $request->unit_kerja_id);
+        }
+        
+        // Sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+        
+        $penetapan = $query->paginate(20);
         
         // Data untuk filter dropdown
         $tahunList = PenetapanSPM::select('tahun')->distinct()->orderBy('tahun', 'desc')->get();
+        $unitKerjaList = UnitKerja::where('status', true)->get();
+        
+        // Statistics
+        $totalPenetapan = PenetapanSPM::count();
+        $penetapanAktif = PenetapanSPM::where('status', 'aktif')->count();
+        $dokumenValid = PenetapanSPM::where('status_dokumen', 'valid')->count();
+        $dokumenBelumValid = PenetapanSPM::where('status_dokumen', 'belum_valid')->count();
         
         // Kelompokkan untuk tabs
         $kelompok = [
@@ -62,7 +86,16 @@ class SpmController extends Controller
             'peningkatan' => PenetapanSPM::where('tipe_penetapan', 'peningkatan')->orderBy('created_at', 'desc')->get(),
         ];
         
-        return view('dashboard.spmi.penetapan.index', compact('penetapan', 'kelompok', 'tahunList'));
+        return view('dashboard.spmi.penetapan.index', compact(
+            'penetapan', 
+            'kelompok', 
+            'tahunList', 
+            'unitKerjaList',
+            'totalPenetapan',
+            'penetapanAktif',
+            'dokumenValid',
+            'dokumenBelumValid'
+        ));
     }
 
     /**
@@ -70,7 +103,6 @@ class SpmController extends Controller
      */
     public function createPenetapan()
     {
-        // Data untuk dropdown
         $unitKerjas = UnitKerja::where('status', true)->get();
         $ikus = Iku::where('status', true)->get();
         
@@ -99,8 +131,7 @@ class SpmController extends Controller
             // Generate kode otomatis
             $tipe = $request->tipe_penetapan;
             $tahun = $request->tahun;
-            $count = PenetapanSPM::where('tipe_penetapan', $tipe)->where('tahun', $tahun)->count() + 1;
-            $kode = strtoupper(substr($tipe, 0, 3)) . '-' . str_pad($count, 3, '0', STR_PAD_LEFT) . '/' . $tahun;
+            $kode = PenetapanSPM::generateKode($tipe, $tahun);
             
             // Create penetapan
             $penetapan = PenetapanSPM::create([
@@ -116,15 +147,26 @@ class SpmController extends Controller
                 'iku_id' => $request->iku_id,
             ]);
             
-            // Jika ada file langsung diupload
-            if ($request->hasFile('file_dokumen')) {
-                return $this->uploadDokumen($request, $penetapan->id);
+            // Jika request AJAX, return JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data penetapan berhasil ditambahkan.',
+                    'data' => $penetapan
+                ]);
             }
             
             return redirect()->route('spmi.penetapan.index')
                 ->with('success', 'Data penetapan berhasil ditambahkan.');
                 
         } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan data: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())
                          ->withInput();
         }
@@ -138,7 +180,10 @@ class SpmController extends Controller
         try {
             $penetapan = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
             
-            return view('dashboard.spmi.penetapan.show', compact('penetapan'));
+            // Get all documents related to this penetapan
+            $allDokumen = $penetapan->getAllDokumen();
+            
+            return view('dashboard.spmi.penetapan.show', compact('penetapan', 'allDokumen'));
             
         } catch (\Exception $e) {
             return redirect()->route('spmi.penetapan.index')
@@ -199,15 +244,26 @@ class SpmController extends Controller
                 'tanggal_review' => now(),
             ]);
             
-            // Jika ada file baru
-            if ($request->hasFile('file_dokumen')) {
-                return $this->uploadDokumen($request, $penetapan->id);
+            // Jika request AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data penetapan berhasil diperbarui.',
+                    'data' => $penetapan
+                ]);
             }
             
             return redirect()->route('spmi.penetapan.index')
                 ->with('success', 'Data penetapan berhasil diperbarui.');
                 
         } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui data: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())
                          ->withInput();
         }
@@ -220,15 +276,6 @@ class SpmController extends Controller
     {
         try {
             $penetapan = PenetapanSPM::findOrFail($id);
-            
-            // Hapus file dokumen terkait jika ada
-            if ($penetapan->dokumen_id) {
-                $dokumen = Dokumen::find($penetapan->dokumen_id);
-                if ($dokumen && $dokumen->jenis_upload === 'file' && Storage::disk('public')->exists($dokumen->file_path)) {
-                    Storage::disk('public')->delete($dokumen->file_path);
-                    $dokumen->delete();
-                }
-            }
             
             // Soft delete penetapan
             $penetapan->delete();
@@ -268,8 +315,10 @@ class SpmController extends Controller
             
             // Validasi file
             $request->validate([
-                'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx',
+                'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png',
                 'keterangan' => 'nullable|string|max:500',
+                'jenis_dokumen' => 'nullable|string|max:100',
+                'nama_dokumen' => 'nullable|string|max:255',
             ]);
             
             // Upload file
@@ -278,22 +327,28 @@ class SpmController extends Controller
                 $originalName = $file->getClientOriginalName();
                 $extension = $file->getClientOriginalExtension();
                 
+                // Generate folder path based on tahun and tipe_penetapan
+                $folderPath = 'dokumen/spmi/penetapan/' . $penetapan->tipe_penetapan . '/' . $penetapan->tahun;
+                
                 // Generate unique filename
-                $fileName = 'penetapan_' . $penetapan->id . '_' . time() . '_' . Str::random(10) . '.' . $extension;
+                $fileName = Str::slug($penetapan->nama_komponen) . '_' . time() . '_' . Str::random(5) . '.' . $extension;
                 
                 // Store file
-                $filePath = $file->storeAs('dokumen/penetapan-spmi', $fileName, 'public');
+                $filePath = $file->storeAs($folderPath, $fileName, 'public');
                 
                 // Unit kerja default (LPM) jika tidak ada
                 $unitKerjaId = $penetapan->unit_kerja_id ?? 1; // ID LPM
                 $ikuId = $penetapan->iku_id ?? 1; // ID IKU SPMI
                 
-                // Create dokumen record
+                // Generate nama dokumen
+                $namaDokumen = $request->nama_dokumen ?? ($penetapan->nama_komponen . ' - ' . ($request->jenis_dokumen ?? 'Dokumen Penetapan'));
+                
+                // Create dokumen record dengan metadata yang benar
                 $dokumen = Dokumen::create([
                     'unit_kerja_id' => $unitKerjaId,
                     'iku_id' => $ikuId,
-                    'jenis_dokumen' => 'Penetapan SPMI',
-                    'nama_dokumen' => 'Penetapan SPMI - ' . $penetapan->nama_komponen . ' (' . $penetapan->tahun . ')',
+                    'jenis_dokumen' => $request->jenis_dokumen ?? 'Penetapan SPMI',
+                    'nama_dokumen' => $namaDokumen,
                     'keterangan' => $request->keterangan ?? 'Dokumen penetapan SPMI',
                     'file_path' => $filePath,
                     'file_name' => $originalName,
@@ -302,23 +357,34 @@ class SpmController extends Controller
                     'jenis_upload' => 'file',
                     'uploaded_by' => auth()->id(),
                     'is_public' => true,
-                    'tahapan' => 'penetapan',
+                    'tahapan' => 'penetapan', // Pastikan tahapan diset
                     'metadata' => json_encode([
-                        'penetapan_id' => $penetapan->id,
+                        'penetapan_id' => $penetapan->id, // Pastikan penetapan_id ada
                         'nama_komponen' => $penetapan->nama_komponen,
                         'tipe_penetapan' => $penetapan->tipe_penetapan,
                         'tahun' => $penetapan->tahun,
                         'penanggung_jawab' => $penetapan->penanggung_jawab,
+                        'kode_penetapan' => $penetapan->kode_penetapan,
+                        'upload_source' => $request->has('upload_source') ? $request->upload_source : 'inline_form'
                     ])
                 ]);
                 
-                // Update penetapan dengan dokumen_id
+                // Update penetapan status dokumen
                 $penetapan->update([
-                    'dokumen_id' => $dokumen->id,
                     'status_dokumen' => 'valid',
                     'tanggal_penetapan' => now(),
-                    'file_path' => $filePath,
+                    'dokumen_id' => $penetapan->dokumen_id ?? $dokumen->id, // Simpan referensi ke dokumen utama
                 ]);
+                
+                // Jika request AJAX
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Dokumen berhasil diupload.',
+                        'dokumen' => $dokumen,
+                        'penetapan' => $penetapan
+                    ]);
+                }
                 
                 return redirect()->route('spmi.penetapan.show', $penetapan->id)
                     ->with('success', 'Dokumen berhasil diupload dan terkait dengan penetapan.');
@@ -327,6 +393,13 @@ class SpmController extends Controller
             return back()->with('error', 'File tidak valid.');
             
         } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengupload dokumen: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage());
         }
     }
@@ -457,11 +530,184 @@ class SpmController extends Controller
                 'diperiksa_oleh' => auth()->user()->name ?? 'System',
             ]);
             
+            // Jika request AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Status dokumen berhasil diperbarui.',
+                    'status_dokumen' => $penetapan->status_dokumen
+                ]);
+            }
+            
             return redirect()->route('spmi.penetapan.show', $penetapan->id)
                 ->with('success', 'Status dokumen berhasil diperbarui.');
                 
         } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui status: ' . $e->getMessage()
+                ], 500);
+            }
+            
             return back()->with('error', 'Gagal memperbarui status: ' . $e->getMessage());
+        }
+    }
+
+    // ==================== AJAX METHODS ====================
+    
+    /**
+     * Get data for view modal
+     */
+    public function getPenetapanData($id)
+    {
+        try {
+            $penetapan = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
+            
+            // Get all documents related to this penetapan
+            $allDokumen = $penetapan->getAllDokumen();
+            
+            $html = view('dashboard.spmi.penetapan.partials.detail-modal', compact('penetapan', 'allDokumen'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Get form for edit modal
+     */
+    public function getEditForm($id)
+    {
+        try {
+            $penetapan = PenetapanSPM::findOrFail($id);
+            $unitKerjas = UnitKerja::where('status', true)->get();
+            $ikus = Iku::where('status', true)->get();
+            
+            $html = view('dashboard.spmi.penetapan.partials.edit-form', compact('penetapan', 'unitKerjas', 'ikus'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Update via AJAX
+     */
+    public function updateAjax(Request $request, $id)
+    {
+        try {
+            $penetapan = PenetapanSPM::findOrFail($id);
+            
+            $request->validate([
+                'nama_komponen' => 'required|string|max:255',
+                'tipe_penetapan' => 'required|in:pengelolaan,organisasi,pelaksanaan,evaluasi,pengendalian,peningkatan',
+                'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
+                'status' => 'required|in:aktif,nonaktif,revisi',
+                'deskripsi' => 'nullable|string',
+                'penanggung_jawab' => 'nullable|string|max:255',
+                'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
+                'iku_id' => 'nullable|exists:ikus,id',
+            ]);
+            
+            $penetapan->update($request->all());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil diperbarui',
+                'data' => $penetapan
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get dokumen list for penetapan
+     */
+    public function getDokumenList($id)
+    {
+        try {
+            $penetapan = PenetapanSPM::findOrFail($id);
+            $allDokumen = $penetapan->getAllDokumen();
+            
+            $html = view('dashboard.spmi.penetapan.partials.dokumen-list', compact('allDokumen'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'count' => $allDokumen->count()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data dokumen: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics for dashboard
+     */
+    public function getPenetapanStatistics()
+    {
+        try {
+            $total = PenetapanSPM::count();
+            $aktif = PenetapanSPM::where('status', 'aktif')->count();
+            $valid = PenetapanSPM::where('status_dokumen', 'valid')->count();
+            $belumValid = PenetapanSPM::where('status_dokumen', 'belum_valid')->count();
+            
+            // Group by tipe_penetapan
+            $byTipe = PenetapanSPM::select('tipe_penetapan', \DB::raw('count(*) as count'))
+                ->groupBy('tipe_penetapan')
+                ->get()
+                ->pluck('count', 'tipe_penetapan');
+            
+            // Group by tahun
+            $byTahun = PenetapanSPM::select('tahun', \DB::raw('count(*) as count'))
+                ->groupBy('tahun')
+                ->orderBy('tahun', 'desc')
+                ->take(5)
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'statistics' => [
+                    'total' => $total,
+                    'aktif' => $aktif,
+                    'valid' => $valid,
+                    'belum_valid' => $belumValid,
+                    'by_tipe' => $byTipe,
+                    'by_tahun' => $byTahun
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil statistik: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -727,5 +973,38 @@ class SpmController extends Controller
         ];
         
         return view('dashboard.spmi.akreditasi.index', compact('akreditasi', 'instruments'));
+    }
+    
+    // ==================== REPORT METHODS ====================
+    
+    public function reportPenetapan()
+    {
+        $penetapan = PenetapanSPM::with(['unitKerja', 'iku', 'dokumen'])->get();
+        
+        return view('dashboard.spmi.reports.penetapan', compact('penetapan'));
+    }
+    
+    public function reportSummary()
+    {
+        $statistics = [
+            'total' => PenetapanSPM::count(),
+            'aktif' => PenetapanSPM::where('status', 'aktif')->count(),
+            'nonaktif' => PenetapanSPM::where('status', 'nonaktif')->count(),
+            'revisi' => PenetapanSPM::where('status', 'revisi')->count(),
+            'valid' => PenetapanSPM::where('status_dokumen', 'valid')->count(),
+            'belum_valid' => PenetapanSPM::where('status_dokumen', 'belum_valid')->count(),
+            'dalam_review' => PenetapanSPM::where('status_dokumen', 'dalam_review')->count(),
+        ];
+        
+        $byTipe = PenetapanSPM::select('tipe_penetapan', \DB::raw('count(*) as count'))
+            ->groupBy('tipe_penetapan')
+            ->get();
+            
+        $byTahun = PenetapanSPM::select('tahun', \DB::raw('count(*) as count'))
+            ->groupBy('tahun')
+            ->orderBy('tahun', 'desc')
+            ->get();
+        
+        return view('dashboard.spmi.reports.summary', compact('statistics', 'byTipe', 'byTahun'));
     }
 }

@@ -354,7 +354,7 @@
                             <img src="{{ asset('images/photos/25600_Logo-IKIP-warna.png') }}" 
                                  alt="IKIP Logo" 
                                  class="logo-img" 
-                                 style="max-width: 70px; height: auto; filter: brightness(0) invert(1);">
+                                 style="max-width: 70px; height: auto;">
                         </div>
                         <h4 class="fw-bold mb-1">SPMI</h4>
                         <small class="opacity-75">SPMI Digital</small>
