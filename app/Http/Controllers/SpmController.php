@@ -6,6 +6,7 @@ use App\Models\PenetapanSPM;
 use App\Models\Dokumen;
 use App\Models\UnitKerja;
 use App\Models\Iku;
+use App\Models\PelaksanaanSPMI;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -554,7 +555,7 @@ class SpmController extends Controller
         }
     }
 
-    // ==================== AJAX METHODS ====================
+    // ==================== AJAX METHODS PENETAPAN ====================
     
     /**
      * Get data for view modal
@@ -711,6 +712,669 @@ class SpmController extends Controller
         }
     }
 
+    // ==================== PELAKSANAAN SPMI (CRUD LENGKAP) ====================
+    
+    /**
+     * Display a listing of pelaksanaan.
+     */
+    public function indexPelaksanaan(Request $request)
+    {
+        // Query dengan filter
+        $query = PelaksanaanSPMI::with(['dokumen', 'unitKerja', 'iku']);
+        
+        // Filter pencarian
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_kegiatan', 'like', '%' . $search . '%')
+                  ->orWhere('deskripsi', 'like', '%' . $search . '%')
+                  ->orWhere('kode_pelaksanaan', 'like', '%' . $search . '%')
+                  ->orWhere('penanggung_jawab', 'like', '%' . $search . '%');
+            });
+        }
+        
+        // Filter status
+        if ($request->has('status') && $request->status != '' && $request->status != 'all') {
+            $query->where('status', $request->status);
+        }
+        
+        // Filter status dokumen
+        if ($request->has('status_dokumen') && $request->status_dokumen != '' && $request->status_dokumen != 'all') {
+            $query->where('status_dokumen', $request->status_dokumen);
+        }
+        
+        // Filter tahun
+        if ($request->has('tahun') && $request->tahun != '' && $request->tahun != 'all') {
+            $query->where('tahun', $request->tahun);
+        }
+        
+        // Filter unit kerja
+        if ($request->has('unit_kerja_id') && $request->unit_kerja_id != '' && $request->unit_kerja_id != 'all') {
+            $query->where('unit_kerja_id', $request->unit_kerja_id);
+        }
+        
+        // Sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+        
+        $pelaksanaan = $query->paginate(20);
+        
+        // Data untuk filter dropdown
+        $tahunList = PelaksanaanSPMI::select('tahun')->distinct()->orderBy('tahun', 'desc')->get();
+        $unitKerjaList = UnitKerja::where('status', true)->get();
+        
+        // Statistics
+        $totalPelaksanaan = PelaksanaanSPMI::count();
+        $pelaksanaanAktif = PelaksanaanSPMI::where('status', 'aktif')->count();
+        $dokumenValid = PelaksanaanSPMI::where('status_dokumen', 'valid')->count();
+        $dokumenBelumValid = PelaksanaanSPMI::where('status_dokumen', 'belum_valid')->count();
+        
+        return view('dashboard.spmi.pelaksanaan.index', compact(
+            'pelaksanaan', 
+            'tahunList', 
+            'unitKerjaList',
+            'totalPelaksanaan',
+            'pelaksanaanAktif',
+            'dokumenValid',
+            'dokumenBelumValid'
+        ));
+    }
+
+    /**
+     * Show the form for creating a new pelaksanaan.
+     */
+    public function createPelaksanaan()
+    {
+        $unitKerjas = UnitKerja::where('status', true)->get();
+        $ikus = Iku::where('status', true)->get();
+        
+        return view('dashboard.spmi.pelaksanaan.create', compact('unitKerjas', 'ikus'));
+    }
+
+    /**
+     * Store a newly created pelaksanaan in storage.
+     */
+    public function storePelaksanaan(Request $request)
+    {
+        try {
+            // Validasi
+            $request->validate([
+                'nama_kegiatan' => 'required|string|max:255',
+                'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
+                'status' => 'required|in:aktif,nonaktif,revisi',
+                'status_dokumen' => 'in:valid,belum_valid,dalam_review',
+                'deskripsi' => 'nullable|string',
+                'penanggung_jawab' => 'nullable|string|max:255',
+                'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
+                'iku_id' => 'nullable|exists:ikus,id',
+            ]);
+            
+            // Create pelaksanaan (kode akan di-generate otomatis oleh model)
+            $pelaksanaan = PelaksanaanSPMI::create([
+                'nama_kegiatan' => $request->nama_kegiatan,
+                'tahun' => $request->tahun,
+                'status' => $request->status,
+                'status_dokumen' => $request->status_dokumen ?? 'belum_valid',
+                'deskripsi' => $request->deskripsi,
+                'penanggung_jawab' => $request->penanggung_jawab,
+                'unit_kerja_id' => $request->unit_kerja_id,
+                'iku_id' => $request->iku_id,
+            ]);
+            
+            // Jika request AJAX, return JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data pelaksanaan berhasil ditambahkan.',
+                    'data' => $pelaksanaan
+                ]);
+            }
+            
+            return redirect()->route('spmi.pelaksanaan.index')
+                ->with('success', 'Data pelaksanaan berhasil ditambahkan.');
+            
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan data: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())
+                     ->withInput();
+        }
+    }
+
+    /**
+     * Display the specified pelaksanaan.
+     */
+    public function showPelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
+            
+            // Get all documents related to this pelaksanaan
+            $allDokumen = $pelaksanaan->getAllDokumen();
+            
+            return view('dashboard.spmi.pelaksanaan.show', compact('pelaksanaan', 'allDokumen'));
+            
+        } catch (\Exception $e) {
+            return redirect()->route('spmi.pelaksanaan.index')
+                ->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the form for editing the specified pelaksanaan.
+     */
+    public function editPelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            $unitKerjas = UnitKerja::where('status', true)->get();
+            $ikus = Iku::where('status', true)->get();
+            
+            return view('dashboard.spmi.pelaksanaan.edit', compact('pelaksanaan', 'unitKerjas', 'ikus'));
+            
+        } catch (\Exception $e) {
+            return redirect()->route('spmi.pelaksanaan.index')
+                ->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update the specified pelaksanaan in storage.
+     */
+    public function updatePelaksanaan(Request $request, $id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            
+            // Validasi
+            $request->validate([
+                'nama_kegiatan' => 'required|string|max:255',
+                'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
+                'status' => 'required|in:aktif,nonaktif,revisi',
+                'status_dokumen' => 'in:valid,belum_valid,dalam_review',
+                'deskripsi' => 'nullable|string',
+                'penanggung_jawab' => 'nullable|string|max:255',
+                'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
+                'iku_id' => 'nullable|exists:ikus,id',
+            ]);
+            
+            // Update data
+            $pelaksanaan->update([
+                'nama_kegiatan' => $request->nama_kegiatan,
+                'tahun' => $request->tahun,
+                'status' => $request->status,
+                'status_dokumen' => $request->status_dokumen ?? $pelaksanaan->status_dokumen,
+                'deskripsi' => $request->deskripsi,
+                'penanggung_jawab' => $request->penanggung_jawab,
+                'unit_kerja_id' => $request->unit_kerja_id,
+                'iku_id' => $request->iku_id,
+                'tanggal_review' => now(),
+            ]);
+            
+            // Jika request AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Data pelaksanaan berhasil diperbarui.',
+                    'data' => $pelaksanaan
+                ]);
+            }
+            
+            return redirect()->route('spmi.pelaksanaan.index')
+                ->with('success', 'Data pelaksanaan berhasil diperbarui.');
+            
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui data: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())
+                     ->withInput();
+        }
+    }
+
+    /**
+     * Remove the specified pelaksanaan from storage.
+     */
+    public function destroyPelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            
+            // Soft delete
+            $pelaksanaan->delete();
+            
+            return redirect()->route('spmi.pelaksanaan.index')
+                ->with('success', 'Data pelaksanaan berhasil dihapus.');
+            
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Restore soft deleted pelaksanaan.
+     */
+    public function restorePelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::withTrashed()->findOrFail($id);
+            $pelaksanaan->restore();
+            
+            return redirect()->route('spmi.pelaksanaan.index')
+                ->with('success', 'Data pelaksanaan berhasil dipulihkan.');
+            
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal memulihkan data: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Upload dokumen untuk pelaksanaan.
+     */
+    public function uploadDokumenPelaksanaan(Request $request, $id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            
+            // Validasi file
+            $request->validate([
+                'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png',
+                'keterangan' => 'nullable|string|max:500',
+                'jenis_dokumen' => 'nullable|string|max:100',
+                'nama_dokumen' => 'nullable|string|max:255',
+            ]);
+            
+            // Upload file
+            if ($request->hasFile('file_dokumen') && $request->file('file_dokumen')->isValid()) {
+                $file = $request->file('file_dokumen');
+                $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
+                
+                // Generate folder path based on tahun
+                $folderPath = 'dokumen/spmi/pelaksanaan/' . $pelaksanaan->tahun;
+                
+                // Generate unique filename
+                $fileName = Str::slug($pelaksanaan->nama_kegiatan) . '_' . time() . '_' . Str::random(5) . '.' . $extension;
+                
+                // Store file
+                $filePath = $file->storeAs($folderPath, $fileName, 'public');
+                
+                // Unit kerja default (LPM) jika tidak ada
+                $unitKerjaId = $pelaksanaan->unit_kerja_id ?? 1; // ID LPM
+                $ikuId = $pelaksanaan->iku_id ?? 1; // ID IKU SPMI
+                
+                // Generate nama dokumen
+                $namaDokumen = $request->nama_dokumen ?? ($pelaksanaan->nama_kegiatan . ' - ' . ($request->jenis_dokumen ?? 'Dokumen Pelaksanaan'));
+                
+                // Create dokumen record dengan metadata yang benar
+                $dokumen = Dokumen::create([
+                    'unit_kerja_id' => $unitKerjaId,
+                    'iku_id' => $ikuId,
+                    'jenis_dokumen' => $request->jenis_dokumen ?? 'Pelaksanaan SPMI',
+                    'nama_dokumen' => $namaDokumen,
+                    'keterangan' => $request->keterangan ?? 'Dokumen pelaksanaan SPMI',
+                    'file_path' => $filePath,
+                    'file_name' => $originalName,
+                    'file_size' => $file->getSize(),
+                    'file_extension' => $extension,
+                    'jenis_upload' => 'file',
+                    'uploaded_by' => auth()->id(),
+                    'is_public' => true,
+                    'tahapan' => 'pelaksanaan',
+                    'metadata' => json_encode([
+                        'pelaksanaan_id' => $pelaksanaan->id,
+                        'nama_kegiatan' => $pelaksanaan->nama_kegiatan,
+                        'kode_pelaksanaan' => $pelaksanaan->kode_pelaksanaan,
+                        'tahun' => $pelaksanaan->tahun,
+                        'penanggung_jawab' => $pelaksanaan->penanggung_jawab,
+                        'upload_source' => $request->has('upload_source') ? $request->upload_source : 'inline_form'
+                    ])
+                ]);
+                
+                // Update pelaksanaan status dokumen
+                $pelaksanaan->update([
+                    'status_dokumen' => 'valid',
+                    'tanggal_pelaksanaan' => now(),
+                    'dokumen_id' => $pelaksanaan->dokumen_id ?? $dokumen->id,
+                ]);
+                
+                // Jika request AJAX
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Dokumen berhasil diupload.',
+                        'dokumen' => $dokumen,
+                        'pelaksanaan' => $pelaksanaan
+                    ]);
+                }
+                
+                return redirect()->route('spmi.pelaksanaan.show', $pelaksanaan->id)
+                    ->with('success', 'Dokumen berhasil diupload dan terkait dengan pelaksanaan.');
+            }
+            
+            return back()->with('error', 'File tidak valid.');
+            
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengupload dokumen: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download dokumen pelaksanaan.
+     */
+    public function downloadDokumenPelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::with('dokumen')->findOrFail($id);
+            
+            if (!$pelaksanaan->dokumen) {
+                return back()->with('error', 'Dokumen tidak ditemukan.');
+            }
+            
+            $dokumen = $pelaksanaan->dokumen;
+            
+            // Jika berupa link
+            if ($dokumen->jenis_upload === 'link') {
+                return redirect()->away($dokumen->file_path);
+            }
+            
+            // Jika file
+            if (!Storage::disk('public')->exists($dokumen->file_path)) {
+                return back()->with('error', 'File tidak ditemukan.');
+            }
+            
+            return Storage::disk('public')->download($dokumen->file_path, $dokumen->file_name);
+            
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mendownload dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Preview dokumen pelaksanaan.
+     */
+    public function previewDokumenPelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::with('dokumen')->findOrFail($id);
+            
+            if (!$pelaksanaan->dokumen) {
+                return back()->with('error', 'Dokumen tidak ditemukan.');
+            }
+            
+            $dokumen = $pelaksanaan->dokumen;
+            
+            // Jika link
+            if ($dokumen->jenis_upload === 'link') {
+                return redirect()->away($dokumen->file_path);
+            }
+            
+            // Jika file
+            if (!Storage::disk('public')->exists($dokumen->file_path)) {
+                return back()->with('error', 'File tidak ditemukan.');
+            }
+            
+            // Hanya preview PDF
+            if ($dokumen->file_extension !== 'pdf') {
+                return back()->with('info', 'Preview hanya tersedia untuk file PDF.');
+            }
+            
+            $filePath = Storage::disk('public')->path($dokumen->file_path);
+            
+            return response()->file($filePath);
+            
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal mempreview dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Hapus dokumen dari pelaksanaan.
+     */
+    public function hapusDokumenPelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::with('dokumen')->findOrFail($id);
+            
+            if (!$pelaksanaan->dokumen) {
+                return back()->with('error', 'Dokumen tidak ditemukan.');
+            }
+            
+            $dokumen = $pelaksanaan->dokumen;
+            
+            // Hapus file fisik jika ada
+            if ($dokumen->jenis_upload === 'file' && Storage::disk('public')->exists($dokumen->file_path)) {
+                Storage::disk('public')->delete($dokumen->file_path);
+            }
+            
+            // Hapus dari database
+            $dokumen->delete();
+            
+            // Update pelaksanaan
+            $pelaksanaan->update([
+                'dokumen_id' => null,
+                'status_dokumen' => 'belum_valid',
+                'file_path' => null,
+            ]);
+            
+            return redirect()->route('spmi.pelaksanaan.show', $pelaksanaan->id)
+                ->with('success', 'Dokumen berhasil dihapus.');
+                
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update status dokumen pelaksanaan.
+     */
+    public function updateStatusDokumenPelaksanaan(Request $request, $id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            
+            $request->validate([
+                'status_dokumen' => 'required|in:valid,belum_valid,dalam_review',
+                'catatan' => 'nullable|string|max:500',
+            ]);
+            
+            $pelaksanaan->update([
+                'status_dokumen' => $request->status_dokumen,
+                'catatan_verifikasi' => $request->catatan,
+                'tanggal_review' => now(),
+                'diperiksa_oleh' => auth()->user()->name ?? 'System',
+            ]);
+            
+            // Jika request AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Status dokumen berhasil diperbarui.',
+                    'status_dokumen' => $pelaksanaan->status_dokumen
+                ]);
+            }
+            
+            return redirect()->route('spmi.pelaksanaan.show', $pelaksanaan->id)
+                ->with('success', 'Status dokumen berhasil diperbarui.');
+                
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui status: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->with('error', 'Gagal memperbarui status: ' . $e->getMessage());
+        }
+    }
+
+    // ==================== AJAX METHODS PELAKSANAAN ====================
+    
+    /**
+     * Get data for view modal
+     */
+    public function getPelaksanaanData($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
+            
+            // Get all documents related to this pelaksanaan
+            $allDokumen = $pelaksanaan->getAllDokumen();
+            
+            $html = view('dashboard.spmi.pelaksanaan.partials.detail-modal', compact('pelaksanaan', 'allDokumen'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Get form for edit modal
+     */
+    public function getPelaksanaanEditForm($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            $unitKerjas = UnitKerja::where('status', true)->get();
+            $ikus = Iku::where('status', true)->get();
+            
+            $html = view('dashboard.spmi.pelaksanaan.partials.edit-form', compact('pelaksanaan', 'unitKerjas', 'ikus'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Update via AJAX
+     */
+    public function updatePelaksanaanAjax(Request $request, $id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            
+            $request->validate([
+                'nama_kegiatan' => 'required|string|max:255',
+                'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
+                'status' => 'required|in:aktif,nonaktif,revisi',
+                'deskripsi' => 'nullable|string',
+                'penanggung_jawab' => 'nullable|string|max:255',
+                'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
+                'iku_id' => 'nullable|exists:ikus,id',
+            ]);
+            
+            $pelaksanaan->update($request->all());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil diperbarui',
+                'data' => $pelaksanaan
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get dokumen list for pelaksanaan
+     */
+    public function getDokumenListPelaksanaan($id)
+    {
+        try {
+            $pelaksanaan = PelaksanaanSPMI::findOrFail($id);
+            $allDokumen = $pelaksanaan->getAllDokumen();
+            
+            $html = view('dashboard.spmi.pelaksanaan.partials.dokumen-list', compact('allDokumen'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'count' => $allDokumen->count()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data dokumen: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics for pelaksanaan dashboard
+     */
+    public function getPelaksanaanStatistics()
+    {
+        try {
+            $total = PelaksanaanSPMI::count();
+            $aktif = PelaksanaanSPMI::where('status', 'aktif')->count();
+            $valid = PelaksanaanSPMI::where('status_dokumen', 'valid')->count();
+            $belumValid = PelaksanaanSPMI::where('status_dokumen', 'belum_valid')->count();
+            
+            // Group by tahun
+            $byTahun = PelaksanaanSPMI::select('tahun', \DB::raw('count(*) as count'))
+                ->groupBy('tahun')
+                ->orderBy('tahun', 'desc')
+                ->take(5)
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'statistics' => [
+                    'total' => $total,
+                    'aktif' => $aktif,
+                    'valid' => $valid,
+                    'belum_valid' => $belumValid,
+                    'by_tahun' => $byTahun
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil statistik: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     // ==================== METODE BANTUAN PRIVAT ====================
     
     /**
@@ -726,607 +1390,44 @@ class SpmController extends Controller
         return $this->uploadDokumenPenetapan($uploadRequest, $penetapanId);
     }
 
-   // ==================== PELAKSANAAN SPMI (CRUD LENGKAP) ====================
-
-        public function indexPelaksanaan(Request $request)
-    {   
-    // Query dengan filter - gunakan tipe_penetapan = 'pelaksanaan'
-    $query = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku'])
-                        ->where('tipe_penetapan', 'pelaksanaan');
+    // ==================== EXPORT METHODS ====================
     
-    // Filter pencarian
-    if ($request->has('search') && $request->search != '') {
-        $search = $request->search;
-        $query->where(function($q) use ($search) {
-            $q->where('nama_komponen', 'like', '%' . $search . '%')
-              ->orWhere('deskripsi', 'like', '%' . $search . '%')
-              ->orWhere('kode_penetapan', 'like', '%' . $search . '%')
-              ->orWhere('penanggung_jawab', 'like', '%' . $search . '%');
-        });
+    /**
+     * Export excel untuk penetapan
+     */
+    public function exportExcelPenetapan()
+    {
+        // Implementasi export excel
+        // ...
     }
-    
-    // Filter status
-    if ($request->has('status') && $request->status != '' && $request->status != 'all') {
-        $query->where('status', $request->status);
-    }
-    
-    // Filter status dokumen
-    if ($request->has('status_dokumen') && $request->status_dokumen != '' && $request->status_dokumen != 'all') {
-        $query->where('status_dokumen', $request->status_dokumen);
-    }
-    
-    // Filter tahun
-    if ($request->has('tahun') && $request->tahun != '' && $request->tahun != 'all') {
-        $query->where('tahun', $request->tahun);
-    }
-    
-    // Filter unit kerja
-    if ($request->has('unit_kerja_id') && $request->unit_kerja_id != '' && $request->unit_kerja_id != 'all') {
-        $query->where('unit_kerja_id', $request->unit_kerja_id);
-    }
-    
-    // Sorting
-    $sortBy = $request->get('sort_by', 'created_at');
-    $sortOrder = $request->get('sort_order', 'desc');
-    $query->orderBy($sortBy, $sortOrder);
-    
-    $pelaksanaan = $query->paginate(20);
-    
-    // Data untuk filter dropdown
-    $tahunList = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                            ->select('tahun')
-                            ->distinct()
-                            ->orderBy('tahun', 'desc')
-                            ->get();
-    $unitKerjaList = UnitKerja::where('status', true)->get();
-    
-    // Statistics khusus pelaksanaan
-    $totalPelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')->count();
-    $pelaksanaanAktif = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                    ->where('status', 'aktif')->count();
-    $dokumenValid = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                ->where('status_dokumen', 'valid')->count();
-    $dokumenBelumValid = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                     ->where('status_dokumen', 'belum_valid')->count();
-    
-    return view('dashboard.spmi.pelaksanaan.index', compact(
-        'pelaksanaan', 
-        'tahunList', 
-        'unitKerjaList',
-        'totalPelaksanaan',
-        'pelaksanaanAktif',
-        'dokumenValid',
-        'dokumenBelumValid'
-    ));
-}
 
-/**
- * Show the form for creating a new pelaksanaan.
- */
-public function createPelaksanaan()
-{
-    $unitKerjas = UnitKerja::where('status', true)->get();
-    $ikus = Iku::where('status', true)->get();
-    
-    return view('dashboard.spmi.pelaksanaan.create', compact('unitKerjas', 'ikus'));
-}
-
-/**
- * Store a newly created pelaksanaan in storage.
- */
-public function storePelaksanaan(Request $request)
-{
-    try {
-        // Validasi
-        $request->validate([
-            'nama_komponen' => 'required|string|max:255',
-            'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
-            'status' => 'required|in:aktif,nonaktif,revisi',
-            'status_dokumen' => 'in:valid,belum_valid,dalam_review',
-            'deskripsi' => 'nullable|string',
-            'penanggung_jawab' => 'nullable|string|max:255',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'iku_id' => 'nullable|exists:ikus,id',
-        ]);
-        
-        // Generate kode otomatis khusus pelaksanaan
-        $tahun = $request->tahun;
-        $kode = PenetapanSPM::generateKode('pelaksanaan', $tahun);
-        
-        // Create pelaksanaan dengan tipe_penetapan = 'pelaksanaan'
-        $pelaksanaan = PenetapanSPM::create([
-            'nama_komponen' => $request->nama_komponen,
-            'tipe_penetapan' => 'pelaksanaan', // FIXED
-            'tahun' => $tahun,
-            'status' => $request->status,
-            'status_dokumen' => $request->status_dokumen ?? 'belum_valid',
-            'deskripsi' => $request->deskripsi,
-            'penanggung_jawab' => $request->penanggung_jawab,
-            'kode_penetapan' => $kode,
-            'unit_kerja_id' => $request->unit_kerja_id,
-            'iku_id' => $request->iku_id,
-        ]);
-        
-        // Jika request AJAX, return JSON
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data pelaksanaan berhasil ditambahkan.',
-                'data' => $pelaksanaan
-            ]);
-        }
-        
-        return redirect()->route('spmi.pelaksanaan.index')
-            ->with('success', 'Data pelaksanaan berhasil ditambahkan.');
-            
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan data: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())
-                     ->withInput();
+    /**
+     * Export pdf untuk penetapan
+     */
+    public function exportPdfPenetapan()
+    {
+        // Implementasi export pdf
+        // ...
     }
-}
 
-/**
- * Display the specified pelaksanaan.
- */
-public function showPelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku'])
-                                  ->where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        
-        // Get all documents related to this pelaksanaan
-        $allDokumen = $pelaksanaan->getAllDokumen();
-        
-        return view('dashboard.spmi.pelaksanaan.show', compact('pelaksanaan', 'allDokumen'));
-        
-    } catch (\Exception $e) {
-        return redirect()->route('spmi.pelaksanaan.index')
-            ->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
+    /**
+     * Export excel untuk pelaksanaan
+     */
+    public function exportExcelPelaksanaan()
+    {
+        // Implementasi export excel
+        // ...
     }
-}
 
-/**
- * Show the form for editing the specified pelaksanaan.
- */
-public function editPelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        $unitKerjas = UnitKerja::where('status', true)->get();
-        $ikus = Iku::where('status', true)->get();
-        
-        return view('dashboard.spmi.pelaksanaan.edit', compact('pelaksanaan', 'unitKerjas', 'ikus'));
-        
-    } catch (\Exception $e) {
-        return redirect()->route('spmi.pelaksanaan.index')
-            ->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
+    /**
+     * Export pdf untuk pelaksanaan
+     */
+    public function exportPdfPelaksanaan()
+    {
+        // Implementasi export pdf
+        // ...
     }
-}
 
-/**
- * Update the specified pelaksanaan in storage.
- */
-public function updatePelaksanaan(Request $request, $id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        
-        // Validasi
-        $request->validate([
-            'nama_komponen' => 'required|string|max:255',
-            'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
-            'status' => 'required|in:aktif,nonaktif,revisi',
-            'status_dokumen' => 'in:valid,belum_valid,dalam_review',
-            'deskripsi' => 'nullable|string',
-            'penanggung_jawab' => 'nullable|string|max:255',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'iku_id' => 'nullable|exists:ikus,id',
-        ]);
-        
-        // Update data
-        $pelaksanaan->update([
-            'nama_komponen' => $request->nama_komponen,
-            'tahun' => $request->tahun,
-            'status' => $request->status,
-            'status_dokumen' => $request->status_dokumen ?? $pelaksanaan->status_dokumen,
-            'deskripsi' => $request->deskripsi,
-            'penanggung_jawab' => $request->penanggung_jawab,
-            'unit_kerja_id' => $request->unit_kerja_id,
-            'iku_id' => $request->iku_id,
-            'tanggal_review' => now(),
-        ]);
-        
-        // Jika request AJAX
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data pelaksanaan berhasil diperbarui.',
-                'data' => $pelaksanaan
-            ]);
-        }
-        
-        return redirect()->route('spmi.pelaksanaan.index')
-            ->with('success', 'Data pelaksanaan berhasil diperbarui.');
-            
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui data: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())
-                     ->withInput();
-    }
-}
-
-/**
- * Remove the specified pelaksanaan from storage.
- */
-public function destroyPelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        
-        // Soft delete
-        $pelaksanaan->delete();
-        
-        return redirect()->route('spmi.pelaksanaan.index')
-            ->with('success', 'Data pelaksanaan berhasil dihapus.');
-            
-    } catch (\Exception $e) {
-        return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
-    }
-}
-
-/**
- * Restore soft deleted pelaksanaan.
- */
-public function restorePelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::withTrashed()
-                                  ->where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        $pelaksanaan->restore();
-        
-        return redirect()->route('spmi.pelaksanaan.index')
-            ->with('success', 'Data pelaksanaan berhasil dipulihkan.');
-            
-    } catch (\Exception $e) {
-        return back()->with('error', 'Gagal memulihkan data: ' . $e->getMessage());
-    }
-}
-
-/**
- * Upload dokumen untuk pelaksanaan.
- */
-public function uploadDokumenPelaksanaan(Request $request, $id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        
-        // Gunakan method yang sama dari Penetapan
-        return $this->uploadDokumenPenetapan($request, $id);
-        
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengupload dokumen: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage());
-    }
-}
-
-/**
- * Download dokumen pelaksanaan.
- */
-public function downloadDokumenPelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->with('dokumen')
-                                  ->findOrFail($id);
-        
-        if (!$pelaksanaan->dokumen) {
-            return back()->with('error', 'Dokumen tidak ditemukan.');
-        }
-        
-        $dokumen = $pelaksanaan->dokumen;
-        
-        // Jika berupa link
-        if ($dokumen->jenis_upload === 'link') {
-            return redirect()->away($dokumen->file_path);
-        }
-        
-        // Jika file
-        if (!Storage::disk('public')->exists($dokumen->file_path)) {
-            return back()->with('error', 'File tidak ditemukan.');
-        }
-        
-        return Storage::disk('public')->download($dokumen->file_path, $dokumen->file_name);
-        
-    } catch (\Exception $e) {
-        return back()->with('error', 'Gagal mendownload dokumen: ' . $e->getMessage());
-    }
-}
-
-/**
- * Preview dokumen pelaksanaan.
- */
-public function previewDokumenPelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->with('dokumen')
-                                  ->findOrFail($id);
-        
-        if (!$pelaksanaan->dokumen) {
-            return back()->with('error', 'Dokumen tidak ditemukan.');
-        }
-        
-        $dokumen = $pelaksanaan->dokumen;
-        
-        // Jika link
-        if ($dokumen->jenis_upload === 'link') {
-            return redirect()->away($dokumen->file_path);
-        }
-        
-        // Jika file
-        if (!Storage::disk('public')->exists($dokumen->file_path)) {
-            return back()->with('error', 'File tidak ditemukan.');
-        }
-        
-        // Hanya preview PDF
-        if ($dokumen->file_extension !== 'pdf') {
-            return back()->with('info', 'Preview hanya tersedia untuk file PDF.');
-        }
-        
-        $filePath = Storage::disk('public')->path($dokumen->file_path);
-        
-        return response()->file($filePath);
-        
-    } catch (\Exception $e) {
-        return back()->with('error', 'Gagal mempreview dokumen: ' . $e->getMessage());
-    }
-}
-
-/**
- * Hapus dokumen dari pelaksanaan.
- */
-public function hapusDokumenPelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->with('dokumen')
-                                  ->findOrFail($id);
-        
-        if (!$pelaksanaan->dokumen) {
-            return back()->with('error', 'Dokumen tidak ditemukan.');
-        }
-        
-        $dokumen = $pelaksanaan->dokumen;
-        
-        // Hapus file fisik jika ada
-        if ($dokumen->jenis_upload === 'file' && Storage::disk('public')->exists($dokumen->file_path)) {
-            Storage::disk('public')->delete($dokumen->file_path);
-        }
-        
-        // Hapus dari database
-        $dokumen->delete();
-        
-        // Update pelaksanaan
-        $pelaksanaan->update([
-            'dokumen_id' => null,
-            'status_dokumen' => 'belum_valid',
-            'file_path' => null,
-        ]);
-        
-        return redirect()->route('spmi.pelaksanaan.show', $pelaksanaan->id)
-            ->with('success', 'Dokumen berhasil dihapus.');
-            
-    } catch (\Exception $e) {
-        return back()->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
-    }
-}
-
-/**
- * Update status dokumen pelaksanaan.
- */
-public function updateStatusDokumenPelaksanaan(Request $request, $id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        
-        $request->validate([
-            'status_dokumen' => 'required|in:valid,belum_valid,dalam_review',
-            'catatan' => 'nullable|string|max:500',
-        ]);
-        
-        $pelaksanaan->update([
-            'status_dokumen' => $request->status_dokumen,
-            'catatan_verifikasi' => $request->catatan,
-            'tanggal_review' => now(),
-            'diperiksa_oleh' => auth()->user()->name ?? 'System',
-        ]);
-        
-        // Jika request AJAX
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Status dokumen berhasil diperbarui.',
-                'status_dokumen' => $pelaksanaan->status_dokumen
-            ]);
-        }
-        
-        return redirect()->route('spmi.pelaksanaan.show', $pelaksanaan->id)
-            ->with('success', 'Status dokumen berhasil diperbarui.');
-            
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui status: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return back()->with('error', 'Gagal memperbarui status: ' . $e->getMessage());
-    }
-}
-
-// ==================== AJAX METHODS PELAKSANAAN ====================
-
-/**
- * Get data for view modal pelaksanaan
- */
-public function getPelaksanaanData($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku'])
-                                  ->where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        
-        // Get all documents related to this pelaksanaan
-        $allDokumen = $pelaksanaan->getAllDokumen();
-        
-        $html = view('dashboard.spmi.pelaksanaan.partials.detail-modal', compact('pelaksanaan', 'allDokumen'))->render();
-        
-        return response()->json([
-            'success' => true,
-            'html' => $html
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Data tidak ditemukan: ' . $e->getMessage()
-        ], 404);
-    }
-}
-
-/**
- * Get form for edit modal pelaksanaan
- */
-public function getPelaksanaanEditForm($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        $unitKerjas = UnitKerja::where('status', true)->get();
-        $ikus = Iku::where('status', true)->get();
-        
-        $html = view('dashboard.spmi.pelaksanaan.partials.edit-form', compact('pelaksanaan', 'unitKerjas', 'ikus'))->render();
-        
-        return response()->json([
-            'success' => true,
-            'html' => $html
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Data tidak ditemukan: ' . $e->getMessage()
-        ], 404);
-    }
-}
-
-/**
- * Update via AJAX pelaksanaan
- */
-public function updatePelaksanaanAjax(Request $request, $id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        
-        $request->validate([
-            'nama_komponen' => 'required|string|max:255',
-            'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
-            'status' => 'required|in:aktif,nonaktif,revisi',
-            'deskripsi' => 'nullable|string',
-            'penanggung_jawab' => 'nullable|string|max:255',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'iku_id' => 'nullable|exists:ikus,id',
-        ]);
-        
-        $pelaksanaan->update($request->all());
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Data berhasil diperbarui',
-            'data' => $pelaksanaan
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal memperbarui data: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * Get dokumen list for pelaksanaan
- */
-public function getDokumenListPelaksanaan($id)
-{
-    try {
-        $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')
-                                  ->findOrFail($id);
-        $allDokumen = $pelaksanaan->getAllDokumen();
-        
-        $html = view('dashboard.spmi.pelaksanaan.partials.dokumen-list', compact('allDokumen'))->render();
-        
-        return response()->json([
-            'success' => true,
-            'html' => $html,
-            'count' => $allDokumen->count()
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal mengambil data dokumen: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-/**
- * Export Excel pelaksanaan
- */
-public function exportExcelPelaksanaan()
-{
-    // Implementasi export Excel untuk pelaksanaan
-    return Excel::download(new PelaksanaanExport, 'pelaksanaan-spmi.xlsx');
-}
-
-/**
- * Export PDF pelaksanaan
- */
-public function exportPdfPelaksanaan()
-{
-    // Implementasi export PDF untuk pelaksanaan
-    $pelaksanaan = PenetapanSPM::where('tipe_penetapan', 'pelaksanaan')->get();
-    $pdf = PDF::loadView('dashboard.spmi.pelaksanaan.export.pdf', compact('pelaksanaan'));
-    return $pdf->download('pelaksanaan-spmi.pdf');
-}
     // ==================== EVALUASI ====================
     public function indexEvaluasi()
     {

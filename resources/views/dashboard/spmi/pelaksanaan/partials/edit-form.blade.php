@@ -1,6 +1,6 @@
 <div class="mb-3">
     <label class="form-label">Nama Kegiatan <span class="text-danger">*</span></label>
-    <input type="text" class="form-control" name="nama_komponen" value="{{ $pelaksanaan->nama_komponen }}" required>
+    <input type="text" class="form-control" name="nama_kegiatan" value="{{ $pelaksanaan->nama_kegiatan }}" required>
 </div>
 
 <div class="row">

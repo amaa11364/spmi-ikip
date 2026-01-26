@@ -80,25 +80,18 @@ Route::middleware(['auth'])->group(function () {
     // ==================== SPMI ROUTES (CRUD LENGKAP) ====================
     Route::prefix('spmi')->name('spmi.')->group(function () {
         
-    // ===== PENETAPAN SPMI - CRUD LENGKAP =====
-    Route::prefix('penetapan')->name('penetapan.')->group(function () {
-
-    // ===== AJAX ROUTES (LETAKKAN DI AWAL) =====
-    Route::get('/{id}/detail', [SpmController::class, 'getPenetapanData'])->name('ajax.detail');
-    Route::get('/{id}/edit-form', [SpmController::class, 'getEditForm'])->name('ajax.edit-form');
-    Route::put('/{id}/ajax-update', [SpmController::class, 'updateAjax'])->name('ajax.update');
-    Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenList'])->name('ajax.dokumen-list');
-    
-    // ===== MAIN CRUD ROUTES =====
-    Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
-    Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
-    Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
-    Route::get('/{id}', [SpmController::class, 'showPenetapan'])->name('show');
-    Route::get('/{id}/edit', [SpmController::class, 'editPenetapan'])->name('edit');
-    Route::put('/{id}', [SpmController::class, 'updatePenetapan'])->name('update');
-    Route::delete('/{id}', [SpmController::class, 'destroyPenetapan'])->name('destroy');
-    
-    // Restore soft deleted
+        // ===== PENETAPAN SPMI - CRUD LENGKAP =====
+        Route::prefix('penetapan')->name('penetapan.')->group(function () {
+            // ===== MAIN CRUD ROUTES =====
+            Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
+            Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
+            Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
+            Route::get('/{id}', [SpmController::class, 'showPenetapan'])->name('show');
+            Route::get('/{id}/edit', [SpmController::class, 'editPenetapan'])->name('edit');
+            Route::put('/{id}', [SpmController::class, 'updatePenetapan'])->name('update');
+            Route::delete('/{id}', [SpmController::class, 'destroyPenetapan'])->name('destroy');
+            
+            // Restore soft deleted
             Route::post('/{id}/restore', [SpmController::class, 'restorePenetapan'])->name('restore');
             
             // Document management
@@ -110,10 +103,6 @@ Route::middleware(['auth'])->group(function () {
             // Status management
             Route::put('/{id}/status-dokumen', [SpmController::class, 'updateStatusDokumen'])->name('status.update');
             
-            // Export & Report
-            Route::get('/export/excel', [SpmController::class, 'exportExcelPenetapan'])->name('export.excel');
-            Route::get('/export/pdf', [SpmController::class, 'exportPdfPenetapan'])->name('export.pdf');
-            
             // AJAX endpoints
             Route::get('/{id}/detail', [SpmController::class, 'getPenetapanData'])->name('ajax.detail');
             Route::get('/{id}/edit-form', [SpmController::class, 'getEditForm'])->name('ajax.edit-form');
@@ -121,40 +110,35 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenList'])->name('ajax.dokumen-list');
         });
         
-    // ===== PELAKSANAAN SPMI - CRUD LENGKAP =====
-    Route::prefix('pelaksanaan')->name('pelaksanaan.')->group(function () {
-
-    // ===== AJAX ROUTES =====
-    Route::get('/{id}/detail', [SpmController::class, 'getPelaksanaanData'])->name('ajax.detail');
-    Route::get('/{id}/edit-form', [SpmController::class, 'getPelaksanaanEditForm'])->name('ajax.edit-form');
-    Route::put('/{id}/ajax-update', [SpmController::class, 'updatePelaksanaanAjax'])->name('ajax.update');
-    Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenListPelaksanaan'])->name('ajax.dokumen-list');
-    
-    // ===== MAIN CRUD ROUTES =====
-    Route::get('/', [SpmController::class, 'indexPelaksanaan'])->name('index');
-    Route::get('/create', [SpmController::class, 'createPelaksanaan'])->name('create');
-    Route::post('/', [SpmController::class, 'storePelaksanaan'])->name('store');
-    Route::get('/{id}', [SpmController::class, 'showPelaksanaan'])->name('show');
-    Route::get('/{id}/edit', [SpmController::class, 'editPelaksanaan'])->name('edit');
-    Route::put('/{id}', [SpmController::class, 'updatePelaksanaan'])->name('update');
-    Route::delete('/{id}', [SpmController::class, 'destroyPelaksanaan'])->name('destroy');
-    
-    // Restore soft deleted
-    Route::post('/{id}/restore', [SpmController::class, 'restorePelaksanaan'])->name('restore');
-    
-    // Document management
-    Route::post('/{id}/upload', [SpmController::class, 'uploadDokumenPelaksanaan'])->name('upload');
-    Route::get('/{id}/download', [SpmController::class, 'downloadDokumenPelaksanaan'])->name('download');
-    Route::get('/{id}/preview', [SpmController::class, 'previewDokumenPelaksanaan'])->name('preview');
-    Route::delete('/{id}/dokumen', [SpmController::class, 'hapusDokumenPelaksanaan'])->name('dokumen.hapus');
-    
-    // Status management
-    Route::put('/{id}/status-dokumen', [SpmController::class, 'updateStatusDokumenPelaksanaan'])->name('status.update');
-    
-    // Export & Report
-    Route::get('/export/excel', [SpmController::class, 'exportExcelPelaksanaan'])->name('export.excel');
-    Route::get('/export/pdf', [SpmController::class, 'exportPdfPelaksanaan'])->name('export.pdf');
-});
+        // ===== PELAKSANAAN SPMI - CRUD LENGKAP =====
+        Route::prefix('pelaksanaan')->name('pelaksanaan.')->group(function () {
+            // ===== MAIN CRUD ROUTES =====
+            Route::get('/', [SpmController::class, 'indexPelaksanaan'])->name('index');
+            Route::get('/create', [SpmController::class, 'createPelaksanaan'])->name('create');
+            Route::post('/', [SpmController::class, 'storePelaksanaan'])->name('store');
+            Route::get('/{id}', [SpmController::class, 'showPelaksanaan'])->name('show');
+            Route::get('/{id}/edit', [SpmController::class, 'editPelaksanaan'])->name('edit');
+            Route::put('/{id}', [SpmController::class, 'updatePelaksanaan'])->name('update');
+            Route::delete('/{id}', [SpmController::class, 'destroyPelaksanaan'])->name('destroy');
+            
+            // Restore soft deleted
+            Route::post('/{id}/restore', [SpmController::class, 'restorePelaksanaan'])->name('restore');
+            
+            // Document management
+            Route::post('/{id}/upload', [SpmController::class, 'uploadDokumenPelaksanaan'])->name('upload');
+            Route::get('/{id}/download', [SpmController::class, 'downloadDokumenPelaksanaan'])->name('download');
+            Route::get('/{id}/preview', [SpmController::class, 'previewDokumenPelaksanaan'])->name('preview');
+            Route::delete('/{id}/dokumen', [SpmController::class, 'hapusDokumenPelaksanaan'])->name('dokumen.hapus');
+            
+            // Status management
+            Route::put('/{id}/status-dokumen', [SpmController::class, 'updateStatusDokumenPelaksanaan'])->name('status.update');
+            
+            // AJAX endpoints
+            Route::get('/{id}/detail', [SpmController::class, 'getPelaksanaanData'])->name('ajax.detail');
+            Route::get('/{id}/edit-form', [SpmController::class, 'getPelaksanaanEditForm'])->name('ajax.edit-form');
+            Route::put('/{id}/ajax-update', [SpmController::class, 'updatePelaksanaanAjax'])->name('ajax.update');
+            Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenListPelaksanaan'])->name('ajax.dokumen-list');
+        });
         
         // ===== EVALUASI =====
         Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
@@ -186,6 +170,7 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('api')->name('api.')->group(function () {
             Route::get('/penetapan/data', [SpmController::class, 'getPenetapanData'])->name('penetapan.data');
             Route::get('/penetapan/statistics', [SpmController::class, 'getPenetapanStatistics'])->name('penetapan.statistics');
+            Route::get('/pelaksanaan/statistics', [SpmController::class, 'getPelaksanaanStatistics'])->name('pelaksanaan.statistics');
         });
     });
     

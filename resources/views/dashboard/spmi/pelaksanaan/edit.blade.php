@@ -14,7 +14,7 @@
             </li>
             <li class="breadcrumb-item">
                 <a href="{{ route('spmi.pelaksanaan.show', $pelaksanaan->id) }}">
-                    {{ Str::limit($pelaksanaan->nama_komponen, 30) }}
+                    {{ Str::limit($pelaksanaan->nama_kegiatan, 30) }}
                 </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">Edit</li>
@@ -26,7 +26,7 @@
             <div class="card">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-edit me-2"></i> Edit Pelaksanaan: {{ $pelaksanaan->nama_komponen }}
+                        <i class="fas fa-edit me-2"></i> Edit Pelaksanaan: {{ $pelaksanaan->nama_kegiatan }}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -36,9 +36,9 @@
                         
                         <div class="mb-3">
                             <label class="form-label">Nama Kegiatan <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('nama_komponen') is-invalid @enderror" 
-                                   name="nama_komponen" value="{{ old('nama_komponen', $pelaksanaan->nama_komponen) }}" required>
-                            @error('nama_komponen')
+                            <input type="text" class="form-control @error('nama_kegiatan') is-invalid @enderror" 
+                                   name="nama_kegiatan" value="{{ old('nama_kegiatan', $pelaksanaan->nama_kegiatan) }}" required>
+                            @error('nama_kegiatan')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

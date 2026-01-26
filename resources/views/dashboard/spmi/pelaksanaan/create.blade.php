@@ -30,10 +30,10 @@
                         
                         <div class="mb-3">
                             <label class="form-label">Nama Kegiatan <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('nama_komponen') is-invalid @enderror" 
-                                   name="nama_komponen" value="{{ old('nama_komponen') }}" required 
+                            <input type="text" class="form-control @error('nama_kegiatan') is-invalid @enderror" 
+                                   name="nama_kegiatan" value="{{ old('nama_kegiatan') }}" required 
                                    placeholder="Contoh: Implementasi Kurikulum Berbasis KKNI">
-                            @error('nama_komponen')
+                            @error('nama_kegiatan')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

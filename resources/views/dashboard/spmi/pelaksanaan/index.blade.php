@@ -384,7 +384,7 @@
                                         <i class="fas fa-play-circle"></i>
                                     </div>
                                     <div class="komponen-details">
-                                        <h6>{{ $item->nama_komponen }}</h6>
+                                        <h6>{{ $item->nama_kegiatan }}</h6>
                                         <small>
                                             <i class="fas fa-building me-1"></i>
                                             {{ $item->unitKerja->nama ?? 'Tidak ada unit kerja' }}
@@ -464,7 +464,7 @@
                                                 @csrf
                                                 <div class="mb-2">
                                                     <label class="form-label small mb-1">
-                                                        <strong>Upload ke:</strong> {{ $item->nama_komponen }}
+                                                        <strong>Upload ke:</strong> {{ $item->nama_kegiatan }}
                                                     </label>
                                                     <input type="file" class="form-control form-control-sm" name="file_dokumen" required 
                                                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
@@ -472,7 +472,7 @@
                                                 </div>
                                                 <div class="mb-2">
                                                     <input type="text" class="form-control form-control-sm" name="keterangan" 
-                                                           placeholder="Keterangan (opsional)" value="Dokumen {{ $item->nama_komponen }}">
+                                                           placeholder="Keterangan (opsional)" value="Dokumen {{ $item->nama_kegiatan }}">
                                                 </div>
                                                 <div class="mb-2">
                                                     <input type="text" class="form-control form-control-sm" name="jenis_dokumen" 

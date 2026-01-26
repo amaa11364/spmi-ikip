@@ -1,6 +1,6 @@
 <div class="row">
     <div class="col-md-8">
-        <h4 class="text-success">{{ $pelaksanaan->nama_komponen }}</h4>
+        <h4 class="text-success">{{ $pelaksanaan->nama_kegiatan }}</h4>
         <div class="d-flex flex-wrap gap-2 mb-3">
             <span class="badge bg-info">{{ $pelaksanaan->kode_penetapan }}</span>
             <span class="badge bg-secondary">{{ $pelaksanaan->tahun }}</span>
