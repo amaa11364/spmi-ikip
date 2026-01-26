@@ -140,11 +140,30 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenListPelaksanaan'])->name('ajax.dokumen-list');
         });
         
-        // ===== EVALUASI =====
-        Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
-            Route::get('/', [SpmController::class, 'indexEvaluasi'])->name('index');
-            Route::get('/{type}', [SpmController::class, 'showEvaluasi'])->name('show');
-        });
+        // ===== EVALUASI SPMI - CRUD LENGKAP =====
+                Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
+    // ===== MAIN CRUD ROUTES =====
+    Route::get('/', [EvaluasiSpmController::class, 'index'])->name('index');
+    Route::get('/create', [EvaluasiSpmController::class, 'create'])->name('create');
+    Route::post('/', [EvaluasiSpmController::class, 'store'])->name('store');
+    Route::get('/{id}', [EvaluasiSpmController::class, 'show'])->name('show');
+    Route::get('/{id}/edit', [EvaluasiSpmController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [EvaluasiSpmController::class, 'update'])->name('update');
+    Route::delete('/{id}', [EvaluasiSpmController::class, 'destroy'])->name('destroy');
+    
+    // Restore soft deleted
+    Route::post('/{id}/restore', [EvaluasiSpmController::class, 'restore'])->name('restore');
+    
+    // Document management
+    Route::post('/{id}/upload', [EvaluasiSpmController::class, 'uploadDokumen'])->name('upload');
+    Route::get('/{id}/download', [EvaluasiSpmController::class, 'downloadDokumen'])->name('download');
+    Route::delete('/{id}/dokumen', [EvaluasiSpmController::class, 'hapusDokumen'])->name('dokumen.hapus');
+    
+    // AJAX endpoints
+    Route::get('/{id}/detail', [EvaluasiSpmController::class, 'getEvaluasiData'])->name('ajax.detail');
+    Route::get('/{id}/edit-form', [EvaluasiSpmController::class, 'getEditForm'])->name('ajax.edit-form');
+    Route::put('/{id}/ajax-update', [EvaluasiSpmController::class, 'updateAjax'])->name('ajax.update');
+});
         
         // ===== PENGENDALIAN =====
         Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
