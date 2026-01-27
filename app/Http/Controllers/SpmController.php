@@ -1500,7 +1500,7 @@ public function indexEvaluasiFull(Request $request)
         'evaluasi_kinerja' => EvaluasiSPMI::where('tipe_evaluasi', 'evaluasi_kinerja')->orderBy('created_at', 'desc')->get(),
     ];
     
-    return view('dashboard.spmi.evaluasi-full.index', compact(
+    return view('dashboard.spmi.evaluasi.index', compact(
         'evaluasi', 
         'kelompok', 
         'tahunList', 
@@ -1520,7 +1520,7 @@ public function createEvaluasiFull()
     $unitKerjas = UnitKerja::where('status', true)->get();
     $ikus = Iku::where('status', true)->get();
     
-    return view('dashboard.spmi.evaluasi-full.create', compact('unitKerjas', 'ikus'));
+    return view('dashboard.spmi.evaluasi.create', compact('unitKerjas', 'ikus'));
 }
 
 /**
