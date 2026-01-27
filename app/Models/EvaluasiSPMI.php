@@ -2,19 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EvaluasiSPMI extends Model
 {
-    use HasFactory, SoftDeletes;
-
-    protected $table = 'evaluasi_s_p_m_i_s';
-
+    use SoftDeletes;
+    
+    protected $table = 'evaluasi_spmi';
     protected $fillable = [
         'nama_evaluasi',
         'tipe_evaluasi',
+        'kode_evaluasi',
         'tahun',
         'periode',
         'status',
@@ -24,65 +23,102 @@ class EvaluasiSPMI extends Model
         'unit_kerja_id',
         'iku_id',
         'dokumen_id',
-        'kode_evaluasi',
         'tanggal_evaluasi',
         'tanggal_review',
         'catatan_verifikasi',
         'diperiksa_oleh',
     ];
-
-    protected $casts = [
-        'tahun' => 'integer',
-        'tanggal_evaluasi' => 'datetime',
-        'tanggal_review' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-    ];
-
-    protected $appends = [
-        'tipe_evaluasi_label',
-        'status_label',
-        'status_dokumen_label',
-        'status_color',
-        'status_dokumen_color',
-        'total_dokumen',
-        'folder_path',
-    ];
-
-    /**
-     * RELATIONSHIPS
-     */
-    public function unitKerja()
+    
+    protected $dates = ['tanggal_evaluasi', 'tanggal_review', 'deleted_at'];
+    
+    public static function generateKode($tipe, $tahun)
     {
-        return $this->belongsTo(UnitKerja::class);
+        $prefix = 'EVAL-';
+        
+        switch($tipe) {
+            case 'ami':
+                $prefix .= 'AMI-';
+                break;
+            case 'edom':
+                $prefix .= 'EDOM-';
+                break;
+            case 'evaluasi_layanan':
+                $prefix .= 'LAY-';
+                break;
+            case 'evaluasi_kinerja':
+                $prefix .= 'KIN-';
+                break;
+            default:
+                $prefix .= 'EVAL-';
+        }
+        
+        $lastNumber = self::where('tahun', $tahun)
+            ->where('tipe_evaluasi', $tipe)
+            ->count() + 1;
+        
+        return $prefix . $tahun . '-' . str_pad($lastNumber, 3, '0', STR_PAD_LEFT);
     }
-
-    public function iku()
-    {
-        return $this->belongsTo(Iku::class);
-    }
-
+    
     public function dokumen()
     {
-        return $this->belongsTo(Dokumen::class);
+        return $this->belongsTo(Dokumen::class, 'dokumen_id');
     }
-
-    /**
-     * Get all related documents
-     */
+    
+    public function unitKerja()
+    {
+        return $this->belongsTo(UnitKerja::class, 'unit_kerja_id');
+    }
+    
+    public function iku()
+    {
+        return $this->belongsTo(Iku::class, 'iku_id');
+    }
+    
     public function getAllDokumen()
     {
-        return Dokumen::where('metadata->evaluasi_id', $this->id)
-                     ->orWhere('id', $this->dokumen_id)
-                     ->orWhere(function($query) {
-                         $query->where('metadata', 'LIKE', '%"evaluasi_id":' . $this->id . '%')
-                               ->orWhere('metadata', 'LIKE', '%"evaluasi_id":"' . $this->id . '"%');
-                     })
-                     ->get()
-                     ->unique('id');
+        return Dokumen::where('metadata', 'LIKE', '%"evaluasi_id":' . $this->id . '%')
+            ->orWhere('metadata', 'LIKE', '%evaluasi_id":' . $this->id . '%')
+            ->orWhere('id', $this->dokumen_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
-
+    
+    // Accessor untuk label
+    public function getTipeEvaluasiLabelAttribute()
+    {
+        $labels = [
+            'ami' => 'Audit Mutu Internal (AMI)',
+            'edom' => 'Evaluasi Dosen oleh Mahasiswa (EDOM)',
+            'evaluasi_layanan' => 'Evaluasi Layanan',
+            'evaluasi_kinerja' => 'Evaluasi Kinerja',
+        ];
+        
+        return $labels[$this->tipe_evaluasi] ?? $this->tipe_evaluasi;
+    }
+    
+    public function getStatusLabelAttribute()
+    {
+        $labels = [
+            'aktif' => 'Aktif',
+            'nonaktif' => 'Nonaktif',
+            'selesai' => 'Selesai',
+            'berjalan' => 'Berjalan',
+        ];
+        
+        return $labels[$this->status] ?? $this->status;
+    }
+    
+    public function getStatusDokumenLabelAttribute()
+    {
+        $labels = [
+            'valid' => 'Valid',
+            'belum_valid' => 'Belum Valid',
+            'dalam_review' => 'Dalam Review',
+        ];
+        
+        return $labels[$this->status_dokumen] ?? $this->status_dokumen;
+    }
+}
     /**
      * ACCESSORS
      */

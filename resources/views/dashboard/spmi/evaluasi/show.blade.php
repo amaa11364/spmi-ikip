@@ -458,59 +458,71 @@
 @endsection
 
 @push('scripts')
+{{-- Di bagian JavaScript, perbaikan form submission --}}
 <script>
     // Toggle quick upload form
     function toggleUploadForm() {
         const form = document.getElementById('quickUploadForm');
-        form.classList.toggle('show');
-        
-        if (form.classList.contains('show')) {
-            form.scrollIntoView({ behavior: 'smooth' });
+        if (form) {
+            form.classList.toggle('show');
+            
+            if (form.classList.contains('show')) {
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     }
 
-    // Handle quick upload form submission
-    document.getElementById('quickUploadForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const form = this;
-        const formData = new FormData(form);
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        
-        // Show loading
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mengupload...';
-        submitBtn.disabled = true;
-        
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Dokumen berhasil diupload!');
-                location.reload();
-            } else {
-                alert('Gagal: ' + data.message);
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal mengupload dokumen. Silakan coba lagi.');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-    });
-
-    // Initialize tooltips
+    // Handle quick upload form submission - Diperbaiki
     document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        const quickUploadForm = document.getElementById('quickUploadForm');
+        if (quickUploadForm) {
+            quickUploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const form = this;
+                const formData = new FormData(form);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                // Show loading
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mengupload...';
+                submitBtn.disabled = true;
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('Dokumen berhasil diupload!');
+                        location.reload();
+                    } else {
+                        alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal mengupload dokumen. Silakan coba lagi.');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });

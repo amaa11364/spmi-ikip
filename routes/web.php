@@ -140,26 +140,30 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenListPelaksanaan'])->name('ajax.dokumen-list');
         });
         
-        // ===== EVALUASI SPMI - CRUD LENGKAP =====
-Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
-    // ===== MAIN CRUD ROUTES =====
-    Route::get('/', [SpmController::class, 'indexEvaluasiFull'])->name('index');
-    Route::get('/create', [SpmController::class, 'createEvaluasiFull'])->name('create');
-    Route::post('/', [SpmController::class, 'storeEvaluasiFull'])->name('store');
-    Route::get('/{id}', [SpmController::class, 'showEvaluasiFull'])->name('show');
-    Route::get('/{id}/edit', [SpmController::class, 'editEvaluasiFull'])->name('edit');
-    Route::put('/{id}', [SpmController::class, 'updateEvaluasiFull'])->name('update');
-    Route::delete('/{id}', [SpmController::class, 'destroyEvaluasiFull'])->name('destroy');
+        // Evaluasi SPMI Routes
+Route::prefix('spmi')->name('spmi.')->middleware('auth')->group(function () {
+    // Evaluasi Routes (yang lama)
+    Route::get('evaluasi', [EvaluasiSpmController::class, 'index'])->name('evaluasi.index');
+    Route::get('evaluasi/create', [EvaluasiSpmController::class, 'create'])->name('evaluasi.create');
+    Route::post('evaluasi', [EvaluasiSpmController::class, 'store'])->name('evaluasi.store');
+    Route::get('evaluasi/{id}', [EvaluasiSpmController::class, 'show'])->name('evaluasi.show');
+    Route::get('evaluasi/{id}/edit', [EvaluasiSpmController::class, 'edit'])->name('evaluasi.edit');
+    Route::put('evaluasi/{id}', [EvaluasiSpmController::class, 'update'])->name('evaluasi.update');
+    Route::delete('evaluasi/{id}', [EvaluasiSpmController::class, 'destroy'])->name('evaluasi.destroy');
+    Route::post('evaluasi/{id}/upload', [EvaluasiSpmController::class, 'uploadDokumen'])->name('evaluasi.upload');
+    Route::get('evaluasi/ajax/detail/{id}', [EvaluasiSpmController::class, 'getEvaluasiData'])->name('evaluasi.ajax.detail');
+    Route::get('evaluasi/ajax/edit-form/{id}', [EvaluasiSpmController::class, 'getEditForm'])->name('evaluasi.ajax.edit-form');
     
-    // Document management
-    Route::post('/{id}/upload', [SpmController::class, 'uploadDokumenEvaluasi'])->name('upload');
-    
-    // AJAX endpoints
-    Route::get('/{id}/detail', [SpmController::class, 'getEvaluasiData'])->name('ajax.detail');
-    Route::get('/{id}/edit-form', [SpmController::class, 'getEvaluasiEditForm'])->name('ajax.edit-form');
-    Route::put('/{id}/ajax-update', [SpmController::class, 'updateEvaluasiAjax'])->name('ajax.update');
+    // Evaluasi Routes FULL (alternatif)
+    Route::get('evaluasi-full', [EvaluasiSpmController::class, 'indexEvaluasiFull'])->name('evaluasi-full.index');
+    Route::get('evaluasi-full/create', [EvaluasiSpmController::class, 'createEvaluasiFull'])->name('evaluasi-full.create');
+    Route::post('evaluasi-full', [EvaluasiSpmController::class, 'storeEvaluasiFull'])->name('evaluasi-full.store');
+    Route::get('evaluasi-full/{id}', [EvaluasiSpmController::class, 'showEvaluasiFull'])->name('evaluasi-full.show');
+    Route::get('evaluasi-full/{id}/edit', [EvaluasiSpmController::class, 'editEvaluasiFull'])->name('evaluasi-full.edit');
+    Route::put('evaluasi-full/{id}', [EvaluasiSpmController::class, 'updateEvaluasiFull'])->name('evaluasi-full.update');
+    Route::delete('evaluasi-full/{id}', [EvaluasiSpmController::class, 'destroyEvaluasiFull'])->name('evaluasi-full.destroy');
+    Route::post('evaluasi-full/{id}/upload', [EvaluasiSpmController::class, 'uploadDokumenEvaluasi'])->name('evaluasi-full.upload');
 });
-        
         // ===== PENGENDALIAN =====
         Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
             Route::get('/', [SpmController::class, 'indexPengendalian'])->name('index');
