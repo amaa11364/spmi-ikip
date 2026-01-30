@@ -11,14 +11,14 @@
             </h4>
             <p class="text-muted mb-0">Form tambah data evaluasi SPMI</p>
         </div>
-        <a href="{{ route('spmi.evaluasi-full.index') }}" class="btn btn-outline-secondary">
+        <a href="{{ route('spmi.evaluasi.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-1"></i> Kembali
         </a>
     </div>
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('spmi.evaluasi-full.store') }}" method="POST">
+            <form action="{{ route('spmi.evaluasi.store') }}" method="POST">
                 @csrf
                 
                 <div class="row">
@@ -165,7 +165,7 @@
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save me-2"></i> Simpan Evaluasi
                                     </button>
-                                    <a href="{{ route('spmi.evaluasi-full.index') }}" class="btn btn-outline-secondary">
+                                    <a href="{{ route('spmi.evaluasi.index') }}" class="btn btn-outline-secondary">
                                         <i class="fas fa-times me-2"></i> Batal
                                     </a>
                                 </div>

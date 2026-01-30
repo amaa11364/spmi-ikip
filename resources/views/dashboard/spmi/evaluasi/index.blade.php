@@ -507,7 +507,7 @@
                                     
                                     <!-- Upload Button with Inline Modal -->
                                     <div class="position-relative">
-                                        <button class="btn-action btn-upload" title="Upload Dokumen" onclick="toggleUploadModalEvaluasi({{ $item->id }})">
+                                       <button class="btn-action btn-upload" title="Upload Dokumen" onclick="toggleUploadModal({{ $item->id }})">
                                             <i class="fas fa-upload"></i>
                                         </button>
                                         
@@ -532,7 +532,7 @@
                                                 </div>
                                                 <input type="hidden" name="upload_source" value="inline_modal">
                                                 <div class="d-flex gap-2">
-                                                    <button type="button" class="btn btn-sm btn-primary flex-fill" onclick="uploadInlineFileEvaluasi({{ $item->id }}, this)">
+                                                    <button type="button" class="btn btn-sm btn-primary flex-fill" onclick="uploadInlineFile({{ $item->id }}, this)">
                                                         <i class="fas fa-upload me-1"></i> Upload
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleUploadModalEvaluasi({{ $item->id }})">
@@ -725,29 +725,23 @@
 @endsection
 
 @push('scripts')
+<!-- Load jQuery sebelum script lainnya -->
 <script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
 
-{{-- Di bagian JavaScript, perbaikan AJAX calls --}}
 <script>
-    // Fungsi untuk upload file via AJAX - Diperbaiki
-    function uploadInlineFileEvaluasi(id, buttonElement) {
+    // Fungsi untuk upload file via AJAX
+    function uploadInlineFileEvaluasi(event, id) {
         event.preventDefault();
-        event.stopPropagation();
         
-        const form = document.getElementById('uploadFormEvaluasi' + id);
-        if (!form) {
-            console.error('Form not found: uploadFormEvaluasi' + id);
-            alert('Form upload tidak ditemukan. Silakan refresh halaman.');
-            return;
-        }
-        
+        const form = document.getElementById('uploadForm' + id);
         const formData = new FormData(form);
         const url = form.action;
         
         // Tampilkan loading
-        const originalText = buttonElement.innerHTML;
-        buttonElement.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
-        buttonElement.disabled = true;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
+        submitBtn.disabled = true;
         
         fetch(url, {
             method: 'POST',
@@ -757,39 +751,34 @@
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.status);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 alert('Dokumen berhasil diupload!');
-                toggleUploadModalEvaluasi(id);
-                location.reload();
+                toggleUploadModal(id); // Tutup modal
+                location.reload(); // Refresh halaman untuk update count
             } else {
-                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
-                buttonElement.innerHTML = originalText;
-                buttonElement.disabled = false;
+                alert('Gagal: ' + data.message);
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Gagal mengupload dokumen. Silakan coba lagi. Error: ' + error.message);
-            buttonElement.innerHTML = originalText;
-            buttonElement.disabled = false;
+            alert('Gagal mengupload dokumen. Silakan coba lagi.');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         });
     }
-    
-    // Toggle upload modal - Diperbaiki
+
+    // Toggle upload modal
     function toggleUploadModalEvaluasi(id) {
-        const modal = document.getElementById('uploadModalEvaluasi' + id);
+        const modal = document.getElementById('uploadModal' + id);
         const allModals = document.querySelectorAll('.upload-inline-modal');
         
         // Hide all other modals
         allModals.forEach(m => {
-            if (m.id !== 'uploadModalEvaluasi' + id) {
+            if (m.id !== 'uploadModal' + id) {
                 m.classList.remove('show');
             }
         });
@@ -810,20 +799,21 @@
                         document.removeEventListener('click', handleClickOutside);
                     }
                 };
-                setTimeout(() => document.addEventListener('click', handleClickOutside), 100);
+                document.addEventListener('click', handleClickOutside);
             }, 100);
         }
     }
 
-    // View Evaluasi Detail - Diperbaiki route
-    function viewEvaluasi(id) {
+    // View Penetapan Detail
+    function viewPenetapan(id) {
+        // Cek jika jQuery tersedia
         if (typeof jQuery === 'undefined') {
             console.error('jQuery tidak tersedia untuk AJAX');
             alert('Fitur ini memerlukan jQuery. Silakan refresh halaman.');
             return;
         }
         
-        const url = '{{ route("spmi.evaluasi.ajax.detail", ":id") }}'.replace(':id', id);
+        const url = '{{ route("spmi.penetapan.ajax.detail", ":id") }}'.replace(':id', id);
         
         jQuery.ajax({
             url: url,
@@ -833,13 +823,13 @@
                     jQuery('#viewModalBody').html(response.html);
                     jQuery('#viewModal').modal('show');
                     
-                    // Initialize tooltips
-                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#viewModal [data-bs-toggle="tooltip"]'));
+                    // Re-initialize tooltips di modal
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#viewModal [title]'));
                     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                         return new bootstrap.Tooltip(tooltipTriggerEl);
                     });
                 } else {
-                    alert(response.message || 'Gagal memuat data');
+                    alert(response.message);
                 }
             },
             error: function(xhr, status, error) {
@@ -849,15 +839,16 @@
         });
     }
     
-    // Edit Evaluasi - Diperbaiki route
-    function editEvaluasi(id) {
+    // Edit Penetapan
+    function editPenetapan(id) {
+        // Cek jika jQuery tersedia
         if (typeof jQuery === 'undefined') {
             console.error('jQuery tidak tersedia untuk AJAX');
             alert('Fitur ini memerlukan jQuery. Silakan refresh halaman.');
             return;
         }
         
-        const url = '{{ route("spmi.evaluasi.ajax.edit-form", ":id") }}'.replace(':id', id);
+        const url = '{{ route("spmi.penetapan.ajax.edit-form", ":id") }}'.replace(':id', id);
         
         jQuery.ajax({
             url: url,
@@ -865,16 +856,16 @@
             success: function(response) {
                 if (response.success) {
                     jQuery('#editModalBody').html(response.html);
-                    jQuery('#editForm').attr('action', '{{ route("spmi.evaluasi.update", ":id") }}'.replace(':id', id));
+                    jQuery('#editForm').attr('action', '{{ route("spmi.penetapan.update", ":id") }}'.replace(':id', id));
                     jQuery('#editModal').modal('show');
                     
-                    // Initialize tooltips
-                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#editModal [data-bs-toggle="tooltip"]'));
+                    // Re-initialize tooltips di modal
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#editModal [title]'));
                     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                         return new bootstrap.Tooltip(tooltipTriggerEl);
                     });
                 } else {
-                    alert(response.message || 'Gagal memuat form');
+                    alert(response.message);
                 }
             },
             error: function(xhr, status, error) {
@@ -886,15 +877,15 @@
     
     // Confirm Delete
     function confirmDelete(button) {
-        if (confirm('Apakah Anda yakin ingin menghapus evaluasi ini?')) {
-            // Hapus pesan konfirmasi browser
-            button.closest('form').submit();
+        if (confirm('Apakah Anda yakin ingin menghapus penetapan ini?')) {
+            button.closest('.delete-form').submit();
         }
     }
 
     // Initialize page
     (function() {
         function initPage() {
+            // Cek jika jQuery sudah dimuat
             if (typeof jQuery === 'undefined') {
                 console.error('jQuery belum dimuat!');
                 setTimeout(initPage, 100);
@@ -904,7 +895,7 @@
             console.log('jQuery loaded, version:', jQuery.fn.jquery);
             
             // Initialize Bootstrap tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"], [title]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
@@ -927,7 +918,7 @@
                             alert('Data berhasil diperbarui!');
                             location.reload();
                         } else {
-                            alert('Gagal: ' + (response.message || 'Terjadi kesalahan'));
+                            alert('Gagal: ' + response.message);
                         }
                     },
                     error: function(xhr) {
@@ -936,17 +927,36 @@
                 });
             });
             
-            // Handle Create Modal Form Submission
-            jQuery('#createModal form').submit(function(e) {
+            // Handle Upload Inline Form Submission dengan jQuery
+            jQuery('body').on('submit', '.upload-inline-form', function(e) {
+                e.preventDefault();
+                
                 const form = jQuery(this);
-                if (!form[0].checkValidity()) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-                form.addClass('was-validated');
+                const url = form.attr('action');
+                const formData = new FormData(this);
+                
+                jQuery.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Dokumen berhasil diupload!');
+                            location.reload();
+                        } else {
+                            alert('Gagal: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Gagal mengupload dokumen. Silakan coba lagi.');
+                    }
+                });
             });
         }
         
+        // Tunggu DOM siap
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initPage);
         } else {

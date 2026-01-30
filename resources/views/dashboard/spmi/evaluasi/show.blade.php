@@ -117,7 +117,7 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
-                <a href="{{ route('spmi.evaluasi-full.index') }}">
+                <a href="{{ route('spmi.evaluasi.index') }}">
                     <i class="fas fa-chart-bar me-1"></i> Repository Evaluasi
                 </a>
             </li>
@@ -143,7 +143,7 @@
                             </div>
                         </div>
                         <div class="btn-group">
-                            <a href="{{ route('spmi.evaluasi-full.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
+                            <a href="{{ route('spmi.evaluasi.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-edit me-1"></i> Edit
                             </a>
                             <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-primary">
@@ -265,7 +265,7 @@
                 </div>
 
                 <!-- Quick Upload Form -->
-                <form action="{{ route('spmi.evaluasi-full.upload', $evaluasi->id) }}" method="POST" enctype="multipart/form-data" class="upload-inline-form" id="quickUploadForm">
+                <form action="{{ route('spmi.evaluasi.upload', $evaluasi->id) }}" method="POST" enctype="multipart/form-data" class="upload-inline-form" id="quickUploadForm">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label">Upload File ke <strong>{{ $evaluasi->nama_evaluasi }}</strong></label>
@@ -432,10 +432,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('spmi.evaluasi-full.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('spmi.evaluasi.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar
                         </a>
-                        <a href="{{ route('spmi.evaluasi-full.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
+                        <a href="{{ route('spmi.evaluasi.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
                             <i class="fas fa-edit me-1"></i> Edit Evaluasi
                         </a>
                         <button class="btn btn-primary" onclick="toggleUploadForm()">
