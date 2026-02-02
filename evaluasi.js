@@ -1,239 +1,175 @@
-<!-- Load jQuery sebelum script lainnya -->
-<script src="https://code.jquery.com/jquery-3.6.4.min.js" integrity="sha256-oP6HI9z1XaZNBrJURtCoUT5SUnxFr8s3BzRl+cbzUq8=" crossorigin="anonymous"></script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- MODAL AND UPLOAD LOGIC ---
 
-<script>
-    // Fungsi untuk upload file via AJAX
-    function uploadInlineFileEvaluasi(event, id) {
-        event.preventDefault();
+    // Toggles the visibility of the inline upload form for a given ID
+    window.toggleUploadModal = (id) => {
+        const modal = document.getElementById(`uploadModalEvaluasi${id}`);
+        if (!modal) return;
+
+        // Hide all other open inline modals
+        document.querySelectorAll('.upload-inline-modal.show').forEach(openModal => {
+            if (openModal.id !== `uploadModalEvaluasi${id}`) {
+                openModal.classList.remove('show');
+            }
+        });
+
+        // Toggle the current modal
+        modal.classList.toggle('show');
+
+        // Add a listener to close the modal if clicking outside
+        if (modal.classList.contains('show')) {
+            setTimeout(() => {
+                document.addEventListener('click', function hideOnOutsideClick(event) {
+                    const uploadButton = document.querySelector(`button[onclick*="toggleUploadModal(${id})"]`);
+                    if (!modal.contains(event.target) && !uploadButton.contains(event.target)) {
+                        modal.classList.remove('show');
+                        document.removeEventListener('click', hideOnOutsideClick);
+                    }
+                }, { once: true });
+            }, 100);
+        }
+    };
+
+    // Handles the inline file upload via Fetch API
+    window.uploadInlineFile = (id) => {
+        const form = document.getElementById(`uploadFormEvaluasi${id}`);
+        if (!form) return;
+
+        const submitBtn = form.querySelector('button[type="button"][onclick*="uploadInlineFile"]');
+        const originalBtnText = submitBtn.innerHTML;
         
-        const form = document.getElementById('uploadForm' + id);
-        const formData = new FormData(form);
-        const url = form.action;
-        
-        // Tampilkan loading
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
         submitBtn.disabled = true;
-        
-        fetch(url, {
+
+        fetch(form.action, {
             method: 'POST',
-            body: formData,
+            body: new FormData(form),
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json'
-            }
+                'Accept': 'application/json',
+            },
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 alert('Dokumen berhasil diupload!');
-                toggleUploadModal(id); // Tutup modal
-                location.reload(); // Refresh halaman untuk update count
+                window.location.reload();
             } else {
-                alert('Gagal: ' + data.message);
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                alert(`Upload Gagal: ${data.message || 'Error tidak diketahui.'}`);
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal mengupload dokumen. Silakan coba lagi.');
-            submitBtn.innerHTML = originalText;
+            console.error('Upload error:', error);
+            alert('Terjadi kesalahan saat mengupload file. Silakan coba lagi.');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = originalBtnText;
             submitBtn.disabled = false;
         });
-    }
+    };
 
-    // Toggle upload modal
-    function toggleUploadModalEvaluasi(id) {
-        const modal = document.getElementById('uploadModal' + id);
-        const allModals = document.querySelectorAll('.upload-inline-modal');
-        
-        // Hide all other modals
-        allModals.forEach(m => {
-            if (m.id !== 'uploadModal' + id) {
-                m.classList.remove('show');
-            }
-        });
-        
-        // Toggle current modal
-        if (modal.classList.contains('show')) {
-            modal.classList.remove('show');
-        } else {
-            modal.classList.add('show');
-        }
-        
-        // Close modal when clicking outside
-        if (modal.classList.contains('show')) {
-            setTimeout(() => {
-                const handleClickOutside = (event) => {
-                    if (!modal.contains(event.target) && !event.target.closest('.btn-upload')) {
-                        modal.classList.remove('show');
-                        document.removeEventListener('click', handleClickOutside);
-                    }
-                };
-                document.addEventListener('click', handleClickOutside);
-            }, 100);
-        }
-    }
+    // --- AJAX MODALS FOR VIEW AND EDIT ---
 
-    // View Penetapan Detail
-    function viewPenetapan(id) {
-        // Cek jika jQuery tersedia
-        if (typeof jQuery === 'undefined') {
-            console.error('jQuery tidak tersedia untuk AJAX');
-            alert('Fitur ini memerlukan jQuery. Silakan refresh halaman.');
-            return;
-        }
-        
-        const url = '{{ route("spmi.penetapan.ajax.detail", ":id") }}'.replace(':id', id);
-        
-        jQuery.ajax({
-            url: url,
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    jQuery('#viewModalBody').html(response.html);
-                    jQuery('#viewModal').modal('show');
-                    
-                    // Re-initialize tooltips di modal
-                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#viewModal [title]'));
-                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
+    // Fetches and displays the detail view in a modal
+    window.viewEvaluasi = (id) => {
+        const url = window.routes.evaluasiDetail.replace(':id', id);
+        const viewModalEl = document.getElementById('viewModal');
+        const viewModalBody = document.getElementById('viewModalBody');
+        if (!viewModalEl || !viewModalBody) return;
+
+        const modal = new bootstrap.Modal(viewModalEl);
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    viewModalBody.innerHTML = data.html;
+                    modal.show();
                 } else {
-                    alert(response.message);
+                    alert(data.message || 'Gagal memuat data.');
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                alert('Gagal memuat data. Silakan coba lagi.');
-            }
-        });
-    }
-    
-    // Edit Penetapan
-    function editPenetapan(id) {
-        // Cek jika jQuery tersedia
-        if (typeof jQuery === 'undefined') {
-            console.error('jQuery tidak tersedia untuk AJAX');
-            alert('Fitur ini memerlukan jQuery. Silakan refresh halaman.');
-            return;
-        }
+            })
+            .catch(error => {
+                console.error('View error:', error);
+                alert('Gagal memuat detail. Silakan coba lagi.');
+            });
+    };
+
+    // Fetches and displays the edit form in a modal
+    window.editEvaluasi = (id) => {
+        const url = window.routes.evaluasiEdit.replace(':id', id);
+        const editModalEl = document.getElementById('editModal');
+        const editModalBody = document.getElementById('editModalBody');
+        const editForm = document.getElementById('editForm');
+        if (!editModalEl || !editModalBody || !editForm) return;
         
-        const url = '{{ route("spmi.penetapan.ajax.edit-form", ":id") }}'.replace(':id', id);
-        
-        jQuery.ajax({
-            url: url,
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    jQuery('#editModalBody').html(response.html);
-                    jQuery('#editForm').attr('action', '{{ route("spmi.penetapan.update", ":id") }}'.replace(':id', id));
-                    jQuery('#editModal').modal('show');
-                    
-                    // Re-initialize tooltips di modal
-                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#editModal [title]'));
-                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
+        const modal = new bootstrap.Modal(editModalEl);
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    editModalBody.innerHTML = data.html;
+                    editForm.action = window.routes.evaluasiUpdate.replace(':id', id);
+                    modal.show();
                 } else {
-                    alert(response.message);
+                    alert(data.message || 'Gagal memuat form.');
                 }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
+            })
+            .catch(error => {
+                console.error('Edit error:', error);
                 alert('Gagal memuat form edit. Silakan coba lagi.');
-            }
+            });
+    };
+    
+    // --- FORM SUBMISSIONS ---
+
+    // Handles the submission for the main edit form
+    const editForm = document.getElementById('editForm');
+    if (editForm) {
+        editForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const formData = new FormData(editForm);
+            
+            fetch(editForm.action, {
+                method: 'POST', // Using POST with _method field
+                body: formData,
+                 headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Data berhasil diperbarui!');
+                    window.location.reload();
+                } else {
+                    alert(`Update Gagal: ${data.message || 'Error tidak diketahui.'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Update error:', error);
+                alert('Terjadi kesalahan saat memperbarui data.');
+            });
         });
     }
-    
-    // Confirm Delete
-    function confirmDelete(button) {
-        if (confirm('Apakah Anda yakin ingin menghapus penetapan ini?')) {
-            button.closest('.delete-form').submit();
-        }
-    }
 
-    // Initialize page
-    (function() {
-        function initPage() {
-            // Cek jika jQuery sudah dimuat
-            if (typeof jQuery === 'undefined') {
-                console.error('jQuery belum dimuat!');
-                setTimeout(initPage, 100);
-                return;
+    // --- GENERAL ---
+
+    // Confirms deletion before submitting the form
+    window.confirmDelete = (button) => {
+        if (confirm('Apakah Anda yakin ingin menghapus item ini?')) {
+            const form = button.closest('form');
+            if(form) {
+                form.submit();
             }
-            
-            console.log('jQuery loaded, version:', jQuery.fn.jquery);
-            
-            // Initialize Bootstrap tooltips
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"], [title]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-            
-            // Handle Edit Form Submission dengan jQuery
-            jQuery('#editForm').submit(function(e) {
-                e.preventDefault();
-                
-                const form = jQuery(this);
-                const url = form.attr('action');
-                const formData = form.serialize();
-                
-                jQuery.ajax({
-                    url: url,
-                    method: 'PUT',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            jQuery('#editModal').modal('hide');
-                            alert('Data berhasil diperbarui!');
-                            location.reload();
-                        } else {
-                            alert('Gagal: ' + response.message);
-                        }
-                    },
-                    error: function(xhr) {
-                        alert('Gagal memperbarui data. Silakan coba lagi.');
-                    }
-                });
-            });
-            
-            // Handle Upload Inline Form Submission dengan jQuery
-            jQuery('body').on('submit', '.upload-inline-form', function(e) {
-                e.preventDefault();
-                
-                const form = jQuery(this);
-                const url = form.attr('action');
-                const formData = new FormData(this);
-                
-                jQuery.ajax({
-                    url: url,
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        if (response.success) {
-                            alert('Dokumen berhasil diupload!');
-                            location.reload();
-                        } else {
-                            alert('Gagal: ' + response.message);
-                        }
-                    },
-                    error: function(xhr) {
-                        alert('Gagal mengupload dokumen. Silakan coba lagi.');
-                    }
-                });
-            });
         }
-        
-        // Tunggu DOM siap
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initPage);
-        } else {
-            initPage();
-        }
-    })();
-</script>
+    };
+
+    // Initialize Bootstrap tooltips on the page
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
