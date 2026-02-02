@@ -1,12 +1,9 @@
 @extends('layouts.main')
 
 @section('title', 'Repository Evaluasi SPMI')
-
-@push('styles')
-<link rel="stylesheet" href="evaluasi.css">
-@endpush
-
+<link rel="stylesheet" href="{{ asset('css/evaluasi.css') }}">
 @section('content')
+
 <div class="container-fluid px-3 px-md-4">
     <!-- Folder Header -->
     <div class="folder-header">
@@ -437,6 +434,4 @@
 </div>
 @endsection
 
-@push('scripts')
-<script src="evaluasi.js"></script>
-@endpush
+<link rel="stylesheet" href="{{ asset('js/evaluasi.js') }}">
