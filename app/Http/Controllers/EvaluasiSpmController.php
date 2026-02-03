@@ -118,7 +118,7 @@ class EvaluasiSpmController extends Controller
             // Generate kode otomatis
             $tipe = $request->tipe_evaluasi;
             $tahun = $request->tahun;
-            $kode = EvaluasiSPMI::generateKode($tipe, $tahun);
+            $kode = EvaluasiSPMI::generateKodeStatic($tipe, $tahun);
             
             // Create evaluasi
             $evaluasi = EvaluasiSPMI::create([
