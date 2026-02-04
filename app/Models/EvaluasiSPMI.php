@@ -34,7 +34,6 @@ class EvaluasiSPMI extends Model
         'diperiksa_oleh',
         'created_by',
         'updated_by',
-        'folder_path',
     ];
     
     protected $casts = [

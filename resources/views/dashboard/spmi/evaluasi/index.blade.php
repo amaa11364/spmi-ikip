@@ -434,4 +434,11 @@
 </div>
 @endsection
 
-<link rel="stylesheet" href="{{ asset('js/evaluasi.js') }}">
+<script>
+    window.routes = {
+        evaluasiDetail: '{{ route("spmi.evaluasi.show", ":id") }}',
+        evaluasiEdit: '{{ route("spmi.evaluasi.edit", ":id") }}',
+        evaluasiUpdate: '{{ route("spmi.evaluasi.update", ":id") }}'
+    };
+</script>
+<script src="{{ asset('js/evaluasi.js') }}"></script>

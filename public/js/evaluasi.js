@@ -31,13 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Handles the inline file upload via Fetch API
-    window.uploadInlineFile = (id) => {
+    window.uploadInlineFile = (id, button) => {
         const form = document.getElementById(`uploadFormEvaluasi${id}`);
         if (!form) return;
 
-        const submitBtn = form.querySelector('button[type="button"][onclick*="uploadInlineFile"]');
+        const submitBtn = button || form.querySelector('button[type="button"][onclick*="uploadInlineFile"]');
         const originalBtnText = submitBtn.innerHTML;
-        
+
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
         submitBtn.disabled = true;
 
@@ -46,10 +46,16 @@ document.addEventListener('DOMContentLoaded', () => {
             body: new FormData(form),
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json',
             },
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('Dokumen berhasil diupload!');
