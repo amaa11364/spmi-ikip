@@ -7,7 +7,6 @@ use App\Models\Dokumen;
 use App\Models\UnitKerja;
 use App\Models\Iku;
 use App\Models\PelaksanaanSPMI;
-use App\Models\EvaluasiSPMI;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -1391,43 +1390,6 @@ class SpmController extends Controller
         return $this->uploadDokumenPenetapan($uploadRequest, $penetapanId);
     }
 
-    // ==================== EXPORT METHODS ====================
-    
-    /**
-     * Export excel untuk penetapan
-     */
-    public function exportExcelPenetapan()
-    {
-        // Implementasi export excel
-        // ...
-    }
-
-    /**
-     * Export pdf untuk penetapan
-     */
-    public function exportPdfPenetapan()
-    {
-        // Implementasi export pdf
-        // ...
-    }
-
-    /**
-     * Export excel untuk pelaksanaan
-     */
-    public function exportExcelPelaksanaan()
-    {
-        // Implementasi export excel
-        // ...
-    }
-
-    /**
-     * Export pdf untuk pelaksanaan
-     */
-    public function exportPdfPelaksanaan()
-    {
-        // Implementasi export pdf
-        // ...
-    }
 
     // ==================== EVALUASI SPMI (CRUD LENGKAP) ====================
 

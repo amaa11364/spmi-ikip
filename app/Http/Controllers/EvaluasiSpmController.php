@@ -69,21 +69,12 @@ class EvaluasiSpmController extends Controller
         
         // Statistics
         $totalEvaluasi = EvaluasiSPMI::count();
-        $evaluasiAktif = EvaluasiSPMI::where('status', 'aktif')->orWhere('status', 'selesai')->count();
+        $evaluasiAktif = EvaluasiSPMI::whereIn('status', ['aktif', 'selesai'])->count();
         $dokumenValid = EvaluasiSPMI::where('status_dokumen', 'valid')->count();
         $dokumenBelumValid = EvaluasiSPMI::where('status_dokumen', 'belum_valid')->count();
         
-        // Kelompokkan untuk tabs
-        $kelompok = [
-            'ami' => EvaluasiSPMI::where('tipe_evaluasi', 'ami')->orderBy('created_at', 'desc')->get(),
-            'edom' => EvaluasiSPMI::where('tipe_evaluasi', 'edom')->orderBy('created_at', 'desc')->get(),
-            'evaluasi_layanan' => EvaluasiSPMI::where('tipe_evaluasi', 'evaluasi_layanan')->orderBy('created_at', 'desc')->get(),
-            'evaluasi_kinerja' => EvaluasiSPMI::where('tipe_evaluasi', 'evaluasi_kinerja')->orderBy('created_at', 'desc')->get(),
-        ];
-        
         return view('dashboard.spmi.evaluasi.index', compact(
             'evaluasi', 
-            'kelompok', 
             'tahunList', 
             'unitKerjaList',
             'totalEvaluasi',
@@ -117,7 +108,7 @@ class EvaluasiSpmController extends Controller
                 'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
                 'periode' => 'nullable|string|max:100',
                 'status' => 'required|in:aktif,nonaktif,selesai,berjalan',
-                'status_dokumen' => 'in:valid,belum_valid,dalam_review',
+                'status_dokumen' => 'nullable|in:valid,belum_valid,dalam_review',
                 'deskripsi' => 'nullable|string',
                 'penanggung_jawab' => 'nullable|string|max:255',
                 'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
@@ -221,7 +212,7 @@ class EvaluasiSpmController extends Controller
                 'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
                 'periode' => 'nullable|string|max:100',
                 'status' => 'required|in:aktif,nonaktif,selesai,berjalan',
-                'status_dokumen' => 'in:valid,belum_valid,dalam_review',
+                'status_dokumen' => 'nullable|in:valid,belum_valid,dalam_review',
                 'deskripsi' => 'nullable|string',
                 'penanggung_jawab' => 'nullable|string|max:255',
                 'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
@@ -455,7 +446,17 @@ class EvaluasiSpmController extends Controller
                 'iku_id' => 'nullable|exists:ikus,id',
             ]);
             
-            $evaluasi->update($request->all());
+            $evaluasi->update([
+                'nama_evaluasi' => $request->nama_evaluasi,
+                'tipe_evaluasi' => $request->tipe_evaluasi,
+                'tahun' => $request->tahun,
+                'status' => $request->status,
+                'deskripsi' => $request->deskripsi,
+                'penanggung_jawab' => $request->penanggung_jawab,
+                'unit_kerja_id' => $request->unit_kerja_id,
+                'iku_id' => $request->iku_id,
+                'tanggal_review' => now(),
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -553,5 +554,57 @@ class EvaluasiSpmController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
         }
+    }
+    
+    // ==================== METHOD ALTERNATIF (evaluasi-full) ====================
+    
+    public function indexEvaluasiFull(Request $request)
+    {
+        return $this->index($request);
+    }
+    
+    public function createEvaluasiFull()
+    {
+        return $this->create();
+    }
+    
+    public function storeEvaluasiFull(Request $request)
+    {
+        return $this->store($request);
+    }
+    
+    public function showEvaluasiFull($id)
+    {
+        return $this->show($id);
+    }
+    
+    public function editEvaluasiFull($id)
+    {
+        return $this->edit($id);
+    }
+    
+    public function updateEvaluasiFull(Request $request, $id)
+    {
+        return $this->update($request, $id);
+    }
+    
+    public function destroyEvaluasiFull($id)
+    {
+        return $this->destroy($id);
+    }
+    
+    public function uploadDokumenEvaluasi(Request $request, $id)
+    {
+        return $this->uploadDokumen($request, $id);
+    }
+    
+    public function getEvaluasiEditForm($id)
+    {
+        return $this->getEditForm($id);
+    }
+    
+    public function updateEvaluasiAjax(Request $request, $id)
+    {
+        return $this->updateAjax($request, $id);
     }
 }

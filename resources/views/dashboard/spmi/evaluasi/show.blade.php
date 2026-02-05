@@ -117,7 +117,7 @@
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
-                <a href="{{ route('spmi.evaluasi-full.index') }}">
+                <a href="{{ route('spmi.evaluasi.index') }}">
                     <i class="fas fa-chart-bar me-1"></i> Repository Evaluasi
                 </a>
             </li>
@@ -143,7 +143,7 @@
                             </div>
                         </div>
                         <div class="btn-group">
-                            <a href="{{ route('spmi.evaluasi-full.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
+                            <a href="{{ route('spmi.evaluasi.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-edit me-1"></i> Edit
                             </a>
                             <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-primary">
@@ -265,7 +265,7 @@
                 </div>
 
                 <!-- Quick Upload Form -->
-                <form action="{{ route('spmi.evaluasi-full.upload', $evaluasi->id) }}" method="POST" enctype="multipart/form-data" class="upload-inline-form" id="quickUploadForm">
+                <form action="{{ route('spmi.evaluasi.upload', $evaluasi->id) }}" method="POST" enctype="multipart/form-data" class="upload-inline-form" id="quickUploadForm">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label">Upload File ke <strong>{{ $evaluasi->nama_evaluasi }}</strong></label>
@@ -432,10 +432,10 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{{ route('spmi.evaluasi-full.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('spmi.evaluasi.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar
                         </a>
-                        <a href="{{ route('spmi.evaluasi-full.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
+                        <a href="{{ route('spmi.evaluasi.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
                             <i class="fas fa-edit me-1"></i> Edit Evaluasi
                         </a>
                         <button class="btn btn-primary" onclick="toggleUploadForm()">
@@ -458,59 +458,71 @@
 @endsection
 
 @push('scripts')
+{{-- Di bagian JavaScript, perbaikan form submission --}}
 <script>
     // Toggle quick upload form
     function toggleUploadForm() {
         const form = document.getElementById('quickUploadForm');
-        form.classList.toggle('show');
-        
-        if (form.classList.contains('show')) {
-            form.scrollIntoView({ behavior: 'smooth' });
+        if (form) {
+            form.classList.toggle('show');
+            
+            if (form.classList.contains('show')) {
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
         }
     }
 
-    // Handle quick upload form submission
-    document.getElementById('quickUploadForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const form = this;
-        const formData = new FormData(form);
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        
-        // Show loading
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mengupload...';
-        submitBtn.disabled = true;
-        
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Dokumen berhasil diupload!');
-                location.reload();
-            } else {
-                alert('Gagal: ' + data.message);
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal mengupload dokumen. Silakan coba lagi.');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        });
-    });
-
-    // Initialize tooltips
+    // Handle quick upload form submission - Diperbaiki
     document.addEventListener('DOMContentLoaded', function() {
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        const quickUploadForm = document.getElementById('quickUploadForm');
+        if (quickUploadForm) {
+            quickUploadForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const form = this;
+                const formData = new FormData(form);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                // Show loading
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mengupload...';
+                submitBtn.disabled = true;
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('Dokumen berhasil diupload!');
+                        location.reload();
+                    } else {
+                        alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal mengupload dokumen. Silakan coba lagi.');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
