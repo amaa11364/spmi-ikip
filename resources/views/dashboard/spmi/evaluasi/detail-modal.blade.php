@@ -1,29 +1,39 @@
 <div class="row">
     <div class="col-md-8">
-        <h4 class="text-primary">{{ $evaluasi->nama_evaluasi }}</h4>
+        <h4 class="text-primary">{{ $evaluasi->nama_komponen }}</h4>
         <div class="d-flex flex-wrap gap-2 mb-3">
             <span class="badge bg-info">{{ $evaluasi->kode_evaluasi }}</span>
             <span class="badge bg-secondary">{{ $evaluasi->tahun }}</span>
-            <span class="badge bg-{{ $evaluasi->status_color }}">
-                {{ $evaluasi->status_label }}
-            </span>
-            <span class="badge bg-{{ $evaluasi->status_dokumen_color }}">
-                Dokumen: {{ $evaluasi->status_dokumen_label }}
-            </span>
-            <span class="badge bg-primary">{{ $allDokumen->count() }} dokumen</span>
+            <span class="badge bg-primary">{{ $evaluasi->periode }}</span>
+            <span class="badge bg-{{ $evaluasi->status_color }}">{{ $evaluasi->status_label }}</span>
+            <span class="badge bg-{{ $evaluasi->status_dokumen_color }}">{{ $evaluasi->status_dokumen_label }}</span>
+            <span class="badge bg-dark">{{ $allDokumen->count() }} dokumen</span>
         </div>
         
-        @if($evaluasi->periode)
-        <div class="mb-3">
-            <h6 class="text-muted mb-2">Periode:</h6>
-            <p class="mb-0">{{ $evaluasi->periode }}</p>
+        @if($evaluasi->deskripsi)
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">Deskripsi:</h6>
+            <p class="mb-0">{{ $evaluasi->deskripsi }}</p>
         </div>
         @endif
         
+        @if($evaluasi->hasil_evaluasi)
         <div class="mb-4">
-            <h6 class="text-muted mb-2">Deskripsi:</h6>
-            <p class="mb-0">{{ $evaluasi->deskripsi ?? 'Tidak ada deskripsi' }}</p>
+            <h6 class="text-muted mb-2">Hasil Evaluasi:</h6>
+            <div class="alert alert-info mb-0">
+                {{ $evaluasi->hasil_evaluasi }}
+            </div>
         </div>
+        @endif
+        
+        @if($evaluasi->rekomendasi)
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">Rekomendasi:</h6>
+            <div class="alert alert-warning mb-0">
+                {{ $evaluasi->rekomendasi }}
+            </div>
+        </div>
+        @endif
         
         <div class="row mb-4">
             <div class="col-md-6">
@@ -38,8 +48,8 @@
                         <strong>Unit Kerja:</strong> {{ $evaluasi->unitKerja->nama ?? 'Tidak ada' }}
                     </li>
                     <li class="mb-2">
-                        <i class="fas fa-chart-line me-2 text-primary"></i>
-                        <strong>IKU:</strong> {{ $evaluasi->iku->nama ?? 'Tidak ada' }}
+                        <i class="fas fa-calendar me-2 text-primary"></i>
+                        <strong>Tanggal Evaluasi:</strong> {{ $evaluasi->tanggal_evaluasi ? $evaluasi->tanggal_evaluasi->format('d/m/Y') : 'Belum ditentukan' }}
                     </li>
                 </ul>
             </div>
@@ -54,10 +64,10 @@
                         <i class="fas fa-calendar-check me-2 text-primary"></i>
                         <strong>Diperbarui:</strong> {{ $evaluasi->updated_at->format('d/m/Y H:i') }}
                     </li>
-                    @if($evaluasi->tanggal_evaluasi)
+                    @if($evaluasi->tanggal_selesai)
                     <li class="mb-2">
-                        <i class="fas fa-calendar-alt me-2 text-primary"></i>
-                        <strong>Tanggal Evaluasi:</strong> {{ $evaluasi->tanggal_evaluasi->format('d/m/Y') }}
+                        <i class="fas fa-check-circle me-2 text-primary"></i>
+                        <strong>Selesai:</strong> {{ $evaluasi->tanggal_selesai->format('d/m/Y') }}
                     </li>
                     @endif
                 </ul>
@@ -113,7 +123,7 @@
                 @endif
             </div>
             <div class="card-footer text-center">
-                <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('upload.spmi-evaluasi', $evaluasi->id) }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-upload me-1"></i> Tambah Dokumen
                 </a>
             </div>

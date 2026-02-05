@@ -1,181 +1,236 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- MODAL AND UPLOAD LOGIC ---
+// Ganti file evaluasi.js dengan ini
 
-    // Toggles the visibility of the inline upload form for a given ID
-    window.toggleUploadModal = (id) => {
-        const modal = document.getElementById(`uploadModalEvaluasi${id}`);
-        if (!modal) return;
-
-        // Hide all other open inline modals
-        document.querySelectorAll('.upload-inline-modal.show').forEach(openModal => {
-            if (openModal.id !== `uploadModalEvaluasi${id}`) {
-                openModal.classList.remove('show');
-            }
-        });
-
-        // Toggle the current modal
-        modal.classList.toggle('show');
-
-        // Add a listener to close the modal if clicking outside
-        if (modal.classList.contains('show')) {
-            setTimeout(() => {
-                document.addEventListener('click', function hideOnOutsideClick(event) {
-                    const uploadButton = document.querySelector(`button[onclick*="toggleUploadModal(${id})"]`);
-                    if (!modal.contains(event.target) && !uploadButton.contains(event.target)) {
-                        modal.classList.remove('show');
-                        document.removeEventListener('click', hideOnOutsideClick);
-                    }
-                }, { once: true });
-            }, 100);
-        }
-    };
-
-    // Handles the inline file upload via Fetch API
-    window.uploadInlineFile = (id, button) => {
-        const form = document.getElementById(`uploadFormEvaluasi${id}`);
-        if (!form) return;
-
-        const submitBtn = button || form.querySelector('button[type="button"][onclick*="uploadInlineFile"]');
-        const originalBtnText = submitBtn.innerHTML;
-
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
-        submitBtn.disabled = true;
-
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-            },
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert('Dokumen berhasil diupload!');
-                window.location.reload();
-            } else {
-                alert(`Upload Gagal: ${data.message || 'Error tidak diketahui.'}`);
-            }
-        })
-        .catch(error => {
-            console.error('Upload error:', error);
-            alert('Terjadi kesalahan saat mengupload file. Silakan coba lagi.');
-        })
-        .finally(() => {
-            submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = false;
-        });
-    };
-
-    // --- AJAX MODALS FOR VIEW AND EDIT ---
-
-    // Fetches and displays the detail view in a modal
-    window.viewEvaluasi = (id) => {
-        const url = window.routes.evaluasiDetail.replace(':id', id);
-        const viewModalEl = document.getElementById('viewModal');
-        const viewModalBody = document.getElementById('viewModalBody');
-        if (!viewModalEl || !viewModalBody) return;
-
-        const modal = new bootstrap.Modal(viewModalEl);
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    viewModalBody.innerHTML = data.html;
-                    modal.show();
-                } else {
-                    alert(data.message || 'Gagal memuat data.');
-                }
-            })
-            .catch(error => {
-                console.error('View error:', error);
-                alert('Gagal memuat detail. Silakan coba lagi.');
-            });
-    };
-
-    // Fetches and displays the edit form in a modal
-    window.editEvaluasi = (id) => {
-        const url = window.routes.evaluasiEdit.replace(':id', id);
-        const editModalEl = document.getElementById('editModal');
-        const editModalBody = document.getElementById('editModalBody');
-        const editForm = document.getElementById('editForm');
-        if (!editModalEl || !editModalBody || !editForm) return;
-        
-        const modal = new bootstrap.Modal(editModalEl);
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    editModalBody.innerHTML = data.html;
-                    editForm.action = window.routes.evaluasiUpdate.replace(':id', id);
-                    modal.show();
-                } else {
-                    alert(data.message || 'Gagal memuat form.');
-                }
-            })
-            .catch(error => {
-                console.error('Edit error:', error);
-                alert('Gagal memuat form edit. Silakan coba lagi.');
-            });
-    };
+// View Evaluasi
+function viewEvaluasi(id) {
+    showLoading(true);
     
-    // --- FORM SUBMISSIONS ---
+    fetch(`/spmi/evaluasi/${id}/detail-ajax`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        // Cek jika response bukan JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Server returned non-JSON response");
+        }
+        return response.json();
+    })
+    .then(data => {
+        showLoading(false);
+        
+        if (data.success) {
+            document.getElementById('viewModalBody').innerHTML = data.html;
+            var viewModal = new bootstrap.Modal(document.getElementById('viewModal'));
+            viewModal.show();
+        } else {
+            showError('Gagal memuat data: ' + (data.message || 'Data tidak ditemukan'));
+        }
+    })
+    .catch(error => {
+        showLoading(false);
+        console.error('View error:', error);
+        showError('Terjadi kesalahan saat memuat data. Silakan coba lagi.');
+    });
+}
 
-    // Handles the submission for the main edit form
-    const editForm = document.getElementById('editForm');
-    if (editForm) {
-        editForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            const formData = new FormData(editForm);
+// Edit Evaluasi
+function editEvaluasi(id) {
+    showLoading(true);
+    
+    fetch(`/spmi/evaluasi/${id}/edit-ajax`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Server returned non-JSON response");
+        }
+        return response.json();
+    })
+    .then(data => {
+        showLoading(false);
+        
+        if (data.success) {
+            document.getElementById('editModalBody').innerHTML = data.html;
+            document.getElementById('editForm').action = `/spmi/evaluasi/${id}`;
             
-            fetch(editForm.action, {
-                method: 'POST', // Using POST with _method field
+            var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
+            
+            // Setup form submission
+            setupEditForm(id);
+        } else {
+            showError('Gagal memuat form edit: ' + (data.message || 'Data tidak ditemukan'));
+        }
+    })
+    .catch(error => {
+        showLoading(false);
+        console.error('Edit error:', error);
+        showError('Terjadi kesalahan saat memuat form. Silakan coba lagi.');
+    });
+}
+
+// Setup form edit submission
+function setupEditForm(id) {
+    const form = document.getElementById('editForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Menyimpan...';
+            submitBtn.disabled = true;
+            
+            fetch(this.action, {
+                method: 'POST',
                 body: formData,
-                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Accept': 'application/json',
-                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
             })
-            .then(response => response.json())
+            .then(response => {
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new TypeError("Server returned non-JSON response");
+                }
+                return response.json();
+            })
             .then(data => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                
                 if (data.success) {
-                    alert('Data berhasil diperbarui!');
-                    window.location.reload();
+                    showSuccess('Data berhasil diperbarui!');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
                 } else {
-                    alert(`Update Gagal: ${data.message || 'Error tidak diketahui.'}`);
+                    showError('Gagal menyimpan: ' + (data.message || 'Terjadi kesalahan'));
                 }
             })
             .catch(error => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
                 console.error('Update error:', error);
-                alert('Terjadi kesalahan saat memperbarui data.');
+                showError('Terjadi kesalahan saat menyimpan. Silakan coba lagi.');
             });
         });
     }
+}
 
-    // --- GENERAL ---
-
-    // Confirms deletion before submitting the form
-    window.confirmDelete = (button) => {
-        if (confirm('Apakah Anda yakin ingin menghapus item ini?')) {
-            const form = button.closest('form');
-            if(form) {
-                form.submit();
-            }
+// Helper functions
+function showLoading(show) {
+    if (show) {
+        // Tambahkan loading overlay jika belum ada
+        if (!document.getElementById('loadingOverlay')) {
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            `;
+            overlay.innerHTML = `
+                <div class="spinner-border text-white" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            `;
+            document.body.appendChild(overlay);
         }
-    };
+    } else {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+}
 
-    // Initialize Bootstrap tooltips on the page
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+function showError(message) {
+    // Gunakan Toast atau Alert Bootstrap
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        // Implement toast notification
+    } else {
+        alert(message);
+    }
+}
+
+function showSuccess(message) {
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        // Implement toast notification
+    } else {
+        alert(message);
+    }
+}
+
+// Upload inline file
+function uploadInlineFile(evaluasiId, button) {
+    const form = document.getElementById(`uploadFormEvaluasi${evaluasiId}`);
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Uploading...';
+    button.disabled = true;
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Server returned non-JSON response");
+        }
+        return response.json();
+    })
+    .then(data => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        
+        if (data.success) {
+            showSuccess('Dokumen berhasil diupload!');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showError('Upload gagal: ' + (data.message || 'Terjadi kesalahan'));
+        }
+    })
+    .catch(error => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        console.error('Upload error:', error);
+        showError('Terjadi kesalahan saat upload.');
     });
-});
+}
+
+// Toggle upload modal
+function toggleUploadModal(evaluasiId) {
+    const modal = document.getElementById(`uploadModalEvaluasi${evaluasiId}`);
+    if (modal) {
+        modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+    }
+}

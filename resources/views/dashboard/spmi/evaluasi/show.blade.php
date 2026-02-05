@@ -118,11 +118,11 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
                 <a href="{{ route('spmi.evaluasi.index') }}">
-                    <i class="fas fa-chart-bar me-1"></i> Repository Evaluasi
+                    <i class="fas fa-chart-line me-1"></i> Evaluasi SPMI
                 </a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
-                Detail: {{ $evaluasi->nama_evaluasi }}
+                Detail: {{ $evaluasi->nama_komponen }}
             </li>
         </ol>
     </nav>
@@ -134,10 +134,11 @@
                 <div class="detail-header">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h4 class="mb-2">{{ $evaluasi->nama_evaluasi }}</h4>
+                            <h4 class="mb-2">{{ $evaluasi->nama_komponen }}</h4>
                             <div class="d-flex flex-wrap gap-2">
                                 <span class="badge bg-info">{{ $evaluasi->kode_evaluasi }}</span>
                                 <span class="badge bg-secondary">{{ $evaluasi->tahun }}</span>
+                                <span class="badge bg-primary">{{ $evaluasi->periode }}</span>
                                 <span class="badge bg-{{ $evaluasi->status_color }}">{{ $evaluasi->status_label }}</span>
                                 <span class="badge bg-{{ $evaluasi->status_dokumen_color }}">{{ $evaluasi->status_dokumen_label }}</span>
                             </div>
@@ -146,7 +147,7 @@
                             <a href="{{ route('spmi.evaluasi.edit', $evaluasi->id) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-edit me-1"></i> Edit
                             </a>
-                            <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-primary">
+                            <a href="{{ route('upload.spmi-evaluasi', $evaluasi->id) }}" class="btn btn-primary">
                                 <i class="fas fa-upload me-1"></i> Upload Dokumen
                             </a>
                         </div>
@@ -158,23 +159,12 @@
                     <div class="col-md-6">
                         <div class="info-group">
                             <div class="info-label">
-                                <i class="fas fa-chart-bar me-2 text-primary"></i> Tipe Evaluasi
+                                <i class="fas fa-chart-line me-2 text-primary"></i> Tipe Evaluasi
                             </div>
                             <div class="info-value">
                                 {{ $evaluasi->tipe_evaluasi_label }}
                             </div>
                         </div>
-                        
-                        @if($evaluasi->periode)
-                        <div class="info-group">
-                            <div class="info-label">
-                                <i class="fas fa-calendar-alt me-2 text-primary"></i> Periode
-                            </div>
-                            <div class="info-value">
-                                {{ $evaluasi->periode }}
-                            </div>
-                        </div>
-                        @endif
                         
                         <div class="info-group">
                             <div class="info-label">
@@ -184,9 +174,7 @@
                                 {{ $evaluasi->penanggung_jawab ?? 'Belum ditentukan' }}
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="col-md-6">
+                        
                         <div class="info-group">
                             <div class="info-label">
                                 <i class="fas fa-building me-2 text-primary"></i> Unit Kerja
@@ -198,6 +186,17 @@
                         
                         <div class="info-group">
                             <div class="info-label">
+                                <i class="fas fa-calendar me-2 text-primary"></i> Tanggal Evaluasi
+                            </div>
+                            <div class="info-value">
+                                {{ $evaluasi->tanggal_evaluasi ? $evaluasi->tanggal_evaluasi->format('d/m/Y') : 'Belum ditentukan' }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <div class="info-label">
                                 <i class="fas fa-chart-line me-2 text-primary"></i> IKU
                             </div>
                             <div class="info-value">
@@ -207,14 +206,51 @@
                         
                         <div class="info-group">
                             <div class="info-label">
-                                <i class="fas fa-calendar me-2 text-primary"></i> Tanggal Evaluasi
+                                <i class="fas fa-calendar-check me-2 text-primary"></i> Tanggal Selesai
                             </div>
                             <div class="info-value">
-                                {{ $evaluasi->tanggal_evaluasi ? $evaluasi->tanggal_evaluasi->format('d/m/Y H:i') : 'Belum dievaluasi' }}
+                                {{ $evaluasi->tanggal_selesai ? $evaluasi->tanggal_selesai->format('d/m/Y') : 'Belum selesai' }}
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <div class="info-label">
+                                <i class="fas fa-search me-2 text-primary"></i> Diperiksa Oleh
+                            </div>
+                            <div class="info-value">
+                                {{ $evaluasi->diperiksa_oleh ?? 'Belum diperiksa' }}
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Hasil Evaluasi -->
+                @if($evaluasi->hasil_evaluasi)
+                <div class="info-group">
+                    <div class="info-label">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i> Hasil Evaluasi
+                    </div>
+                    <div class="info-value">
+                        <div class="alert alert-info mb-0">
+                            {{ $evaluasi->hasil_evaluasi }}
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Rekomendasi -->
+                @if($evaluasi->rekomendasi)
+                <div class="info-group">
+                    <div class="info-label">
+                        <i class="fas fa-lightbulb me-2 text-primary"></i> Rekomendasi
+                    </div>
+                    <div class="info-value">
+                        <div class="alert alert-warning mb-0">
+                            {{ $evaluasi->rekomendasi }}
+                        </div>
+                    </div>
+                </div>
+                @endif
 
                 <!-- Deskripsi -->
                 @if($evaluasi->deskripsi)
@@ -235,7 +271,7 @@
                         <i class="fas fa-sticky-note me-2 text-primary"></i> Catatan Verifikasi
                     </div>
                     <div class="info-value">
-                        <div class="alert alert-info mb-0">
+                        <div class="alert alert-secondary mb-0">
                             {{ $evaluasi->catatan_verifikasi }}
                         </div>
                     </div>
@@ -257,7 +293,7 @@
                             <button class="btn btn-sm btn-outline-primary" onclick="toggleUploadForm()">
                                 <i class="fas fa-paperclip me-1"></i> Upload Cepat
                             </button>
-                            <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-sm btn-primary">
+                            <a href="{{ route('upload.spmi-evaluasi', $evaluasi->id) }}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-upload me-1"></i> Upload Lengkap
                             </a>
                         </div>
@@ -268,13 +304,13 @@
                 <form action="{{ route('spmi.evaluasi.upload', $evaluasi->id) }}" method="POST" enctype="multipart/form-data" class="upload-inline-form" id="quickUploadForm">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label">Upload File ke <strong>{{ $evaluasi->nama_evaluasi }}</strong></label>
+                        <label class="form-label">Upload File ke <strong>{{ $evaluasi->nama_komponen }}</strong></label>
                         <input type="file" class="form-control" name="file_dokumen" required accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
                         <div class="form-text">Maksimal 10MB. Format: PDF, DOC, XLS, PPT, JPG, PNG</div>
                     </div>
                     <div class="row g-2">
                         <div class="col-md-8">
-                            <input type="text" class="form-control" name="keterangan" placeholder="Keterangan (opsional)" value="Dokumen {{ $evaluasi->nama_evaluasi }}">
+                            <input type="text" class="form-control" name="keterangan" placeholder="Keterangan (opsional)" value="Dokumen Evaluasi {{ $evaluasi->nama_komponen }}">
                         </div>
                         <div class="col-md-4">
                             <button type="submit" class="btn btn-primary w-100">
@@ -282,7 +318,7 @@
                             </button>
                         </div>
                     </div>
-                    <input type="hidden" name="jenis_dokumen" value="Evaluasi SPMI">
+                    <input type="hidden" name="jenis_dokumen" value="Laporan Evaluasi">
                     <input type="hidden" name="upload_source" value="quick_form">
                 </form>
 
@@ -333,12 +369,6 @@
                                        class="btn btn-outline-success" title="Download">
                                         <i class="fas fa-download"></i>
                                     </a>
-                                    @if($dokumen->jenis_upload === 'link')
-                                    <a href="{{ $dokumen->file_path }}" 
-                                       class="btn btn-outline-info" title="Buka Link" target="_blank">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </a>
-                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -353,7 +383,7 @@
                             <button class="btn btn-primary" onclick="toggleUploadForm()">
                                 <i class="fas fa-paperclip me-1"></i> Upload Cepat
                             </button>
-                            <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-outline-primary">
+                            <a href="{{ route('upload.spmi-evaluasi', $evaluasi->id) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-upload me-1"></i> Upload Lengkap
                             </a>
                         </div>
@@ -384,22 +414,6 @@
                                 <strong>Diperbarui:</strong> {{ $evaluasi->updated_at->format('d/m/Y H:i') }}
                             </small>
                         </li>
-                        @if($evaluasi->tanggal_review)
-                        <li class="mb-2">
-                            <small class="text-muted">
-                                <i class="fas fa-search me-2"></i>
-                                <strong>Review Terakhir:</strong> {{ $evaluasi->tanggal_review->format('d/m/Y H:i') }}
-                            </small>
-                        </li>
-                        @endif
-                        @if($evaluasi->diperiksa_oleh)
-                        <li class="mb-2">
-                            <small class="text-muted">
-                                <i class="fas fa-user-check me-2"></i>
-                                <strong>Diperiksa oleh:</strong> {{ $evaluasi->diperiksa_oleh }}
-                            </small>
-                        </li>
-                        @endif
                         <li class="mb-2">
                             <small class="text-muted">
                                 <i class="fas fa-folder me-2"></i>
@@ -441,7 +455,7 @@
                         <button class="btn btn-primary" onclick="toggleUploadForm()">
                             <i class="fas fa-paperclip me-1"></i> Upload Dokumen Cepat
                         </button>
-                        <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-success">
+                        <a href="{{ route('upload.spmi-evaluasi', $evaluasi->id) }}" class="btn btn-success">
                             <i class="fas fa-upload me-1"></i> Upload dengan Detail
                         </a>
                         @if(count($allDokumen) > 0)
@@ -452,77 +466,115 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Status Card -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i> Status Evaluasi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            @if($evaluasi->status == 'selesai')
+                                <i class="fas fa-check-circle fa-3x text-success"></i>
+                                <h5 class="mt-2 text-success">Evaluasi Selesai</h5>
+                            @elseif($evaluasi->status == 'proses')
+                                <i class="fas fa-spinner fa-3x text-warning"></i>
+                                <h5 class="mt-2 text-warning">Dalam Proses</h5>
+                            @elseif($evaluasi->status == 'ditunda')
+                                <i class="fas fa-pause-circle fa-3x text-danger"></i>
+                                <h5 class="mt-2 text-danger">Ditunda</h5>
+                            @else
+                                <i class="fas fa-edit fa-3x text-secondary"></i>
+                                <h5 class="mt-2 text-secondary">Draft</h5>
+                            @endif
+                        </div>
+                        
+                        @if($evaluasi->status_dokumen == 'valid')
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Dokumen telah divalidasi
+                            </div>
+                        @elseif($evaluasi->status_dokumen == 'dalam_review')
+                            <div class="alert alert-warning">
+                                <i class="fas fa-search me-1"></i>
+                                Dokumen dalam proses review
+                            </div>
+                        @else
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                Dokumen belum divalidasi
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
-{{-- Di bagian JavaScript, perbaikan form submission --}}
 <script>
     // Toggle quick upload form
     function toggleUploadForm() {
         const form = document.getElementById('quickUploadForm');
-        if (form) {
-            form.classList.toggle('show');
-            
-            if (form.classList.contains('show')) {
-                form.scrollIntoView({ behavior: 'smooth' });
-            }
+        form.classList.toggle('show');
+        
+        if (form.classList.contains('show')) {
+            form.scrollIntoView({ behavior: 'smooth' });
         }
     }
 
-    // Handle quick upload form submission - Diperbaiki
-    document.addEventListener('DOMContentLoaded', function() {
-        const quickUploadForm = document.getElementById('quickUploadForm');
-        if (quickUploadForm) {
-            quickUploadForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const form = this;
-                const formData = new FormData(form);
-                const submitBtn = form.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                
-                // Show loading
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mengupload...';
-                submitBtn.disabled = true;
-                
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok: ' + response.status);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        alert('Dokumen berhasil diupload!');
-                        location.reload();
-                    } else {
-                        alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Gagal mengupload dokumen. Silakan coba lagi.');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-            });
-        }
+    // Handle quick upload form submission
+    document.getElementById('quickUploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const form = this;
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        
+        // Show loading
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Mengupload...';
+        submitBtn.disabled = true;
+        
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Dokumen berhasil diupload!');
+                location.reload();
+            } else {
+                alert('Gagal: ' + data.message);
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal mengupload dokumen. Silakan coba lagi.');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+
+    // Download all documents
+    function downloadAllDokumen() {
+        alert('Fitur download semua dokumen sedang dikembangkan.');
+    }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
