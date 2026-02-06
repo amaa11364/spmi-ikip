@@ -10,7 +10,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DokumenPublikController;
 use App\Http\Controllers\BeritaController;
 use App\Http\Controllers\JadwalController;
-use App\Http\Controllers\SpmController:
+use App\Http\Controllers\SpmController;
 use App\Http\Controllers\PeningkatanController;
 use App\Http\Controllers\EvaluasiSpmController;
 use App\Http\Controllers\PengendalianSpmController;
