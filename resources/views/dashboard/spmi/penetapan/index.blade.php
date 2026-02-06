@@ -152,6 +152,7 @@
     .btn-edit { color: #ffc107; }
     .btn-upload { color: #28a745; }
     .btn-delete { color: #dc3545; }
+    .btn-dokumen { color: #6f42c1; }
     
     /* Upload Inline Modal */
     .upload-inline-modal {
@@ -501,6 +502,11 @@
                             <!-- Action Column -->
                             <td>
                                 <div class="action-buttons position-relative">
+                                    <!-- Dokumen Button (BARU) -->
+                                    <a href="{{ route('spmi.penetapan.dokumen-terkait', $item->id) }}" class="btn-action btn-dokumen" title="Lihat Dokumen">
+                                        <i class="fas fa-file-alt"></i>
+                                    </a>
+                                    
                                     <!-- View Button -->
                                     <button class="btn-action btn-view" title="Lihat Detail" onclick="viewPenetapan({{ $item->id }})">
                                         <i class="fas fa-eye"></i>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PenetapanSPM extends Model
 {
@@ -98,7 +99,7 @@ class PenetapanSPM extends Model
      */
     public function dokumen()
     {
-        return $this->belongsTo(Dokumen::class);
+        return $this->belongsTo(Dokumen::class, 'dokumen_id');
     }
 
     /**

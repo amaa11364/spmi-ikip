@@ -88,11 +88,13 @@ Route::middleware(['auth'])->group(function () {
             // ===== MAIN CRUD ROUTES =====
             Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
             Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
+            Route::get('/{id}/dokumen-terkait', [SpmController::class, 'dokumenTerkait'])->name('dokumen-terkait');
             Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
             Route::get('/{id}', [SpmController::class, 'showPenetapan'])->name('show');
             Route::get('/{id}/edit', [SpmController::class, 'editPenetapan'])->name('edit');
             Route::put('/{id}', [SpmController::class, 'updatePenetapan'])->name('update');
             Route::delete('/{id}', [SpmController::class, 'destroyPenetapan'])->name('destroy');
+            
             
             // Restore soft deleted
             Route::post('/{id}/restore', [SpmController::class, 'restorePenetapan'])->name('restore');
@@ -116,6 +118,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{id}/ajax-update', [SpmController::class, 'updatePenetapanAjax'])->name('ajax.update');
             Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenListPenetapan'])->name('ajax.dokumen-list');
             Route::post('/bulk-action', [SpmController::class, 'bulkActionPenetapan'])->name('bulk-action');
+            Route::get('/{id}/dokumen-detail', [SpmController::class, 'dokumenDetailAjax'])->name('ajax.dokumen-detail');
         });
         
         // ===== PELAKSANAAN SPMI - CRUD LENGKAP =====
