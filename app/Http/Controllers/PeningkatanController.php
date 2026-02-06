@@ -67,7 +67,7 @@ class PeningkatanController extends Controller
         $tahunList = PeningkatanSPMI::select('tahun')->distinct()->orderBy('tahun', 'desc')->get();
         $unitKerjaList = UnitKerja::where('status', true)->get();
         
-        // Statistics
+        // Statistics - FIXED VARIABLE NAMES
         $totalPeningkatan = PeningkatanSPMI::count();
         $peningkatanAktif = PeningkatanSPMI::whereIn('status', ['disetujui', 'berjalan'])->count();
         $dokumenValid = PeningkatanSPMI::where('status_dokumen', 'valid')->count();
@@ -995,6 +995,49 @@ class PeningkatanController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil data export: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get evaluation summary (khusus untuk peningkatan)
+     */
+    public function getEvaluationSummary()
+    {
+        try {
+            $totalProgram = PeningkatanSPMI::count();
+            $programWithEvaluation = PeningkatanSPMI::whereNotNull('catatan_evaluasi')->count();
+            $programWithoutEvaluation = $totalProgram - $programWithEvaluation;
+            
+            $averageProgress = PeningkatanSPMI::avg('progress') ?? 0;
+            
+            $statusDistribution = PeningkatanSPMI::select('status', DB::raw('count(*) as count'))
+                ->groupBy('status')
+                ->get();
+            
+            $progressDistribution = [
+                '0-25' => PeningkatanSPMI::whereBetween('progress', [0, 25])->count(),
+                '26-50' => PeningkatanSPMI::whereBetween('progress', [26, 50])->count(),
+                '51-75' => PeningkatanSPMI::whereBetween('progress', [51, 75])->count(),
+                '76-100' => PeningkatanSPMI::whereBetween('progress', [76, 100])->count(),
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'evaluation_summary' => [
+                    'total_program' => $totalProgram,
+                    'program_with_evaluation' => $programWithEvaluation,
+                    'program_without_evaluation' => $programWithoutEvaluation,
+                    'average_progress' => round($averageProgress, 1),
+                    'status_distribution' => $statusDistribution,
+                    'progress_distribution' => $progressDistribution,
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil summary evaluasi: ' . $e->getMessage()
             ], 500);
         }
     }
