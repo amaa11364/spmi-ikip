@@ -177,13 +177,12 @@ Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
     
     // Export routes
     Route::get('/export/excel', [EvaluasiSpmController::class, 'exportExcelEvaluasi'])->name('export.excel');
-    
-    // AJAX endpoints
-    Route::get('/{id}/detail', [EvaluasiSpmController::class, 'getEvaluasiData'])->name('ajax.detail');
-    Route::get('/{id}/edit-form', [EvaluasiSpmController::class, 'getEditFormEvaluasi'])->name('ajax.edit-form');
-    Route::put('/{id}/ajax-update', [EvaluasiSpmController::class, 'updateEvaluasiAjax'])->name('ajax.update');
-    Route::get('/{id}/dokumen-list', [EvaluasiSpmController::class, 'getDokumenListEvaluasi'])->name('ajax.dokumen-list');
-    Route::post('/bulk-action', [EvaluasiSpmController::class, 'bulkActionEvaluasi'])->name('bulk-action');
+    // AJAX endpoints untuk evaluasi
+Route::get('/{id}/detail', [EvaluasiSpmController::class, 'getEvaluasiData'])->name('ajax.detail');
+Route::get('/{id}/edit-form', [EvaluasiSpmController::class, 'getEditFormEvaluasi'])->name('ajax.edit-form');
+Route::put('/{id}/ajax-update', [EvaluasiSpmController::class, 'updateEvaluasiAjax'])->name('ajax.update');
+Route::get('/{id}/dokumen-list', [EvaluasiSpmController::class, 'getDokumenListEvaluasi'])->name('ajax.dokumen-list');
+Route::get('/export/excel', [EvaluasiSpmController::class, 'exportExcelEvaluasi'])->name('export.excel');
 });
         
         // ===== PENINGKATAN SPMI - CRUD LENGKAP =====
