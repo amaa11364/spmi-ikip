@@ -10,7 +10,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\DokumenPublikController;
 use App\Http\Controllers\BeritaController;
 use App\Http\Controllers\JadwalController;
-use App\Http\Controllers\SpmController;
+use App\Http\Controllers\SpmController:
+use App\Http\Controllers\PeningkatanController;
 use App\Http\Controllers\EvaluasiSpmController;
 use App\Http\Controllers\PengendalianSpmController;
 
@@ -185,6 +186,52 @@ Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
     Route::post('/bulk-action', [EvaluasiSpmController::class, 'bulkActionEvaluasi'])->name('bulk-action');
 });
         
+        // ===== PENINGKATAN SPMI - CRUD LENGKAP =====
+Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
+    // ===== MAIN CRUD ROUTES =====
+    Route::get('/', [PeningkatanController::class, 'index'])->name('index');
+    Route::get('/create', [PeningkatanController::class, 'create'])->name('create');
+    Route::post('/', [PeningkatanController::class, 'store'])->name('store');
+    Route::get('/{id}', [PeningkatanController::class, 'show'])->name('show');
+    Route::get('/{id}/edit', [PeningkatanController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [PeningkatanController::class, 'update'])->name('update');
+    Route::delete('/{id}', [PeningkatanController::class, 'destroy'])->name('destroy');
+    
+    // Restore soft deleted
+    Route::post('/{id}/restore', [PeningkatanController::class, 'restore'])->name('restore');
+    
+    // Document management
+    Route::post('/{id}/upload', [PeningkatanController::class, 'uploadDokumen'])->name('upload');
+    Route::get('/{id}/download', [PeningkatanController::class, 'downloadDokumen'])->name('download');
+    Route::get('/{id}/preview', [PeningkatanController::class, 'previewDokumen'])->name('preview');
+    Route::delete('/{id}/dokumen', [PeningkatanController::class, 'hapusDokumen'])->name('dokumen.hapus');
+    
+    // Status management
+    Route::put('/{id}/status-dokumen', [PeningkatanController::class, 'updateStatusDokumen'])->name('status.update');
+    
+    // Bulk operations
+    Route::put('/bulk/progress', [PeningkatanController::class, 'updateProgressBulk'])->name('bulk.progress');
+    
+    // AJAX endpoints
+    Route::get('/{id}/detail', [PeningkatanController::class, 'getPeningkatanData'])->name('ajax.detail');
+    Route::get('/{id}/edit-form', [PeningkatanController::class, 'getEditForm'])->name('ajax.edit-form');
+    Route::put('/{id}/ajax-update', [PeningkatanController::class, 'updateAjax'])->name('ajax.update');
+    Route::get('/{id}/dokumen-list', [PeningkatanController::class, 'getDokumenList'])->name('ajax.dokumen-list');
+    Route::get('/{id}/sync-dokumen', [PeningkatanController::class, 'syncDokumenRelationships'])->name('ajax.sync-dokumen');
+    Route::get('/{id}/export-data', [PeningkatanController::class, 'getExportData'])->name('ajax.export-data');
+    
+    // Statistics & reports
+    Route::get('/statistics/data', [PeningkatanController::class, 'getStatistics'])->name('statistics');
+    Route::get('/dashboard/summary', [PeningkatanController::class, 'getDashboardSummary'])->name('dashboard.summary');
+    Route::get('/tahun/list', [PeningkatanController::class, 'getTahunList'])->name('tahun.list');
+    Route::get('/status/{status}', [PeningkatanController::class, 'getByStatus'])->name('by.status');
+    Route::get('/progress/filter', [PeningkatanController::class, 'getByProgress'])->name('by.progress');
+    
+    // Export
+    Route::get('/export/excel', [PeningkatanController::class, 'exportExcel'])->name('export.excel');
+    Route::get('/export/pdf', [PeningkatanController::class, 'exportPdf'])->name('export.pdf');
+});
+
        // ===== PENGENDALIAN SPMI - CONTROLLER TERPISAH =====
 Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
     // ===== MAIN CRUD ROUTES =====
@@ -218,6 +265,7 @@ Route::get('/spmi/api/pengendalian/statistics', [PengendalianSpmController::clas
         Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
             Route::get('/', [SpmController::class, 'indexPeningkatan'])->name('index');
         });
+
         
         // ===== AKREDITASI =====
         Route::prefix('akreditasi')->name('akreditasi.')->group(function () {
