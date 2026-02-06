@@ -181,15 +181,15 @@ Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
     // Export routes
     Route::get('/export/excel', [EvaluasiSpmController::class, 'exportExcelEvaluasi'])->name('export.excel');
     // AJAX endpoints untuk evaluasi
-Route::get('/{id}/detail', [EvaluasiSpmController::class, 'getEvaluasiData'])->name('ajax.detail');
-Route::get('/{id}/edit-form', [EvaluasiSpmController::class, 'getEditFormEvaluasi'])->name('ajax.edit-form');
-Route::put('/{id}/ajax-update', [EvaluasiSpmController::class, 'updateEvaluasiAjax'])->name('ajax.update');
-Route::get('/{id}/dokumen-list', [EvaluasiSpmController::class, 'getDokumenListEvaluasi'])->name('ajax.dokumen-list');
-Route::get('/export/excel', [EvaluasiSpmController::class, 'exportExcelEvaluasi'])->name('export.excel');
-});
+    Route::get('/{id}/detail', [EvaluasiSpmController::class, 'getEvaluasiData'])->name('ajax.detail');
+    Route::get('/{id}/edit-form', [EvaluasiSpmController::class, 'getEditFormEvaluasi'])->name('ajax.edit-form');
+    Route::put('/{id}/ajax-update', [EvaluasiSpmController::class, 'updateEvaluasiAjax'])->name('ajax.update');
+    Route::get('/{id}/dokumen-list', [EvaluasiSpmController::class, 'getDokumenListEvaluasi'])->name('ajax.dokumen-list');
+    Route::get('/export/excel', [EvaluasiSpmController::class, 'exportExcelEvaluasi'])->name('export.excel');
+    });
         
         // ===== PENINGKATAN SPMI - CRUD LENGKAP =====
-Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
+    Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
     // ===== MAIN CRUD ROUTES =====
     Route::get('/', [PeningkatanController::class, 'index'])->name('index');
     Route::get('/create', [PeningkatanController::class, 'create'])->name('create');
@@ -235,7 +235,7 @@ Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
 });
 
        // ===== PENGENDALIAN SPMI - CONTROLLER TERPISAH =====
-Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
+    Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
     // ===== MAIN CRUD ROUTES =====
     Route::get('/', [PengendalianSpmController::class, 'index'])->name('index');
     Route::get('/create', [PengendalianSpmController::class, 'create'])->name('create');
@@ -261,13 +261,8 @@ Route::prefix('pengendalian')->name('pengendalian.')->group(function () {
     Route::put('/{id}/ajax-update', [PengendalianSpmController::class, 'updateAjax'])->name('ajax.update');
 });
 
-// API Endpoint untuk statistics
-Route::get('/spmi/api/pengendalian/statistics', [PengendalianSpmController::class, 'getStatistics'])->name('spmi.api.pengendalian.statistics');
-        // ===== PENINGKATAN =====
-        Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
-            Route::get('/', [SpmController::class, 'indexPeningkatan'])->name('index');
-        });
-
+    // API Endpoint untuk statistics
+    Route::get('/spmi/api/pengendalian/statistics', [PengendalianSpmController::class, 'getStatistics'])->name('spmi.api.pengendalian.statistics');
         
         // ===== AKREDITASI =====
         Route::prefix('akreditasi')->name('akreditasi.')->group(function () {
