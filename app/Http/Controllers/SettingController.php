@@ -14,12 +14,12 @@ class SettingController extends Controller
     public function indexIku()
     {
         $ikus = Iku::orderBy('kode')->get();
-        return view('settings.iku-index', compact('ikus'));
+        return view('admin.settings.iku-index', compact('ikus'));
     }
 
     public function createIku()
     {
-        return view('settings.iku-form');
+        return view('admin.settings.iku-form');
     }
 
     public function storeIku(Request $request)
@@ -48,7 +48,7 @@ class SettingController extends Controller
     public function editIku($id)
     {
         $iku = Iku::findOrFail($id);
-        return view('settings.iku-form', compact('iku'));
+        return view('admin.settings.iku-form', compact('iku'));
     }
 
     public function updateIku(Request $request, $id)
@@ -68,7 +68,7 @@ class SettingController extends Controller
                 'status' => $request->has('status'),
             ]);
 
-            return redirect()->route('settings.iku.index')
+            return redirect()->route('admin.settings.iku.index')
                 ->with('success', 'IKU berhasil diperbarui!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memperbarui IKU: ' . $e->getMessage());
@@ -89,7 +89,7 @@ class SettingController extends Controller
             
             $iku->delete();
 
-            return redirect()->route('settings.iku.index')
+            return redirect()->route('admin.settings.iku.index')
                 ->with('success', 'IKU berhasil dihapus!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus IKU: ' . $e->getMessage());

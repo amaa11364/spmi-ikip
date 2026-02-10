@@ -15,7 +15,7 @@
                     {{ isset($iku) ? 'Perbarui data IKU' : 'Tambahkan IKU baru' }}
                 </p>
             </div>
-            <a href="{{ route('settings.iku.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('admin.settings.iku.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Kembali
             </a>
         </div>
@@ -26,7 +26,7 @@
     <div class="col-12 col-lg-8">
         <div class="card">
             <div class="card-body">
-                <form action="{{ isset($iku) ? route('settings.iku.update', $iku->id) : route('settings.iku.store') }}" method="POST">
+                <form action="{{ isset($iku) ? route('admin.settings.iku.update', $iku->id) : route('admin.settings.iku.store') }}" method="POST">
                     @csrf
                     @if(isset($iku))
                         @method('PUT')
@@ -74,7 +74,7 @@
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('settings.iku.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('admin.settings.iku.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-2"></i>Batal
                         </a>
                         <button type="submit" class="btn btn-primary">

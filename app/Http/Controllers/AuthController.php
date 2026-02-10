@@ -12,26 +12,45 @@ class AuthController extends Controller
         return view('auth.masuk');
     }
 
-    public function masuk(Request $request)
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+   public function masuk(Request $request)
+{
+    $credentials = $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            
-            // Redirect ke URL yang diminta atau default ke dashboard
-            $redirectTo = $request->input('redirect_to') ?: route('dashboard');
-            
-            return redirect($redirectTo)->with('success', 'Login berhasil!');
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        
+        // Redirect berdasarkan role
+        $user = Auth::user();
+        
+        if (!$user->is_active) {
+            Auth::logout();
+            return back()->withErrors([
+                'email' => 'Akun Anda tidak aktif. Hubungi administrator.',
+            ]);
         }
-
-        return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ])->withInput();
+        
+        $redirectTo = match($user->role) {
+            'admin' => route('admin.dashboard'),
+            'verifikator' => route('verifikator.dashboard'),
+            'user' => route('user.dashboard'),
+            default => route('landing.page'),
+        };
+        
+        // Prioritaskan redirect_to dari input jika ada
+        if ($request->input('redirect_to')) {
+            $redirectTo = $request->input('redirect_to');
+        }
+        
+        return redirect($redirectTo)->with('success', 'Login berhasil!');
     }
+
+    return back()->withErrors([
+        'email' => 'Email atau password salah.',
+    ])->withInput();
+}
 
     public function logout(Request $request)
     {

@@ -17,6 +17,9 @@ class User extends Authenticatable
         'phone',
         'role',
         'avatar',
+        'program_studi_id',
+        'permissions',
+        'is_active'
     ];
 
     protected $hidden = [
@@ -26,6 +29,7 @@ class User extends Authenticatable
 
     protected $attributes = [
         'role' => 'user',
+        'is_active' => true,
     ];
 
     protected function casts(): array
@@ -33,25 +37,107 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
+            'is_active' => 'boolean',
         ];
     }
 
-    /**
-     * Get the URL for the user's avatar.
-     */
+    // === RELATIONSHIPS ===
+    public function unitKerja()
+    {
+        return $this->belongsTo(UnitKerja::class);
+    }
+
+    public function dokumens()
+    {
+        return $this->hasMany(Dokumen::class, 'uploaded_by');
+    }
+
+    // === ROLE CHECK METHODS ===
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isVerifikator()
+    {
+        return $this->role === 'Verifikator';
+    }
+
+    public function isUser()
+    {
+        return $this->role === 'user';
+    }
+
+    public function hasRole($role)
+    {
+        return $this->role === $role;
+    }
+
+    public function hasAnyRole(array $roles)
+    {
+        return in_array($this->role, $roles);
+    }
+
+    // === PERMISSION METHODS ===
+    public function hasPermission($permission)
+    {
+        if ($this->isAdmin()) {
+            return true; // Admin punya semua permission
+        }
+
+        $permissions = $this->permissions ?? [];
+        return in_array($permission, $permissions);
+    }
+
+    public function assignPermission($permission)
+    {
+        $permissions = $this->permissions ?? [];
+        if (!in_array($permission, $permissions)) {
+            $permissions[] = $permission;
+            $this->permissions = $permissions;
+            $this->save();
+        }
+        return $this;
+    }
+
+    public function revokePermission($permission)
+    {
+        $permissions = $this->permissions ?? [];
+        $key = array_search($permission, $permissions);
+        if ($key !== false) {
+            unset($permissions[$key]);
+            $this->permissions = array_values($permissions);
+            $this->save();
+        }
+        return $this;
+    }
+
+    // === SCOPE METHODS ===
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    public function scopeByUnitKerja($query, $unitKerjaId)
+    {
+        return $query->where('unit_kerja_id', $unitKerjaId);
+    }
+
+    // === OTHER METHODS ===
     public function getAvatarUrl()
     {
         if ($this->avatar) {
-            // Pastikan menggunakan asset() untuk URL public
             return asset('storage/avatars/' . $this->avatar);
         }
-        
         return null;
     }
 
-    /**
-     * Get the user's initials for avatar placeholder
-     */
     public function getInitials()
     {
         $name = trim($this->name);
@@ -71,11 +157,21 @@ class User extends Authenticatable
         return substr($initials, 0, 2) ?: 'US';
     }
 
-    /**
-     * Accessor untuk avatar URL (jika ingin menggunakan sebagai attribute)
-     */
+    // Accessor untuk avatar URL
     public function getAvatarUrlAttribute()
     {
         return $this->getAvatarUrl();
+    }
+
+    // Get role label
+    public function getRoleLabelAttribute()
+    {
+        $labels = [
+            'admin' => 'Administrator',
+            'Verifikator' => 'Verifikator',
+            'user' => 'Pengguna'
+        ];
+        
+        return $labels[$this->role] ?? $this->role;
     }
 }

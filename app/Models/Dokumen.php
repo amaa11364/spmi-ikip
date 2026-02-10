@@ -10,21 +10,12 @@ class Dokumen extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'dokumens';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'unit_kerja_id',
         'iku_id',
+        'prodi_id', // TAMBAH INI
         'jenis_dokumen',
         'nama_dokumen',
         'file_path',
@@ -35,27 +26,22 @@ class Dokumen extends Model
         'uploaded_by',
         'is_public',
         'tahapan',
+        'status', // TAMBAH INI
+        'verified_by', // TAMBAH INI
+        'verified_at', // TAMBAH INI
+        'rejection_reason', // TAMBAH INI
         'metadata'
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'metadata' => 'array',
         'is_public' => 'boolean',
         'file_size' => 'integer',
+        'verified_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var array<int, string>
-     */
     protected $appends = [
         'file_size_formatted',
         'download_url',
@@ -63,47 +49,42 @@ class Dokumen extends Model
         'file_icon',
         'tahapan_label',
         'jenis_upload_label',
+        'status_label', // TAMBAH INI
+        'status_color', // TAMBAH INI
+        'verification_badge', // TAMBAH INI
     ];
 
-    /**
-     * RELATIONSHIPS
-     */
-
-    /**
-     * Get the unit kerja that owns the Dokumen
-     */
+    // ============= RELATIONSHIPS =============
     public function unitKerja()
     {
         return $this->belongsTo(UnitKerja::class);
     }
 
-    /**
-     * Get the iku that owns the Dokumen
-     */
+    public function prodi()
+    {
+        return $this->belongsTo(Prodi::class);
+    }
+
     public function iku()
     {
         return $this->belongsTo(Iku::class);
     }
 
-    /**
-     * Get the user that uploaded the Dokumen
-     */
     public function uploader()
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
-    /**
-     * Get the PenetapanSPM associated with this document (through dokumen_id)
-     */
+    public function verifier()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
     public function penetapanSpm()
     {
         return $this->belongsTo(PenetapanSPM::class, 'dokumen_id');
     }
 
-    /**
-     * Get related PenetapanSPM through metadata
-     */
     public function relatedPenetapan()
     {
         if ($this->metadata && isset($this->metadata['penetapan_id'])) {
@@ -112,13 +93,7 @@ class Dokumen extends Model
         return null;
     }
 
-    /**
-     * ACCESSORS
-     */
-
-    /**
-     * Get formatted file size
-     */
+    // ============= ACCESSORS =============
     protected function fileSizeFormatted(): Attribute
     {
         return Attribute::make(
@@ -138,9 +113,6 @@ class Dokumen extends Model
         );
     }
 
-    /**
-     * Get download URL
-     */
     protected function downloadUrl(): Attribute
     {
         return Attribute::make(
@@ -148,15 +120,11 @@ class Dokumen extends Model
                 if ($this->jenis_upload === 'link') {
                     return $this->file_path;
                 }
-                
                 return route('dokumen-saya.download', $this->id);
             }
         );
     }
 
-    /**
-     * Get preview URL (only for PDF files)
-     */
     protected function previewUrl(): Attribute
     {
         return Attribute::make(
@@ -164,15 +132,11 @@ class Dokumen extends Model
                 if ($this->jenis_upload === 'link' || $this->file_extension !== 'pdf') {
                     return null;
                 }
-                
                 return route('dokumen-saya.preview', $this->id);
             }
         );
     }
 
-    /**
-     * Get file icon based on extension
-     */
     protected function fileIcon(): Attribute
     {
         return Attribute::make(
@@ -197,9 +161,6 @@ class Dokumen extends Model
         );
     }
 
-    /**
-     * Get tahapan label
-     */
     protected function tahapanLabel(): Attribute
     {
         return Attribute::make(
@@ -211,15 +172,11 @@ class Dokumen extends Model
                     'pengendalian' => 'Pengendalian SPMI',
                     'peningkatan' => 'Peningkatan SPMI',
                 ];
-                
                 return $labels[$this->tahapan] ?? $this->tahapan ?? 'Umum';
             }
         );
     }
 
-    /**
-     * Get jenis upload label
-     */
     protected function jenisUploadLabel(): Attribute
     {
         return Attribute::make(
@@ -229,9 +186,48 @@ class Dokumen extends Model
         );
     }
 
-    /**
-     * Get penetapan data from metadata
-     */
+    // ============= STATUS RELATED ACCESSORS =============
+    protected function statusLabel(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return match($this->status) {
+                    'approved' => 'Terverifikasi',
+                    'rejected' => 'Ditolak',
+                    default => 'Menunggu Verifikasi',
+                };
+            }
+        );
+    }
+
+    protected function statusColor(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return match($this->status) {
+                    'approved' => 'success',
+                    'rejected' => 'danger',
+                    default => 'warning',
+                };
+            }
+        );
+    }
+
+    protected function verificationBadge(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $badges = [
+                    'approved' => '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Terverifikasi</span>',
+                    'rejected' => '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Ditolak</span>',
+                    'pending' => '<span class="badge bg-warning"><i class="fas fa-clock me-1"></i>Menunggu</span>',
+                ];
+                return $badges[$this->status] ?? '';
+            }
+        );
+    }
+
+    // ============= HELPER METHODS =============
     public function getPenetapanAttribute()
     {
         if ($this->metadata && isset($this->metadata['penetapan_id'])) {
@@ -240,39 +236,45 @@ class Dokumen extends Model
         return null;
     }
 
-    /**
-     * Get is PDF attribute
-     */
     public function getIsPdfAttribute()
     {
         return strtolower($this->file_extension) === 'pdf';
     }
 
-    /**
-     * Get is image attribute
-     */
     public function getIsImageAttribute()
     {
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
         return in_array(strtolower($this->file_extension), $imageExtensions);
     }
 
-    /**
-     * Get is document attribute (Word, Excel, PowerPoint)
-     */
     public function getIsDocumentAttribute()
     {
         $docExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
         return in_array(strtolower($this->file_extension), $docExtensions);
     }
 
-    /**
-     * SCOPES
-     */
+    public function isVerified()
+    {
+        return $this->status === 'approved';
+    }
 
-    /**
-     * Scope a query to only include my documents.
-     */
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isRejected()
+    {
+        return $this->status === 'rejected';
+    }
+
+    public function canBeVerifiedBy(User $user)
+    {
+        // Admin dan verifikator bisa verifikasi
+        return $user->hasAnyRole(['admin', 'verifikator']);
+    }
+
+    // ============= SCOPES =============
     public function scopeMyDocuments($query)
     {
         if (auth()->check()) {
@@ -281,17 +283,34 @@ class Dokumen extends Model
         return $query;
     }
 
-    /**
-     * Scope a query to only include public documents.
-     */
     public function scopePublic($query)
     {
         return $query->where('is_public', true);
     }
 
-    /**
-     * Scope a query to only include documents by tahapan.
-     */
+    public function scopeByStatus($query, $status)
+    {
+        if ($status) {
+            return $query->where('status', $status);
+        }
+        return $query;
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
+    }
+
     public function scopeByTahapan($query, $tahapan)
     {
         if ($tahapan) {
@@ -300,17 +319,11 @@ class Dokumen extends Model
         return $query;
     }
 
-    /**
-     * Scope a query to only include documents by penetapan.
-     */
     public function scopeByPenetapan($query, $penetapanId)
     {
         return $query->where('metadata->penetapan_id', $penetapanId);
     }
 
-    /**
-     * Scope a query to only include documents by unit kerja.
-     */
     public function scopeByUnitKerja($query, $unitKerjaId)
     {
         if ($unitKerjaId) {
@@ -319,9 +332,14 @@ class Dokumen extends Model
         return $query;
     }
 
-    /**
-     * Scope a query to only include documents by IKU.
-     */
+    public function scopeByProdi($query, $prodiId)
+    {
+        if ($prodiId) {
+            return $query->where('prodi_id', $prodiId);
+        }
+        return $query;
+    }
+
     public function scopeByIku($query, $ikuId)
     {
         if ($ikuId) {
@@ -330,9 +348,6 @@ class Dokumen extends Model
         return $query;
     }
 
-    /**
-     * Scope a query to only include documents by jenis upload.
-     */
     public function scopeByJenisUpload($query, $jenisUpload)
     {
         if ($jenisUpload) {
@@ -341,9 +356,6 @@ class Dokumen extends Model
         return $query;
     }
 
-    /**
-     * Scope a query to search in multiple columns.
-     */
     public function scopeSearch($query, $search)
     {
         if ($search) {
@@ -356,9 +368,6 @@ class Dokumen extends Model
         return $query;
     }
 
-    /**
-     * Scope a query to filter by date range.
-     */
     public function scopeDateRange($query, $startDate, $endDate)
     {
         if ($startDate) {
@@ -370,150 +379,76 @@ class Dokumen extends Model
         return $query;
     }
 
-    /**
-     * HELPER METHODS
-     */
-
-    /**
-     * Get all documents related to a penetapan
-     */
-    public static function getByPenetapanId($penetapanId)
+    // ============= VERIFICATION METHODS =============
+    public function approve(User $verifier)
     {
-        return self::where('metadata->penetapan_id', $penetapanId)
-                  ->orWhere(function ($query) use ($penetapanId) {
-                      $query->whereHas('penetapanSpm', function ($q) use ($penetapanId) {
-                          $q->where('id', $penetapanId);
-                      });
-                  })
-                  ->orderBy('created_at', 'desc')
-                  ->get();
-    }
-
-    /**
-     * Get documents grouped by tahapan
-     */
-    public static function getGroupedByTahapan()
-    {
-        return self::select('tahapan', \DB::raw('count(*) as total'))
-                  ->whereNotNull('tahapan')
-                  ->groupBy('tahapan')
-                  ->orderBy('tahapan')
-                  ->get()
-                  ->pluck('total', 'tahapan')
-                  ->toArray();
-    }
-
-    /**
-     * Get documents grouped by unit kerja
-     */
-    public static function getGroupedByUnitKerja()
-    {
-        return self::select('unit_kerja_id', \DB::raw('count(*) as total'))
-                  ->whereNotNull('unit_kerja_id')
-                  ->groupBy('unit_kerja_id')
-                  ->orderBy('total', 'desc')
-                  ->with('unitKerja')
-                  ->get();
-    }
-
-    /**
-     * Get documents grouped by file extension
-     */
-    public static function getGroupedByExtension()
-    {
-        return self::select('file_extension', \DB::raw('count(*) as total'))
-                  ->where('jenis_upload', 'file')
-                  ->whereNotNull('file_extension')
-                  ->groupBy('file_extension')
-                  ->orderBy('total', 'desc')
-                  ->get()
-                  ->pluck('total', 'file_extension')
-                  ->toArray();
-    }
-
-    /**
-     * Get total storage used by user
-     */
-    public static function getTotalStorageUsed($userId = null)
-    {
-        $query = self::where('jenis_upload', 'file');
+        $this->update([
+            'status' => 'approved',
+            'verified_by' => $verifier->id,
+            'verified_at' => now(),
+            'rejection_reason' => null,
+        ]);
         
-        if ($userId) {
-            $query->where('uploaded_by', $userId);
-        }
-        
-        return $query->sum('file_size');
+        return $this;
     }
 
-    /**
-     * Get formatted total storage used
-     */
-    public static function getFormattedStorageUsed($userId = null)
+    public function reject(User $verifier, string $reason)
     {
-        $bytes = self::getTotalStorageUsed($userId);
+        $this->update([
+            'status' => 'rejected',
+            'verified_by' => $verifier->id,
+            'verified_at' => now(),
+            'rejection_reason' => $reason,
+        ]);
         
-        if ($bytes >= 1073741824) {
-            return number_format($bytes / 1073741824, 2) . ' GB';
-        } elseif ($bytes >= 1048576) {
-            return number_format($bytes / 1048576, 2) . ' MB';
-        } elseif ($bytes >= 1024) {
-            return number_format($bytes / 1024, 2) . ' KB';
-        } else {
-            return $bytes . ' bytes';
-        }
+        return $this;
     }
 
-    /**
-     * Check if file exists in storage
-     */
+    public function resetVerification()
+    {
+        $this->update([
+            'status' => 'pending',
+            'verified_by' => null,
+            'verified_at' => null,
+            'rejection_reason' => null,
+        ]);
+        
+        return $this;
+    }
+
+    // ============= OTHER METHODS =============
     public function fileExists()
     {
         if ($this->jenis_upload !== 'file') {
-            return true; // Link always exists
+            return true;
         }
-        
         return \Storage::disk('public')->exists($this->file_path);
     }
 
-    /**
-     * Get file path for storage
-     */
     public function getStoragePath()
     {
         if ($this->jenis_upload === 'file') {
             return storage_path('app/public/' . $this->file_path);
         }
-        
         return $this->file_path;
     }
 
-    /**
-     * Get URL for file (for web access)
-     */
     public function getUrl()
     {
         if ($this->jenis_upload === 'file') {
             return \Storage::disk('public')->url($this->file_path);
         }
-        
         return $this->file_path;
     }
 
-    /**
-     * Get metadata value by key
-     */
     public function getMetadataValue($key, $default = null)
     {
         if ($this->metadata && isset($this->metadata[$key])) {
             return $this->metadata[$key];
         }
-        
         return $default;
     }
 
-    /**
-     * Set metadata value
-     */
     public function setMetadataValue($key, $value)
     {
         $metadata = $this->metadata ?? [];
@@ -522,64 +457,6 @@ class Dokumen extends Model
         return $this;
     }
 
-    /**
-     * Remove metadata key
-     */
-    public function removeMetadataKey($key)
-    {
-        if ($this->metadata && isset($this->metadata[$key])) {
-            unset($this->metadata[$key]);
-            $this->save();
-        }
-        return $this;
-    }
-
-    /**
-     * Check if document is related to penetapan
-     */
-    public function isRelatedToPenetapan($penetapanId = null)
-    {
-        if ($penetapanId) {
-            return $this->getMetadataValue('penetapan_id') == $penetapanId;
-        }
-        
-        return !is_null($this->getMetadataValue('penetapan_id'));
-    }
-
-    /**
-     * Get related penetapan name
-     */
-    public function getRelatedPenetapanName()
-    {
-        $penetapan = $this->relatedPenetapan;
-        return $penetapan ? $penetapan->nama_komponen : null;
-    }
-
-    /**
-     * Get related penetapan kode
-     */
-    public function getRelatedPenetapanKode()
-    {
-        $penetapan = $this->relatedPenetapan;
-        return $penetapan ? $penetapan->kode_penetapan : null;
-    }
-
-    /**
-     * Update related penetapan status
-     */
-    public function updateRelatedPenetapanStatus()
-    {
-        $penetapan = $this->relatedPenetapan;
-        if ($penetapan && $penetapan->status_dokumen !== 'valid') {
-            $penetapan->status_dokumen = 'valid';
-            $penetapan->save();
-        }
-        return $this;
-    }
-
-    /**
-     * Delete file from storage
-     */
     public function deleteFile()
     {
         if ($this->jenis_upload === 'file' && $this->fileExists()) {
@@ -588,32 +465,14 @@ class Dokumen extends Model
         return false;
     }
 
-    /**
-     * Override delete method to also delete file
-     */
     public function delete()
     {
         $this->deleteFile();
         return parent::delete();
     }
 
-    /**
-     * Override force delete method
-     */
-    public function forceDelete()
-    {
-        $this->deleteFile();
-        return parent::forceDelete();
-    }
-
-    /**
-     * STATIC METHODS FOR DASHBOARD
-     */
-
-    /**
-     * Get statistics for dashboard
-     */
-    public static function getStatistics($userId = null)
+    // ============= STATISTICS METHODS =============
+    public static function getVerificationStatistics($userId = null)
     {
         $query = self::query();
         
@@ -621,38 +480,39 @@ class Dokumen extends Model
             $query->where('uploaded_by', $userId);
         }
         
-        $total = $query->count();
-        $fileCount = $query->where('jenis_upload', 'file')->count();
-        $linkCount = $query->where('jenis_upload', 'link')->count();
-        $publicCount = $query->where('is_public', true)->count();
-        $privateCount = $query->where('is_public', false)->count();
-        
-        // Group by tahapan
-        $byTahapan = $query->select('tahapan', \DB::raw('count(*) as total'))
-                          ->whereNotNull('tahapan')
-                          ->groupBy('tahapan')
-                          ->pluck('total', 'tahapan')
-                          ->toArray();
-        
-        // Group by month for chart
-        $byMonth = $query->select(
-                \DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
-                \DB::raw('count(*) as total')
-            )
-            ->where('created_at', '>=', now()->subMonths(6))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
-        
         return [
-            'total' => $total,
-            'file_count' => $fileCount,
-            'link_count' => $linkCount,
-            'public_count' => $publicCount,
-            'private_count' => $privateCount,
-            'by_tahapan' => $byTahapan,
-            'by_month' => $byMonth,
-            'storage_used' => self::getFormattedStorageUsed($userId),
+            'total' => $query->count(),
+            'pending' => $query->where('status', 'pending')->count(),
+            'approved' => $query->where('status', 'approved')->count(),
+            'rejected' => $query->where('status', 'rejected')->count(),
         ];
     }
+
+    public static function getPendingCount()
+    {
+        return self::where('status', 'pending')->count();
+    }
+
+    // Tambahkan method ini ke model Dokumen
+public function comments()
+{
+    return $this->hasMany(Comment::class);
+}
+
+public function verifikator()
+{
+    return $this->belongsTo(User::class, 'verified_by');
+}
+
+public function getStatusBadgeAttribute()
+{
+    $badges = [
+        'pending' => 'warning',
+        'approved' => 'success',
+        'rejected' => 'danger',
+        'revision' => 'info'
+    ];
+    
+    return $badges[$this->status] ?? 'secondary';
+}
 }

@@ -19,30 +19,23 @@ class JadwalController extends Controller
         return view('admin.jadwal.create');
     }
 
-   // app/Http\Controllers/Admin/JadwalController.php - method store()
 public function store(Request $request)
 {
     $request->validate([
         'tanggal' => 'required|date',
-        'kegiatan' => 'required|max:255',
-        'is_active' => 'boolean'
+        'nama_kegiatan' => 'required|max:255', // Ganti 'kegiatan' dengan 'nama_kegiatan'
+        'status' => 'nullable|in:aktif,selesai,dibatalkan'
     ]);
 
-    $data = $request->only(['tanggal', 'kegiatan']);
+    $data = $request->only(['tanggal', 'nama_kegiatan', 'deskripsi', 'waktu', 'lokasi', 'penanggung_jawab', 'status', 'kategori']);
     $data['user_id'] = auth()->id();
-    $data['is_active'] = true; // Auto aktif
-    $data['waktu'] = '08:00'; // Default waktu
-    $data['urutan'] = 1; // Default urutan
+    $data['status'] = 'aktif'; // Default aktif
 
     Jadwal::create($data);
 
     return redirect()->route('admin.jadwal.index')
         ->with('success', 'Jadwal berhasil ditambahkan');
 }
-    public function edit(Jadwal $jadwal)
-    {
-        return view('admin.jadwal.edit', compact('jadwal'));
-    }
 
     public function update(Request $request, Jadwal $jadwal)
     {

@@ -4,39 +4,45 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 
 class Berita extends Model
 {
     use HasFactory;
 
+    protected $table = 'beritas';
+
     protected $fillable = [
         'judul',
         'slug',
-        'ringkasan',
-        'konten',
+        'isi',
         'gambar',
-        'gambar_url',
+        'kategori',
+        'penulis',
+        'views',
         'is_published',
-        'views'
+        'published_at',
+        'user_id'
     ];
 
-    protected static function boot()
+    protected $casts = [
+        'is_published' => 'boolean',
+        'published_at' => 'datetime',
+        'views' => 'integer'
+    ];
+
+    protected $appends = [
+        'excerpt',
+        'gambar_url',
+        'published_date'
+    ];
+
+    // ============= RELATIONSHIPS =============
+    public function user()
     {
-        parent::boot();
-
-        static::creating(function ($berita) {
-            $berita->slug = Str::slug($berita->judul);
-        });
-
-        static::updating(function ($berita) {
-            if ($berita->isDirty('judul')) {
-                $berita->slug = Str::slug($berita->judul);
-            }
-        });
+        return $this->belongsTo(User::class);
     }
 
+    // ============= SCOPES =============
     public function scopePublished($query)
     {
         return $query->where('is_published', true);
@@ -44,50 +50,86 @@ class Berita extends Model
 
     public function scopeLatestNews($query, $limit = 4)
     {
-        return $query->published()->latest()->limit($limit);
+        return $query->published()
+                    ->orderBy('published_at', 'desc')
+                    ->limit($limit);
     }
 
+    public function scopeActive($query)
+    {
+        return $this->scopePublished($query);
+    }
+
+    public function scopeByKategori($query, $kategori)
+    {
+        return $query->where('kategori', $kategori);
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->where('judul', 'like', "%{$search}%")
+                    ->orWhere('isi', 'like', "%{$search}%");
+    }
+
+    // ============= ACCESSORS =============
     public function getExcerptAttribute()
     {
-        return Str::limit(strip_tags($this->ringkasan), 150);
+        $excerpt = strip_tags($this->isi);
+        return strlen($excerpt) > 150 
+            ? substr($excerpt, 0, 150) . '...' 
+            : $excerpt;
     }
 
-   public function getGambarUrlAttribute()
-{
-    if (!$this->gambar) {
+    public function getGambarUrlAttribute()
+    {
+        if ($this->gambar) {
+            return asset('storage/berita/' . $this->gambar);
+        }
         return asset('images/default-news.jpg');
     }
-    
-    // Jika gambar adalah URL lengkap (http:// atau https://)
-    if (filter_var($this->gambar, FILTER_VALIDATE_URL)) {
-        return $this->gambar;
-    }
-    
-    // Jika gambar disimpan di storage lokal
-    if (Storage::exists('public/' . $this->gambar)) {
-        return asset('storage/' . $this->gambar);
-    }
-    
-    return asset('images/default-news.jpg');
-}
 
- public function user()
+    public function getPublishedDateAttribute()
     {
-        return $this->belongsTo(User::class);
+        return $this->published_at 
+            ? $this->published_at->translatedFormat('d F Y') 
+            : $this->created_at->translatedFormat('d F Y');
     }
 
-    public function scopeDraft($query)
+    public function getFormattedViewsAttribute()
     {
-        return $query->where('is_published', false);
+        if ($this->views >= 1000) {
+            return number_format($this->views / 1000, 1) . 'K';
+        }
+        return $this->views;
     }
 
-    public function getStatusAttribute()
+    // ============= METHODS =============
+    public function incrementViews()
     {
-        return $this->is_published ? 'Published' : 'Draft';
+        $this->increment('views');
+        return $this;
     }
 
-    public function getStatusClassAttribute()
+    public function publish()
     {
-        return $this->is_published ? 'success' : 'warning';
+        $this->update([
+            'is_published' => true,
+            'published_at' => now()
+        ]);
+        return $this;
+    }
+
+    public function unpublish()
+    {
+        $this->update([
+            'is_published' => false,
+            'published_at' => null
+        ]);
+        return $this;
+    }
+
+    public function isPublished()
+    {
+        return $this->is_published;
     }
 }

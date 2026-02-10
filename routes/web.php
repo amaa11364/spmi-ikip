@@ -12,18 +12,21 @@ use App\Http\Controllers\BeritaController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\SpmController;
 use App\Http\Controllers\PeningkatanController;
+use App\Http\Controllers\VerifikatorController;
+use App\Http\Controllers\DashboardController;
 
-// ==================== DOKUMEN PUBLIK ROUTES (TANPA LOGIN) ====================
+// ==================== PUBLIC ROUTES (TANPA LOGIN) ====================
+Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
+
+// Dokumen Publik
 Route::get('/dokumen-publik', [DokumenPublikController::class, 'index'])->name('dokumen-publik.index');
 Route::get('/dokumen-publik/{id}', [DokumenPublikController::class, 'show'])->name('dokumen-publik.show');
 
-// ==================== LANDING PAGE & PUBLIC ROUTES ====================
-Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
-
-// ==================== PUBLIC BERITA ROUTES ====================
+// Berita Publik
 Route::get('/berita', [LandingPageController::class, 'beritaIndex'])->name('berita.index');
 Route::get('/berita/{slug}', [LandingPageController::class, 'beritaShow'])->name('berita.show');
 
+// Halaman Statis
 Route::get('/upt', function () {
     return view('upt.index');
 })->name('upt.index');
@@ -78,12 +81,44 @@ Route::middleware(['auth'])->prefix('upload')->group(function () {
 // ==================== PROTECTED ROUTES (SETELAH LOGIN) ====================
 Route::middleware(['auth'])->group(function () {
     
-    // ==================== SPMI ROUTES (CRUD LENGKAP) ====================
+    // ==================== DASHBOARD UTAMA ====================
+    // Dashboard berdasarkan role - HAPUS DUPLIKAT
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // ==================== ROUTES UMUM UNTUK SEMUA USER ====================
+    Route::prefix('dokumen-saya')->name('dokumen-saya.')->group(function () {
+        Route::get('/', [UploadController::class, 'index'])->name('index');
+        Route::delete('/{id}', [UploadController::class, 'destroy'])->name('destroy');
+        Route::get('/download/{id}', [UploadController::class, 'download'])->name('download');
+        Route::get('/preview/{id}', [UploadController::class, 'preview'])->name('preview');
+        Route::post('/upload', [UploadController::class, 'store'])->name('upload');
+        Route::get('/create', [UploadController::class, 'create'])->name('create');
+        Route::get('/{id}/edit', [UploadController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [UploadController::class, 'update'])->name('update');
+    });
+    
+    // Profile Routes untuk semua user
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/edit', [ProfileController::class, 'edit'])->name('edit');
+        Route::put('/update', [ProfileController::class, 'update'])->name('update');
+        Route::delete('/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('avatar.delete');
+        Route::get('/change-password', [ProfileController::class, 'showChangePassword'])->name('change-password');
+        Route::put('/update-password', [ProfileController::class, 'updatePassword'])->name('update-password');
+    });
+    
+    // Search Routes untuk semua user
+    Route::prefix('search')->name('search.')->group(function () {
+        Route::get('/', [SearchController::class, 'index'])->name('index');
+        Route::get('/results', [SearchController::class, 'search'])->name('results');
+        Route::get('/dokumen/{id}/preview', [SearchController::class, 'preview'])->name('dokumen.preview');
+        Route::get('/dokumen/{id}/download', [SearchController::class, 'download'])->name('dokumen.download');
+    });
+    
+    // ==================== SPMI ROUTES (UNTUK SEMUA YANG TERKAIT SPMI) ====================
     Route::prefix('spmi')->name('spmi.')->group(function () {
         
-        // ===== PENETAPAN SPMI - CRUD LENGKAP =====
+        // ===== PENETAPAN SPMI =====
         Route::prefix('penetapan')->name('penetapan.')->group(function () {
-            // ===== MAIN CRUD ROUTES =====
             Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
             Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
             Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
@@ -92,17 +127,11 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{id}', [SpmController::class, 'updatePenetapan'])->name('update');
             Route::delete('/{id}', [SpmController::class, 'destroyPenetapan'])->name('destroy');
             
-            // Restore soft deleted
-            Route::post('/{id}/restore', [SpmController::class, 'restorePenetapan'])->name('restore');
-            
             // Document management
             Route::post('/{id}/upload', [SpmController::class, 'uploadDokumenPenetapan'])->name('upload');
             Route::get('/{id}/download', [SpmController::class, 'downloadDokumenPenetapan'])->name('download');
             Route::get('/{id}/preview', [SpmController::class, 'previewDokumenPenetapan'])->name('preview');
             Route::delete('/{id}/dokumen', [SpmController::class, 'hapusDokumenPenetapan'])->name('dokumen.hapus');
-            
-            // Status management
-            Route::put('/{id}/status-dokumen', [SpmController::class, 'updateStatusDokumen'])->name('status.update');
             
             // AJAX endpoints
             Route::get('/{id}/detail', [SpmController::class, 'getPenetapanData'])->name('ajax.detail');
@@ -111,9 +140,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenList'])->name('ajax.dokumen-list');
         });
         
-        // ===== PELAKSANAAN SPMI - CRUD LENGKAP =====
+        // ===== PELAKSANAAN SPMI =====
         Route::prefix('pelaksanaan')->name('pelaksanaan.')->group(function () {
-            // ===== MAIN CRUD ROUTES =====
             Route::get('/', [SpmController::class, 'indexPelaksanaan'])->name('index');
             Route::get('/create', [SpmController::class, 'createPelaksanaan'])->name('create');
             Route::post('/', [SpmController::class, 'storePelaksanaan'])->name('store');
@@ -122,17 +150,11 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{id}', [SpmController::class, 'updatePelaksanaan'])->name('update');
             Route::delete('/{id}', [SpmController::class, 'destroyPelaksanaan'])->name('destroy');
             
-            // Restore soft deleted
-            Route::post('/{id}/restore', [SpmController::class, 'restorePelaksanaan'])->name('restore');
-            
             // Document management
             Route::post('/{id}/upload', [SpmController::class, 'uploadDokumenPelaksanaan'])->name('upload');
             Route::get('/{id}/download', [SpmController::class, 'downloadDokumenPelaksanaan'])->name('download');
             Route::get('/{id}/preview', [SpmController::class, 'previewDokumenPelaksanaan'])->name('preview');
             Route::delete('/{id}/dokumen', [SpmController::class, 'hapusDokumenPelaksanaan'])->name('dokumen.hapus');
-            
-            // Status management
-            Route::put('/{id}/status-dokumen', [SpmController::class, 'updateStatusDokumenPelaksanaan'])->name('status.update');
             
             // AJAX endpoints
             Route::get('/{id}/detail', [SpmController::class, 'getPelaksanaanData'])->name('ajax.detail');
@@ -141,9 +163,8 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{id}/dokumen-list', [SpmController::class, 'getDokumenListPelaksanaan'])->name('ajax.dokumen-list');
         });
         
-        // ===== EVALUASI SPMI - CRUD LENGKAP =====
+        // ===== EVALUASI SPMI =====
         Route::prefix('evaluasi')->name('evaluasi.')->group(function () {
-            // ===== MAIN CRUD ROUTES =====
             Route::get('/', [SpmController::class, 'indexEvaluasiFull'])->name('index');
             Route::get('/create', [SpmController::class, 'createEvaluasiFull'])->name('create');
             Route::post('/', [SpmController::class, 'storeEvaluasiFull'])->name('store');
@@ -167,29 +188,21 @@ Route::middleware(['auth'])->group(function () {
         });
         
         // ===== PENINGKATAN SPMI =====
-Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
-    // CRUD LENGKAP
-    Route::get('/', [PeningkatanController::class, 'index'])->name('index');
-    Route::get('/create', [PeningkatanController::class, 'create'])->name('create');
-    Route::post('/', [PeningkatanController::class, 'store'])->name('store');
-    Route::get('/{id}', [PeningkatanController::class, 'show'])->name('show');
-    Route::get('/{id}/edit', [PeningkatanController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [PeningkatanController::class, 'update'])->name('update');
-    Route::delete('/{id}', [PeningkatanController::class, 'destroy'])->name('destroy');
-    
-    // UPLOAD DOKUMEN
-    Route::post('/{id}/upload', [PeningkatanController::class, 'uploadDokumen'])->name('upload');
-});
+        Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
+            Route::get('/', [PeningkatanController::class, 'index'])->name('index');
+            Route::get('/create', [PeningkatanController::class, 'create'])->name('create');
+            Route::post('/', [PeningkatanController::class, 'store'])->name('store');
+            Route::get('/{id}', [PeningkatanController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [PeningkatanController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [PeningkatanController::class, 'update'])->name('update');
+            Route::delete('/{id}', [PeningkatanController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/upload', [PeningkatanController::class, 'uploadDokumen'])->name('upload');
+        });
         
         // ===== AKREDITASI =====
         Route::prefix('akreditasi')->name('akreditasi.')->group(function () {
             Route::get('/', [SpmController::class, 'indexAkreditasi'])->name('index');
         });
-        
-        // ===== SPMI DASHBOARD =====
-        Route::get('/dashboard', function () {
-            return view('dashboard.spmi.dashboard');
-        })->name('dashboard');
         
         // ===== API ENDPOINTS (untuk AJAX) =====
         Route::prefix('api')->name('api.')->group(function () {
@@ -199,110 +212,212 @@ Route::prefix('peningkatan')->name('peningkatan.')->group(function () {
             Route::get('/peningkatan/statistics', [PeningkatanController::class, 'getStatistics'])->name('peningkatan.statistics');
         });
     });
+});
+
+// ==================== VERIFIKATOR ROUTES ====================
+// Verifikator Routes
+Route::prefix('verifikator')->name('verifikator.')->middleware(['auth', 'verifikator'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'verifikatorDashboard'])->name('dashboard');
     
-    // ==================== ADMIN ROUTES ====================
-    Route::middleware(['admin'])->prefix('admin')->group(function () {
-        
-        // Dashboard Routes
-        Route::get('/dashboard', function () {
-            return view('dashboard');
-        })->name('dashboard');
-        
-        Route::get('/home', function () {
-            return view('dashboard');
-        });
-
-        // Search Routes (Protected)
-        Route::prefix('search')->group(function () {
-            Route::get('/', [SearchController::class, 'index'])->name('search.index');
-            Route::get('/results', [SearchController::class, 'search'])->name('search.results');
-            Route::get('/dokumen/{id}/preview', [SearchController::class, 'preview'])->name('search.dokumen.preview');
-            Route::get('/dokumen/{id}/download', [SearchController::class, 'download'])->name('search.dokumen.download');
-        });
-
-        // Upload Dokumen Routes
-        Route::prefix('upload-dokumen')->group(function () {
-            Route::get('/', [UploadController::class, 'create'])->name('upload-dokumen.create');
-            Route::post('/', [UploadController::class, 'store'])->name('upload-dokumen.store');
-        });
-
-        // Dokumen Saya Routes
-        Route::prefix('dokumen-saya')->group(function () {
-            Route::get('/', [UploadController::class, 'index'])->name('dokumen-saya');
-            Route::delete('/{id}', [UploadController::class, 'destroy'])->name('dokumen-saya.destroy');
-            Route::get('/download/{id}', [UploadController::class, 'download'])->name('dokumen-saya.download');
-            Route::get('/preview/{id}', [UploadController::class, 'preview'])->name('dokumen-saya.preview');
-        });
-
-        // Profile Routes
-        Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-        Route::delete('/profile/avatar/delete', [ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
-
-        // ==================== SETTINGS ROUTES ====================
-        Route::prefix('settings')->group(function () {
-            
-            // IKU Management Routes
-            Route::prefix('iku')->group(function () {
-                Route::get('/', [SettingController::class, 'indexIku'])->name('settings.iku.index');
-                Route::get('/create', [SettingController::class, 'createIku'])->name('settings.iku.create');
-                Route::post('/', [SettingController::class, 'storeIku'])->name('settings.iku.store');
-                Route::get('/{id}/edit', [SettingController::class, 'editIku'])->name('settings.iku.edit');
-                Route::put('/{id}', [SettingController::class, 'updateIku'])->name('settings.iku.update');
-                Route::delete('/{id}', [SettingController::class, 'destroyIku'])->name('settings.iku.destroy');
-            });
-
-            // Unit Kerja Management Routes
-            Route::prefix('unit-kerja')->group(function () {
-                Route::get('/', [SettingController::class, 'indexUnitKerja'])->name('settings.unit-kerja.index');
-                Route::get('/create', [SettingController::class, 'createUnitKerja'])->name('settings.unit-kerja.create');
-                Route::post('/', [SettingController::class, 'storeUnitKerja'])->name('settings.unit-kerja.store');
-                Route::get('/{id}/edit', [SettingController::class, 'editUnitKerja'])->name('settings.unit-kerja.edit');
-                Route::put('/{id}', [SettingController::class, 'updateUnitKerja'])->name('settings.unit-kerja.update');
-                Route::delete('/{id}', [SettingController::class, 'destroyUnitKerja'])->name('settings.unit-kerja.destroy');
-            });
-            
-            // SPMI Settings (Optional)
-            Route::prefix('spmi')->group(function () {
-                Route::get('/', [SettingController::class, 'indexSpm'])->name('settings.spmi.index');
-                Route::put('/update', [SettingController::class, 'updateSpm'])->name('settings.spmi.update');
-            });
-            
-        }); 
-        
-        // Berita Management Routes
-        Route::prefix('berita')->group(function () {
-            Route::get('/', [BeritaController::class, 'index'])->name('admin.berita.index');
-            Route::get('/create', [BeritaController::class, 'create'])->name('admin.berita.create');
-            Route::post('/', [BeritaController::class, 'store'])->name('admin.berita.store');
-            Route::get('/{id}/edit', [BeritaController::class, 'edit'])->name('admin.berita.edit');
-            Route::put('/{id}', [BeritaController::class, 'update'])->name('admin.berita.update');
-            Route::delete('/{id}', [BeritaController::class, 'destroy'])->name('admin.berita.destroy');
-        });
-
-        // Jadwal Management Routes  
-        Route::prefix('jadwal')->group(function () {
-            Route::get('/', [JadwalController::class, 'index'])->name('admin.jadwal.index');
-            Route::get('/create', [JadwalController::class, 'create'])->name('admin.jadwal.create');
-            Route::post('/', [JadwalController::class, 'store'])->name('admin.jadwal.store');
-            Route::get('/{id}/edit', [JadwalController::class, 'edit'])->name('admin.jadwal.edit');
-            Route::put('/{id}', [JadwalController::class, 'update'])->name('admin.jadwal.update');
-            Route::delete('/{id}', [JadwalController::class, 'destroy'])->name('admin.jadwal.destroy');
-        });
-        
-        // Report & Analytics Routes
-        Route::prefix('reports')->group(function () {
-            Route::get('/spmi-penetapan', [SpmController::class, 'reportPenetapan'])->name('reports.spmi-penetapan');
-            Route::get('/spmi-summary', [SpmController::class, 'reportSummary'])->name('reports.spmi-summary');
-            Route::get('/spmi-peningkatan', [PeningkatanController::class, 'exportExcel'])->name('reports.spmi-peningkatan');
-        });
-        
+    // Dokumen Routes
+    Route::prefix('dokumen')->name('dokumen.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Verifikator\DokumenController::class, 'index'])->name('index');
+        Route::get('/{id}', [\App\Http\Controllers\Verifikator\DokumenController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [\App\Http\Controllers\Verifikator\DokumenController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [\App\Http\Controllers\Verifikator\DokumenController::class, 'reject'])->name('reject');
+        Route::post('/{id}/revision', [\App\Http\Controllers\Verifikator\DokumenController::class, 'requestRevision'])->name('revision');
+        Route::post('/{id}/comment', [\App\Http\Controllers\Verifikator\DokumenController::class, 'addComment'])->name('comment.add');
+        Route::get('/statistics', [\App\Http\Controllers\Verifikator\DokumenController::class, 'statistics'])->name('statistics');
+    });
+    
+    // Review Dokumen
+    Route::prefix('review')->name('review.')->group(function () {
+        Route::get('/', [VerifikatorController::class, 'index'])->name('index');
+        Route::get('/pending', [VerifikatorController::class, 'pending'])->name('pending');
+        Route::get('/approved', [VerifikatorController::class, 'approved'])->name('approved');
+        Route::get('/rejected', [VerifikatorController::class, 'rejected'])->name('rejected');
+        Route::post('/{id}/approve', [VerifikatorController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [VerifikatorController::class, 'reject'])->name('reject');
+        Route::get('/{id}/detail', [VerifikatorController::class, 'detail'])->name('detail');
+    });
+    
+    // Dokumen Management
+    Route::prefix('dokumen')->name('dokumen.')->group(function () {
+        Route::get('/', [VerifikatorController::class, 'dokumen'])->name('index');
+        Route::get('/{id}/preview', [VerifikatorController::class, 'preview'])->name('preview');
+        Route::get('/{id}/download', [VerifikatorController::class, 'download'])->name('download');
+        Route::get('/search', [VerifikatorController::class, 'search'])->name('search');
+    });
+    
+    // Statistik
+    Route::prefix('statistik')->name('statistik.')->group(function () {
+        Route::get('/', [VerifikatorController::class, 'statistik'])->name('index');
+        Route::get('/by-prodi', [VerifikatorController::class, 'statistikByProdi'])->name('by-prodi');
+        Route::get('/by-tahapan', [VerifikatorController::class, 'statistikByTahapan'])->name('by-tahapan');
+        Route::get('/by-bulan', [VerifikatorController::class, 'statistikByBulan'])->name('by-bulan');
+    });
+    
+    // Laporan
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/', [VerifikatorController::class, 'laporan'])->name('index');
+        Route::get('/export/pdf', [VerifikatorController::class, 'exportPdf'])->name('export.pdf');
+        Route::get('/export/excel', [VerifikatorController::class, 'exportExcel'])->name('export.excel');
     });
 });
 
-// ==================== DEBUG ROUTES ====================
+// ==================== USER ROUTES (USER BIASA) ====================
+Route::middleware(['auth', 'user'])->prefix('user')->name('user.')->group(function () {
+    
+    // Dashboard User
+    Route::get('/dashboard', [DashboardController::class, 'userDashboard'])->name('dashboard');
+    
+    // Dokumen Saya (user-specific)
+    Route::prefix('dokumen')->name('dokumen.')->group(function () {
+        Route::get('/', [UploadController::class, 'userDokumen'])->name('index');
+        Route::get('/create', [UploadController::class, 'userCreate'])->name('create');
+        Route::post('/', [UploadController::class, 'userStore'])->name('store');
+        Route::get('/{id}/edit', [UploadController::class, 'userEdit'])->name('edit');
+        Route::put('/{id}', [UploadController::class, 'userUpdate'])->name('update');
+        Route::get('/status/{status}', [UploadController::class, 'byStatus'])->name('by-status');
+    });
+    
+    // Statistik User
+    Route::get('/statistik', function() {
+        return view('user.statistik');
+    })->name('statistik');
+});
+
+// ==================== ADMIN ROUTES ====================
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    
+    // Dashboard Admin
+    Route::get('/dashboard', [DashboardController::class, 'adminDashboard'])->name('dashboard');
+    Route::get('/home', function () {
+        return view('admin.dashboard');
+    })->name('home');
+    
+    // ==================== USER MANAGEMENT ====================
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\Admin\UserController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\Admin\UserController::class, 'store'])->name('store');
+        Route::get('/{id}', [App\Http\Controllers\Admin\UserController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [App\Http\Controllers\Admin\UserController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\Admin\UserController::class, 'update'])->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('destroy');
+        Route::put('/{id}/activate', [App\Http\Controllers\Admin\UserController::class, 'activate'])->name('activate');
+        Route::put('/{id}/deactivate', [App\Http\Controllers\Admin\UserController::class, 'deactivate'])->name('deactivate');
+        Route::put('/{id}/change-role', [App\Http\Controllers\Admin\UserController::class, 'changeRole'])->name('change-role');
+    });
+    
+    // ==================== SETTINGS MANAGEMENT ====================
+    Route::prefix('settings')->name('settings.')->group(function () {
+        
+        // IKU Management
+        Route::prefix('iku')->group(function () {
+            Route::get('/', [SettingController::class, 'indexIku'])->name('iku.index');
+            Route::get('/create', [SettingController::class, 'createIku'])->name('iku.create');
+            Route::post('/', [SettingController::class, 'storeIku'])->name('iku.store');
+            Route::get('/{id}/edit', [SettingController::class, 'editIku'])->name('iku.edit');
+            Route::put('/{id}', [SettingController::class, 'updateIku'])->name('iku.update');
+            Route::delete('/{id}', [SettingController::class, 'destroyIku'])->name('iku.destroy');
+        });
+
+        // Unit Kerja Management
+        Route::prefix('unit-kerja')->group(function () {
+            Route::get('/', [SettingController::class, 'indexUnitKerja'])->name('unit-kerja.index');
+            Route::get('/create', [SettingController::class, 'createUnitKerja'])->name('unit-kerja.create');
+            Route::post('/', [SettingController::class, 'storeUnitKerja'])->name('unit-kerja.store');
+            Route::get('/{id}/edit', [SettingController::class, 'editUnitKerja'])->name('unit-kerja.edit');
+            Route::put('/{id}', [SettingController::class, 'updateUnitKerja'])->name('unit-kerja.update');
+            Route::delete('/{id}', [SettingController::class, 'destroyUnitKerja'])->name('unit-kerja.destroy');
+        });
+        
+        // Prodi Management
+        Route::prefix('prodi')->group(function () {
+            Route::get('/', [SettingController::class, 'indexProdi'])->name('prodi.index');
+            Route::get('/create', [SettingController::class, 'createProdi'])->name('prodi.create');
+            Route::post('/', [SettingController::class, 'storeProdi'])->name('prodi.store');
+            Route::get('/{id}/edit', [SettingController::class, 'editProdi'])->name('prodi.edit');
+            Route::put('/{id}', [SettingController::class, 'updateProdi'])->name('prodi.update');
+            Route::delete('/{id}', [SettingController::class, 'destroyProdi'])->name('prodi.destroy');
+        });
+        
+        // SPMI Settings
+        Route::prefix('spmi')->group(function () {
+            Route::get('/', [SettingController::class, 'indexSpm'])->name('spmi.index');
+            Route::put('/update', [SettingController::class, 'updateSpm'])->name('spmi.update');
+        });
+        
+        // System Settings
+        Route::get('/system', [SettingController::class, 'system'])->name('system');
+        Route::put('/system/update', [SettingController::class, 'updateSystem'])->name('system.update');
+    });
+    
+    // ==================== CONTENT MANAGEMENT ====================
+    // Berita Management
+    Route::prefix('berita')->group(function () {
+        Route::get('/', [BeritaController::class, 'index'])->name('berita.index');
+        Route::get('/create', [BeritaController::class, 'create'])->name('berita.create');
+        Route::post('/', [BeritaController::class, 'store'])->name('berita.store');
+        Route::get('/{id}/edit', [BeritaController::class, 'edit'])->name('berita.edit');
+        Route::put('/{id}', [BeritaController::class, 'update'])->name('berita.update');
+        Route::delete('/{id}', [BeritaController::class, 'destroy'])->name('berita.destroy');
+        Route::put('/{id}/publish', [BeritaController::class, 'publish'])->name('berita.publish');
+        Route::put('/{id}/unpublish', [BeritaController::class, 'unpublish'])->name('berita.unpublish');
+    });
+
+    // Jadwal Management  
+    Route::prefix('jadwal')->group(function () {
+        Route::get('/', [JadwalController::class, 'index'])->name('jadwal.index');
+        Route::get('/create', [JadwalController::class, 'create'])->name('jadwal.create');
+        Route::post('/', [JadwalController::class, 'store'])->name('jadwal.store');
+        Route::get('/{id}/edit', [JadwalController::class, 'edit'])->name('jadwal.edit');
+        Route::put('/{id}', [JadwalController::class, 'update'])->name('jadwal.update');
+        Route::delete('/{id}', [JadwalController::class, 'destroy'])->name('jadwal.destroy');
+    });
+    
+    // ==================== DOKUMEN MANAGEMENT ====================
+    Route::prefix('dokumen')->name('dokumen.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Admin\DokumenController::class, 'index'])->name('index');
+        Route::get('/{id}', [App\Http\Controllers\Admin\DokumenController::class, 'show'])->name('show');
+        Route::delete('/{id}', [App\Http\Controllers\Admin\DokumenController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/edit', [App\Http\Controllers\Admin\DokumenController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [App\Http\Controllers\Admin\DokumenController::class, 'update'])->name('update');
+        Route::put('/{id}/toggle-public', [App\Http\Controllers\Admin\DokumenController::class, 'togglePublic'])->name('toggle-public');
+        Route::get('/export', [App\Http\Controllers\Admin\DokumenController::class, 'export'])->name('export');
+    });
+    
+    // ==================== REPORT & ANALYTICS ====================
+    Route::prefix('reports')->name('reports.')->group(function () {
+        // SPMI Reports
+        Route::get('/spmi-penetapan', [SpmController::class, 'reportPenetapan'])->name('spmi-penetapan');
+        Route::get('/spmi-summary', [SpmController::class, 'reportSummary'])->name('spmi-summary');
+        Route::get('/spmi-peningkatan', [PeningkatanController::class, 'exportExcel'])->name('spmi-peningkatan');
+        
+        // User Activity Reports
+        Route::get('/user-activity', [App\Http\Controllers\Admin\ReportController::class, 'userActivity'])->name('user-activity');
+        Route::get('/dokumen-activity', [App\Http\Controllers\Admin\ReportController::class, 'dokumenActivity'])->name('dokumen-activity');
+        Route::get('/verification-stats', [App\Http\Controllers\Admin\ReportController::class, 'verificationStats'])->name('verification-stats');
+        
+        // Export Reports
+        Route::get('/export/users', [App\Http\Controllers\Admin\ReportController::class, 'exportUsers'])->name('export.users');
+        Route::get('/export/dokumen', [App\Http\Controllers\Admin\ReportController::class, 'exportDokumen'])->name('export.dokumen');
+        Route::get('/export/verification', [App\Http\Controllers\Admin\ReportController::class, 'exportVerification'])->name('export.verification');
+    });
+    
+    // ==================== SYSTEM TOOLS ====================
+    Route::prefix('tools')->name('tools.')->group(function () {
+        Route::get('/backup', [App\Http\Controllers\Admin\ToolController::class, 'backup'])->name('backup');
+        Route::post('/backup/create', [App\Http\Controllers\Admin\ToolController::class, 'createBackup'])->name('backup.create');
+        Route::get('/logs', [App\Http\Controllers\Admin\ToolController::class, 'logs'])->name('logs');
+        Route::get('/cache-clear', [App\Http\Controllers\Admin\ToolController::class, 'cacheClear'])->name('cache-clear');
+        Route::get('/storage-link', [App\Http\Controllers\Admin\ToolController::class, 'storageLink'])->name('storage-link');
+    });
+});
+
+// ==================== DEBUG & TESTING ROUTES ====================
 Route::get('/test-peningkatan', function() {
-    // Simulasi data untuk testing
     $totalPeningkatan = 15;
     $peningkatanAktif = 8;
     $dokumenValid = 5;
@@ -315,6 +430,10 @@ Route::get('/test-peningkatan', function() {
         'dokumenBelumValid'
     ));
 })->name('test.peningkatan');
+
+Route::get('/test-role-redirect', function() {
+    return view('test.role-redirect');
+})->name('test.role-redirect');
 
 // ==================== ERROR PAGES ====================
 Route::fallback(function () {

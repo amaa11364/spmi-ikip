@@ -10,68 +10,46 @@ class Jadwal extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tanggal',
-        'kegiatan',
+        'nama_kegiatan',
         'deskripsi',
-        'tempat',
+        'tanggal',
         'waktu',
-        'warna',
-        'is_active',
-        'urutan',
-        'user_id'
+        'lokasi',
+        'penanggung_jawab',
+        'status',
+        'kategori',
     ];
 
     protected $casts = [
         'tanggal' => 'date',
-        'waktu' => 'datetime:H:i'
     ];
 
-    public function user()
+    // ============= SCOPES =============
+    public function scopeUpcoming($query, $limit = 5)
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function scopeDraft($query)
-    {
-        return $query->where('is_active', false);
-    }
-
-    public function getStatusAttribute()
-    {
-        return $this->is_active ? 'Active' : 'Draft';
-    }
-
-    public function getStatusClassAttribute()
-    {
-        return $this->is_active ? 'success' : 'warning';
+        return $query->where('tanggal', '>=', now()->startOfDay())
+                    ->orderBy('tanggal', 'asc')
+                    ->limit($limit);
     }
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', 'aktif');
     }
 
-    public function scopeUpcoming($query, $limit = null)
+    // ============= ACCESSORS =============
+    public function getTanggalFormattedAttribute()
     {
-        $query = $query->active()
-            ->where('tanggal', '>=', now()->format('Y-m-d'))
-            ->orderBy('tanggal')
-            ->orderBy('urutan');
-
-        if ($limit) {
-            $query->limit($limit);
-        }
-
-        return $query;
+        return $this->tanggal->translatedFormat('d F Y');
     }
 
     public function getHariAttribute()
     {
-        return $this->tanggal->format('d');
+        return $this->tanggal->translatedFormat('l');
     }
 
-    public function getBulanSingkatAttribute()
+    public function isUpcoming()
     {
-        return $this->tanggal->format('M');
+        return $this->tanggal >= now()->startOfDay();
     }
 }

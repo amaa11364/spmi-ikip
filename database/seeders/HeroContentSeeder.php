@@ -7,31 +7,16 @@ use Illuminate\Database\Seeder;
 
 class HeroContentSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Nonaktifkan semua hero content yang ada
-        HeroContent::query()->update(['is_active' => false]);
-        
-        // Buat hero content default
         HeroContent::create([
-            'title' => 'SPMI Digital',
-            'subtitle' => 'Transformasi Digital Sistem Penjaminan Mutu Internal',
-            'description' => 'Solusi lengkap untuk manajemen mutu pendidikan tinggi. Kelola standar, audit, dokumen, dan program studi dalam satu platform terintegrasi.',
-            'cta_text' => 'Pelajari Lebih Lanjut',
-            'cta_link' => '#features',
-            'background_image' => null, // Kosong dulu, bisa diisi nanti oleh admin
+            'title' => 'Sistem Penjaminan Mutu Internal',
+            'subtitle' => 'Mewujudkan Pendidikan Bermutu',
+            'description' => 'Sistem Penjaminan Mutu Internal (SPMI) IKIP merupakan sistem yang dirancang untuk menjamin dan meningkatkan mutu pendidikan secara berkelanjutan.',
+            'button_text' => 'Pelajari Lebih Lanjut',
+            'button_link' => '/tentang',
+            'background_image' => 'images/hero-bg.jpg',
             'is_active' => true,
-        ]);
-        
-        // Buat hero content alternatif
-        HeroContent::create([
-            'title' => 'Q-TRACK SPMI',
-            'subtitle' => 'Monitoring & Evaluasi Mutu Pendidikan',
-            'description' => 'Sistem digital untuk penjaminan mutu perguruan tinggi yang efisien, transparan, dan terukur.',
-            'cta_text' => 'Lihat Fitur',
-            'cta_link' => '#programs',
-            'background_image' => null,
-            'is_active' => false,
         ]);
     }
 }
