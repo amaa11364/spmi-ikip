@@ -1,6 +1,6 @@
 @extends('layouts.main')
 
-@section('title', 'Tambah Jadwal Baru')
+@section('title', 'Edit Jadwal')
 
 @section('content')
 <div class="container-fluid px-4">
@@ -13,16 +13,16 @@
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3">
             <h5 class="mb-0">
-                <i class="fas fa-plus-circle me-2 text-primary"></i>Tambah Jadwal Baru
+                <i class="fas fa-edit me-2 text-warning"></i>Edit Jadwal
             </h5>
         </div>
         <div class="card-body">
-            <form action="{{ route('admin.jadwal.store') }}" method="POST" id="formJadwal">
+            <form action="{{ route('admin.jadwal.update', $jadwal) }}" method="POST">
                 @csrf
+                @method('PUT')
                 
                 <div class="row">
                     <div class="col-md-6">
-                        {{-- Kegiatan --}}
                         <div class="mb-3">
                             <label for="kegiatan" class="form-label">
                                 Nama Kegiatan <span class="text-danger">*</span>
@@ -31,8 +31,7 @@
                                    class="form-control @error('kegiatan') is-invalid @enderror" 
                                    id="kegiatan" 
                                    name="kegiatan" 
-                                   value="{{ old('kegiatan') }}" 
-                                   placeholder="Contoh: Rapat Koordinasi SPMI"
+                                   value="{{ old('kegiatan', $jadwal->kegiatan) }}" 
                                    required>
                             @error('kegiatan')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -41,7 +40,6 @@
                     </div>
 
                     <div class="col-md-3">
-                        {{-- Tanggal --}}
                         <div class="mb-3">
                             <label for="tanggal" class="form-label">
                                 Tanggal <span class="text-danger">*</span>
@@ -50,7 +48,7 @@
                                    class="form-control @error('tanggal') is-invalid @enderror" 
                                    id="tanggal" 
                                    name="tanggal" 
-                                   value="{{ old('tanggal', now()->format('Y-m-d')) }}" 
+                                   value="{{ old('tanggal', $jadwal->tanggal->format('Y-m-d')) }}" 
                                    required>
                             @error('tanggal')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -59,14 +57,13 @@
                     </div>
 
                     <div class="col-md-3">
-                        {{-- Waktu --}}
                         <div class="mb-3">
                             <label for="waktu" class="form-label">Waktu</label>
                             <input type="time" 
                                    class="form-control @error('waktu') is-invalid @enderror" 
                                    id="waktu" 
                                    name="waktu" 
-                                   value="{{ old('waktu', '09:00') }}">
+                                   value="{{ old('waktu', $jadwal->waktu ? $jadwal->waktu->format('H:i') : '') }}">
                             @error('waktu')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -76,15 +73,13 @@
 
                 <div class="row">
                     <div class="col-md-6">
-                        {{-- Tempat --}}
                         <div class="mb-3">
-                            <label for="tempat" class="form-label">Tempat / Lokasi</label>
+                            <label for="tempat" class="form-label">Tempat</label>
                             <input type="text" 
                                    class="form-control @error('tempat') is-invalid @enderror" 
                                    id="tempat" 
                                    name="tempat" 
-                                   value="{{ old('tempat') }}" 
-                                   placeholder="Contoh: Ruang Rapat Utama">
+                                   value="{{ old('tempat', $jadwal->tempat) }}">
                             @error('tempat')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -92,15 +87,13 @@
                     </div>
 
                     <div class="col-md-6">
-                        {{-- Penanggung Jawab --}}
                         <div class="mb-3">
                             <label for="penanggung_jawab" class="form-label">Penanggung Jawab</label>
                             <input type="text" 
                                    class="form-control @error('penanggung_jawab') is-invalid @enderror" 
                                    id="penanggung_jawab" 
                                    name="penanggung_jawab" 
-                                   value="{{ old('penanggung_jawab') }}" 
-                                   placeholder="Contoh: Ketua SPMI">
+                                   value="{{ old('penanggung_jawab', $jadwal->penanggung_jawab) }}">
                             @error('penanggung_jawab')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -108,14 +101,12 @@
                     </div>
                 </div>
 
-                {{-- Deskripsi --}}
                 <div class="mb-3">
-                    <label for="deskripsi" class="form-label">Deskripsi / Keterangan</label>
+                    <label for="deskripsi" class="form-label">Deskripsi</label>
                     <textarea class="form-control @error('deskripsi') is-invalid @enderror" 
                               id="deskripsi" 
                               name="deskripsi" 
-                              rows="3" 
-                              placeholder="Masukkan deskripsi detail kegiatan...">{{ old('deskripsi') }}</textarea>
+                              rows="3">{{ old('deskripsi', $jadwal->deskripsi) }}</textarea>
                     @error('deskripsi')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -123,19 +114,18 @@
 
                 <div class="row">
                     <div class="col-md-4">
-                        {{-- Kategori --}}
                         <div class="mb-3">
                             <label for="kategori" class="form-label">Kategori</label>
                             <select class="form-select @error('kategori') is-invalid @enderror" 
                                     id="kategori" 
                                     name="kategori">
                                 <option value="">Pilih Kategori</option>
-                                <option value="rapat" {{ old('kategori') == 'rapat' ? 'selected' : '' }}>Rapat</option>
-                                <option value="pelatihan" {{ old('kategori') == 'pelatihan' ? 'selected' : '' }}>Pelatihan</option>
-                                <option value="workshop" {{ old('kategori') == 'workshop' ? 'selected' : '' }}>Workshop</option>
-                                <option value="sosialisasi" {{ old('kategori') == 'sosialisasi' ? 'selected' : '' }}>Sosialisasi</option>
-                                <option value="evaluasi" {{ old('kategori') == 'evaluasi' ? 'selected' : '' }}>Evaluasi</option>
-                                <option value="lainnya" {{ old('kategori') == 'lainnya' ? 'selected' : '' }}>Lainnya</option>
+                                <option value="rapat" {{ old('kategori', $jadwal->kategori) == 'rapat' ? 'selected' : '' }}>Rapat</option>
+                                <option value="pelatihan" {{ old('kategori', $jadwal->kategori) == 'pelatihan' ? 'selected' : '' }}>Pelatihan</option>
+                                <option value="workshop" {{ old('kategori', $jadwal->kategori) == 'workshop' ? 'selected' : '' }}>Workshop</option>
+                                <option value="sosialisasi" {{ old('kategori', $jadwal->kategori) == 'sosialisasi' ? 'selected' : '' }}>Sosialisasi</option>
+                                <option value="evaluasi" {{ old('kategori', $jadwal->kategori) == 'evaluasi' ? 'selected' : '' }}>Evaluasi</option>
+                                <option value="lainnya" {{ old('kategori', $jadwal->kategori) == 'lainnya' ? 'selected' : '' }}>Lainnya</option>
                             </select>
                             @error('kategori')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -143,18 +133,32 @@
                         </div>
                     </div>
 
-                    <div class="col-md-4">
-                        {{-- Warna --}}
+                    <div class="col-md-3">
                         <div class="mb-3">
-                            <label for="warna" class="form-label">Warna Tampilan</label>
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select @error('status') is-invalid @enderror" 
+                                    id="status" 
+                                    name="status">
+                                <option value="akan_datang" {{ old('status', $jadwal->status) == 'akan_datang' ? 'selected' : '' }}>Akan Datang</option>
+                                <option value="sedang_berlangsung" {{ old('status', $jadwal->status) == 'sedang_berlangsung' ? 'selected' : '' }}>Sedang Berlangsung</option>
+                                <option value="selesai" {{ old('status', $jadwal->status) == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                                <option value="dibatalkan" {{ old('status', $jadwal->status) == 'dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
+                            </select>
+                            @error('status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="warna" class="form-label">Warna</label>
                             <div class="d-flex align-items-center gap-2">
                                 <input type="color" 
                                        class="form-control form-control-color @error('warna') is-invalid @enderror" 
                                        id="warna" 
                                        name="warna" 
-                                       value="{{ old('warna', '#0d6efd') }}" 
-                                       style="width: 60px;">
-                                <span class="text-muted small">Pilih warna untuk tampilan kalender</span>
+                                       value="{{ old('warna', $jadwal->warna ?? '#0d6efd') }}">
                             </div>
                             @error('warna')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -163,23 +167,6 @@
                     </div>
 
                     <div class="col-md-2">
-                        {{-- Urutan --}}
-                        <div class="mb-3">
-                            <label for="urutan" class="form-label">Urutan</label>
-                            <input type="number" 
-                                   class="form-control @error('urutan') is-invalid @enderror" 
-                                   id="urutan" 
-                                   name="urutan" 
-                                   value="{{ old('urutan', 0) }}" 
-                                   min="0">
-                            @error('urutan')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="col-md-2">
-                        {{-- Status Aktif --}}
                         <div class="mb-3">
                             <label class="form-label d-block">&nbsp;</label>
                             <div class="form-check form-switch">
@@ -189,7 +176,7 @@
                                        id="is_active" 
                                        name="is_active" 
                                        value="1" 
-                                       {{ old('is_active', '1') == '1' ? 'checked' : '' }}>
+                                       {{ old('is_active', $jadwal->is_active) ? 'checked' : '' }}>
                                 <label class="form-check-label" for="is_active">Aktif</label>
                             </div>
                         </div>
@@ -199,13 +186,10 @@
                 <hr class="my-4">
 
                 <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>Simpan Jadwal
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-1"></i>Perbarui Jadwal
                     </button>
-                    <button type="reset" class="btn btn-outline-secondary">
-                        <i class="fas fa-undo me-1"></i>Reset
-                    </button>
-                    <a href="{{ route('admin.jadwal.index') }}" class="btn btn-outline-secondary ms-auto">
+                    <a href="{{ route('admin.jadwal.index') }}" class="btn btn-outline-secondary">
                         Batal
                     </a>
                 </div>
@@ -213,15 +197,4 @@
         </div>
     </div>
 </div>
-
-@push('scripts')
-<script>
-    // Optional: Auto update preview atau validasi tambahan
-    document.getElementById('tanggal').addEventListener('change', function() {
-        const tanggal = new Date(this.value);
-        const today = new Date();
-        // Bisa tambahkan logic preview status
-    });
-</script>
-@endpush
 @endsection

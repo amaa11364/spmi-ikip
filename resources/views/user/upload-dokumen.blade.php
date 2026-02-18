@@ -113,7 +113,7 @@
                         <i class="fas fa-arrow-left me-2"></i>Kembali ke Penetapan
                     </a>
                 @else
-                    <a href="{{ route('dokumen-saya') }}" class="btn btn-outline-primary me-2">
+                    <a href="{{ route('dokumen-saya.index') }}" class="btn btn-outline-primary me-2">
                         <i class="fas fa-folder me-2"></i>Dokumen Saya
                     </a>
                 @endif
@@ -278,7 +278,7 @@
             
             <!-- ===================== AKHIR BAGIAN KONTEKS ===================== -->
             
-            <form action="{{ route('upload-dokumen.store') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+            <form action="{{ route('user.upload-dokumen.store') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
                 @csrf
                 
                 <!-- Hidden Fields untuk Konteks -->
@@ -490,7 +490,7 @@
                             <i class="fas fa-times me-2"></i>Batal
                         </a>
                     @else
-                        <a href="{{ route('dokumen-saya') }}" class="btn btn-outline-secondary btn-lg px-5">
+                        <a href="{{ route('dokumen-saya.index') }}" class="btn btn-outline-secondary btn-lg px-5">
                             <i class="fas fa-times me-2"></i>Batal
                         </a>
                     @endif

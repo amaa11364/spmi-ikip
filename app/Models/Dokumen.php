@@ -493,6 +493,21 @@ class Dokumen extends Model
         return self::where('status', 'pending')->count();
     }
 
+    public static function getFormattedStorageUsed($userId)
+    {
+        $totalBytes = self::where('uploaded_by', $userId)->sum('file_size');
+
+        if ($totalBytes >= 1073741824) {
+            return number_format($totalBytes / 1073741824, 2) . ' GB';
+        } elseif ($totalBytes >= 1048576) {
+            return number_format($totalBytes / 1048576, 2) . ' MB';
+        } elseif ($totalBytes >= 1024) {
+            return number_format($totalBytes / 1024, 2) . ' KB';
+        } else {
+            return $totalBytes . ' bytes';
+        }
+    }
+
     // Tambahkan method ini ke model Dokumen
 public function comments()
 {

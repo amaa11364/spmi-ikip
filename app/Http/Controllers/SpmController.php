@@ -7,6 +7,7 @@ use App\Models\Dokumen;
 use App\Models\UnitKerja;
 use App\Models\Iku;
 use App\Models\PelaksanaanSPMI;
+use App\Models\EvaluasiSPMI;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -87,7 +88,7 @@ class SpmController extends Controller
             'peningkatan' => PenetapanSPM::where('tipe_penetapan', 'peningkatan')->orderBy('created_at', 'desc')->get(),
         ];
         
-        return view('dashboard.spmi.penetapan.index', compact(
+        return view('admin.dashboard.spmi.penetapan.index', compact(
             'penetapan', 
             'kelompok', 
             'tahunList', 
@@ -770,7 +771,7 @@ class SpmController extends Controller
         $dokumenValid = PelaksanaanSPMI::where('status_dokumen', 'valid')->count();
         $dokumenBelumValid = PelaksanaanSPMI::where('status_dokumen', 'belum_valid')->count();
         
-        return view('dashboard.spmi.pelaksanaan.index', compact(
+        return view('admin.dashboard.spmi.pelaksanaan.index', compact(
             'pelaksanaan', 
             'tahunList', 
             'unitKerjaList',

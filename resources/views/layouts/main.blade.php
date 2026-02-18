@@ -58,7 +58,7 @@
             top: 0;
             bottom: 0;
             z-index: 1000;
-            overflow-y: auto; /* INI YANG BIKIN BISA SCROLL */
+            overflow-y: auto;
             transition: all 0.3s ease;
         }
         
@@ -80,6 +80,9 @@
         /* ===== SIDEBAR INNER STYLING ===== */
         .sidebar-inner {
             padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         
         .sidebar-header {
@@ -90,8 +93,14 @@
         
         .sidebar-menu {
             padding: 1rem 0;
-            height: calc(100vh - 180px); /* TINGGI MENU YANG BISA DISCROLL */
+            flex: 1;
             overflow-y: auto;
+        }
+        
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: auto;
         }
         
         .sidebar-menu .nav-link {
@@ -347,24 +356,7 @@
         
         <!-- Sidebar -->
         <aside class="sidebar-wrapper" id="sidebar">
-            <div class="sidebar-inner">
-                <div class="sidebar-header">
-                    <div class="d-flex flex-column align-items-center text-center">
-                        <div class="logo-container mb-3">
-                            <img src="{{ asset('images/photos/25600_Logo-IKIP-warna.png') }}" 
-                                 alt="IKIP Logo" 
-                                 class="logo-img" 
-                                 style="max-width: 70px; height: auto;">
-                        </div>
-                        <h4 class="fw-bold mb-1">SPMI</h4>
-                        <small class="opacity-75">SPMI Digital</small>
-                    </div>
-                </div>
-                
-                <nav class="sidebar-menu">
-                    @include('layouts.sidebar')
-                </nav>
-            </div>
+            @include('layouts.sidebar')
         </aside>
         
         <!-- Main Content -->
@@ -387,6 +379,22 @@
                 <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
                     <i class="fas fa-exclamation-circle me-2"></i>
                     {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                @endif
+                
+                @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ session('warning') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                @endif
+                
+                @if(session('info'))
+                <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ session('info') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
                 @endif
@@ -430,7 +438,7 @@
             document.addEventListener('click', function(event) {
                 if (window.innerWidth < 992 && 
                     !sidebar.contains(event.target) && 
-                    !mobileBtn.contains(event.target) &&
+                    mobileBtn && !mobileBtn.contains(event.target) &&
                     sidebar.classList.contains('show')) {
                     sidebar.classList.remove('show');
                     if (sidebarOverlay) {
@@ -458,7 +466,7 @@
                 });
             }
             
-            console.log('✅ Layout loaded with scrollable sidebar');
+            console.log('✅ Layout loaded');
         });
     </script>
     

@@ -21,7 +21,7 @@ class UploadController extends Controller
         $unitKerjas = UnitKerja::where('status', true)->get();
         $ikus = Iku::where('status', true)->get();
         
-        return view('upload-dokumen', compact('unitKerjas', 'ikus'));
+        return view('user.upload-dokumen', compact('unitKerjas', 'ikus'));
     }
     
     /**
@@ -184,7 +184,7 @@ class UploadController extends Controller
                         return redirect()->route('spmi.penetapan.show', $metadata['penetapan_id'])
                             ->with('success', 'Dokumen berhasil diupload ke repository penetapan!');
                     } else {
-                        return redirect()->route('dokumen-saya')
+                        return redirect()->route('user.dokumen-saya.index')
                             ->with('success', 'Dokumen berhasil diupload!');
                     }
                 } else {
@@ -220,7 +220,7 @@ class UploadController extends Controller
                     return redirect()->route('spmi.penetapan.show', $metadata['penetapan_id'])
                         ->with('success', 'Link dokumen berhasil ditambahkan ke repository penetapan!');
                 } else {
-                    return redirect()->route('dokumen-saya')
+                    return redirect()->route('user.dokumen-saya.index')
                         ->with('success', 'Link dokumen berhasil disimpan!');
                 }
             }
@@ -257,7 +257,7 @@ class UploadController extends Controller
 
         $isAdmin = true;
 
-        return view('dokumen-saya', compact('dokumens', 'unitKerjas', 'ikus', 'isAdmin'));
+        return view('user.dokumen-saya', compact('dokumens', 'unitKerjas', 'ikus', 'isAdmin'));
     }
 
     // Hapus dokumen
@@ -274,9 +274,9 @@ class UploadController extends Controller
             // Hapus dari database
             $dokumen->delete();
 
-            return redirect()->route('dokumen-saya')->with('success', 'Dokumen berhasil dihapus!');
+            return redirect()->route('user.dokumen-saya.index')->with('success', 'Dokumen berhasil dihapus!');
         } catch (\Exception $e) {
-            return redirect()->route('dokumen-saya')->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
+            return redirect()->route('user.dokumen-saya.index')->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
         }
     }
 

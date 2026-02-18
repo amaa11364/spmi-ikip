@@ -13,11 +13,13 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'username',
         'password',
         'phone',
         'role',
         'avatar',
         'program_studi_id',
+        'unit_kerja_id',
         'permissions',
         'is_active'
     ];
@@ -56,27 +58,27 @@ class User extends Authenticatable
     // === ROLE CHECK METHODS ===
     public function isAdmin()
     {
-        return $this->role === 'admin';
+        return strtolower($this->role) === 'admin';
     }
 
     public function isVerifikator()
     {
-        return $this->role === 'Verifikator';
+        return strtolower($this->role) === 'verifikator';
     }
 
     public function isUser()
     {
-        return $this->role === 'user';
+        return strtolower($this->role) === 'user';
     }
 
     public function hasRole($role)
     {
-        return $this->role === $role;
+        return strtolower($this->role) === strtolower($role);
     }
 
     public function hasAnyRole(array $roles)
     {
-        return in_array($this->role, $roles);
+        return in_array(strtolower($this->role), array_map('strtolower', $roles));
     }
 
     // === PERMISSION METHODS ===

@@ -32,7 +32,7 @@ class AuthController extends Controller
             ]);
         }
         
-        $redirectTo = match($user->role) {
+        $redirectTo = match(strtolower($user->role)) {
             'admin' => route('admin.dashboard'),
             'verifikator' => route('verifikator.dashboard'),
             'user' => route('user.dashboard'),

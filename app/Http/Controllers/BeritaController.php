@@ -21,7 +21,7 @@ class BeritaController extends Controller
         return view('admin.berita.create');
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
 {
     $request->validate([
         'judul' => 'required|max:255',
@@ -30,18 +30,20 @@ class BeritaController extends Controller
         'is_published' => 'boolean'
     ]);
 
-    $data = $request->only(['judul', 'link']);
-    $data['slug'] = Str::slug($request->judul);
-    $data['user_id'] = auth()->id();
-    $data['views'] = 0;
-    $data['is_published'] = true; // Auto publish
-    $data['ringkasan'] = $request->judul; // Use judul as ringkasan
-    $data['konten'] = $request->judul; // Use judul as konten
+    $data = [
+        'judul' => $request->judul,
+        'slug' => Str::slug($request->judul),
+        'isi' => $request->judul, // ✅ GANTI 'konten' menjadi 'isi'
+        'ringkasan' => $request->judul,
+        'user_id' => auth()->id(),
+        'views' => 0,
+        'is_published' => true,
+    ];
 
     if ($request->hasFile('gambar')) {
         $file = $request->file('gambar');
         $filename = time() . '_' . $file->getClientOriginalName();
-        $path = $file->storeAs('public/berita', $filename);
+        $file->storeAs('public/berita', $filename);
         $data['gambar'] = 'berita/' . $filename;
         $data['gambar_url'] = asset('storage/berita/' . $filename);
     } else {
@@ -59,37 +61,44 @@ class BeritaController extends Controller
         return view('admin.berita.edit', compact('berita'));
     }
 
-    public function update(Request $request, Berita $berita)
-    {
-        $request->validate([
-            'judul' => 'required|max:255',
-            'ringkasan' => 'required',
-            'konten' => 'required',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_published' => 'boolean'
-        ]);
+    public function update(Request $request, $id) // ← Gunakan $id, bukan Berita $berita
+{
+    $request->validate([
+        'judul' => 'required|max:255',
+        'ringkasan' => 'nullable',
+        'konten' => 'required',
+        'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'is_published' => 'boolean'
+    ]);
 
-        $data = $request->only(['judul', 'ringkasan', 'konten', 'is_published']);
-        $data['slug'] = Str::slug($request->judul);
+    $berita = Berita::findOrFail($id); // ← Cari berdasarkan ID
+    
+    $data = [
+        'judul' => $request->judul,
+        'ringkasan' => $request->ringkasan,
+        'isi' => $request->konten,
+        'slug' => Str::slug($request->judul),
+        'is_published' => $request->has('is_published') ? true : false,
+    ];
 
-        if ($request->hasFile('gambar')) {
-            // Hapus gambar lama
-            if ($berita->gambar && Storage::exists('public/' . $berita->gambar)) {
-                Storage::delete('public/' . $berita->gambar);
-            }
-
-            $file = $request->file('gambar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('public/berita', $filename);
-            $data['gambar'] = 'berita/' . $filename;
-            $data['gambar_url'] = asset('storage/berita/' . $filename);
+    if ($request->hasFile('gambar')) {
+        // Hapus gambar lama
+        if ($berita->gambar && Storage::exists('public/' . $berita->gambar)) {
+            Storage::delete('public/' . $berita->gambar);
         }
 
-        $berita->update($data);
-
-        return redirect()->route('admin.berita.index')
-            ->with('success', 'Berita berhasil diperbarui');
+        $file = $request->file('gambar');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $file->storeAs('public/berita', $filename);
+        $data['gambar'] = 'berita/' . $filename;
+        $data['gambar_url'] = asset('storage/berita/' . $filename);
     }
+
+    $berita->update($data);
+
+    return redirect()->route('admin.berita.index')
+        ->with('success', 'Berita berhasil diperbarui');
+}
 
     public function destroy(Berita $berita)
     {

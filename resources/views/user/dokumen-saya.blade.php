@@ -135,7 +135,7 @@
             <p class="mb-0">Kelola semua dokumen SPMI Anda</p>
         </div>
        <div class="col-md-4 col-12 text-md-end text-start mt-2 mt-md-0">
-            <a href="{{ route('upload-dokumen.create') }}" class="btn btn-light btn-lg me-2">
+            <a href="{{ route('user.upload-dokumen.create') }}" class="btn btn-light btn-lg me-2">
                 <i class="fas fa-plus me-2"></i>Upload Baru
             </a>
             <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-lg">
@@ -149,7 +149,7 @@
 
 <!-- Filters & Search -->
 <div class="filter-section">
-    <form action="{{ route('dokumen-saya') }}" method="GET" class="row g-3">
+    <form action="{{ route('dokumen-saya.index') }}" method="GET" class="row g-3">
         <div class="col-md-3 col-12">
             <label class="form-label fw-semibold">Unit Kerja</label>
             <select class="form-select" name="unit_kerja">

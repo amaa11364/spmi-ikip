@@ -16,10 +16,17 @@ class UserMiddleware
 
         $user = Auth::user();
         
-        // Hanya user biasa yang bisa akses (bukan supervisor/admin)
-        if ($user->hasAnyRole(['supervisor', 'admin'])) {
-            return redirect()->route($user->isAdmin() ? 'admin.dashboard' : 'supervisor.dashboard')
-                ->with('info', 'Anda sudah login sebagai ' . $user->role_label);
+        // PERBAIKAN: Hanya user dengan role 'user' yang bisa akses
+        if (!$user->isUser()) {  // GANTI INI!
+            if ($user->isAdmin()) {
+                return redirect()->route('admin.dashboard')
+                    ->with('info', 'Anda login sebagai Administrator');
+            }
+            
+            if ($user->isVerifikator()) {
+                return redirect()->route('verifikator.dashboard')
+                    ->with('info', 'Anda login sebagai Verifikator');
+            }
         }
 
         return $next($request);

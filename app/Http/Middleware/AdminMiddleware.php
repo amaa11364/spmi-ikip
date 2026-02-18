@@ -14,12 +14,12 @@ class AdminMiddleware
             return redirect()->route('masuk')->with('error', 'Silakan login terlebih dahulu.');
         }
 
-        // Hanya admin yang bisa akses
-        if (!Auth::user()->isAdmin()) {
-            return redirect()->route('landing.page')
-                ->with('error', 'Anda tidak memiliki akses ke halaman admin.');
+        // PERBAIKAN: Pake isAdmin() aja
+        if (Auth::user()->isAdmin()) {
+            return $next($request);
         }
 
-        return $next($request);
+        return redirect()->route('landing.page')
+            ->with('error', 'Anda tidak memiliki akses ke halaman admin.');
     }
 }
