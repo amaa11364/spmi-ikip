@@ -8,12 +8,11 @@
     $isVerifikator = $role === 'verifikator';
     $isUser = $role === 'user';
     
-    // Fungsi untuk cek apakah route terdaftar
     function routeExists($routeName) {
         return Route::has($routeName);
     }
     
-    // Dashboard route berdasarkan role
+    // Dashboard route
     if ($isAdmin) {
         $dashboardRoute = routeExists('admin.dashboard') ? route('admin.dashboard') : '#';
     } elseif ($isVerifikator) {
@@ -22,16 +21,14 @@
         $dashboardRoute = routeExists('user.dashboard') ? route('user.dashboard') : '#';
     }
     
-    // Hitung pending documents untuk verifikator
+    // Hitung pending documents
     $pendingCount = 0;
     if ($isVerifikator && $user->unit_kerja_id) {
         try {
             $pendingCount = Dokumen::where('status', 'pending')
                 ->where('unit_kerja_id', $user->unit_kerja_id)
                 ->count();
-        } catch (\Exception $e) {
-            $pendingCount = 0;
-        }
+        } catch (\Exception $e) {}
     }
     
     // Hitung total dokumen user
@@ -39,389 +36,257 @@
     if ($isUser) {
         try {
             $userDocumentsCount = $user->dokumens()->count();
-        } catch (\Exception $e) {
-            $userDocumentsCount = 0;
-        }
+        } catch (\Exception $e) {}
     }
 @endphp
 
-<div class="sidebar-inner">
+<div class="sidebar">
     <!-- Sidebar Header -->
     <div class="sidebar-header">
-        <div class="d-flex flex-column align-items-center text-center">
-            <div class="logo-container mb-3">
-                <img src="{{ asset('images/photos/25600_Logo-IKIP-warna.png') }}" 
-                     alt="IKIP Logo" 
-                     class="logo-img" 
-                     style="max-width: 70px; height: auto;">
-            </div>
-            <h4 class="fw-bold mb-1 text-white">SPMI</h4>
-            <small class="opacity-75 text-white-50">Q-TRACK Digital</small>
-            <div class="mt-2">
-                <span class="badge bg-light text-dark">
-                    @if($isAdmin)
-                        <i class="fas fa-crown me-1"></i>Administrator
-                    @elseif($isVerifikator)
-                        <i class="fas fa-check-circle me-1"></i>Verifikator
-                    @else
-                        <i class="fas fa-user me-1"></i>User
-                    @endif
-                </span>
+        <div class="sidebar-brand">
+            <img src="{{ asset('images/photos/25600_Logo-IKIP-warna.png') }}" 
+                 alt="IKIP Logo" 
+                 class="sidebar-logo">
+            <div class="sidebar-brand-text">
+                <h5>SPMI</h5>
+                <small>Q-TRACK Digital</small>
             </div>
         </div>
-    </div>
-    
-    <!-- Sidebar Menu -->
-    <nav class="sidebar-menu">
-        <ul class="nav flex-column">
-            {{-- DASHBOARD (UNTUK SEMUA ROLE) --}}
-            @if($dashboardRoute != '#')
-            <li class="nav-item mt-2">
-                <a class="nav-link {{ request()->routeIs('*.dashboard') ? 'active' : '' }}" 
-                   href="{{ $dashboardRoute }}">
-                    <i class="fas fa-home"></i>Dashboard
-                </a>
-            </li>
-            @endif
-
-            {{-- MENU UNTUK ROLE USER --}}
-            @if($isUser)
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">MANAJEMEN DOKUMEN</small>
-            </li>
-            
-            @if(routeExists('user.upload-dokumen.create'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('user.upload-dokumen.create') ? 'active' : '' }}" 
-                   href="{{ route('user.upload-dokumen.create') }}">
-                    <i class="fas fa-cloud-upload-alt"></i>Upload Dokumen
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('user.dokumen.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('user.dokumen.*') ? 'active' : '' }}" 
-                   href="{{ route('user.dokumen.index') }}">
-                    <i class="fas fa-folder-open"></i>Dokumen Saya
-                    @if($userDocumentsCount > 0)
-                        <span class="badge bg-info ms-2">{{ $userDocumentsCount }}</span>
-                    @endif
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('user.dokumen.status'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('user.dokumen.status') ? 'active' : '' }}" 
-                   href="{{ route('user.dokumen.status') }}">
-                    <i class="fas fa-chart-pie"></i>Status Dokumen
-                </a>
-            </li>
-            @endif
-            @endif
-            
-            {{-- MENU UNTUK ROLE VERIFIKATOR --}}
-            @if($isVerifikator)
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">VERIFIKASI DOKUMEN</small>
-            </li>
-            
-            @if(routeExists('verifikator.review.pending'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('verifikator.review.*') ? 'active' : '' }}" 
-                   href="{{ route('verifikator.review.pending') }}">
-                    <i class="fas fa-clipboard-list"></i>Perlu Verifikasi
-                    @if($pendingCount > 0)
-                        <span class="badge bg-warning ms-2">{{ $pendingCount }}</span>
-                    @endif
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('verifikator.dokumen.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('verifikator.dokumen.*') ? 'active' : '' }}" 
-                   href="{{ route('verifikator.dokumen.index') }}">
-                    <i class="fas fa-file-alt"></i>Semua Dokumen
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('verifikator.dokumen.approved'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('verifikator.dokumen.approved') ? 'active' : '' }}" 
-                   href="{{ route('verifikator.dokumen.approved') }}">
-                    <i class="fas fa-check-circle text-success"></i>Dokumen Disetujui
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('verifikator.dokumen.rejected'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('verifikator.dokumen.rejected') ? 'active' : '' }}" 
-                   href="{{ route('verifikator.dokumen.rejected') }}">
-                    <i class="fas fa-times-circle text-danger"></i>Dokumen Ditolak
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('verifikator.statistik.index'))
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">STATISTIK</small>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('verifikator.statistik.*') ? 'active' : '' }}" 
-                   href="{{ route('verifikator.statistik.index') }}">
-                    <i class="fas fa-chart-bar"></i>Laporan Verifikasi
-                </a>
-            </li>
-            @endif
-            @endif
-            
-            {{-- MENU UNTUK ROLE ADMIN --}}
+        <div class="sidebar-user-role">
             @if($isAdmin)
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">MANAJEMEN USER</small>
-            </li>
+                <span class="role-badge admin">Administrator</span>
+            @elseif($isVerifikator)
+                <span class="role-badge verifikator">Verifikator</span>
+            @else
+                <span class="role-badge user">User</span>
+            @endif
+        </div>
+    </div>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar-menu">
+        <ul class="nav flex-column">
             
-            @if(routeExists('admin.users.index'))
+            {{-- DASHBOARD UNTUK SEMUA --}}
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.users.index') }}">
-                    <i class="fas fa-users-cog"></i>Kelola User
+                <a href="{{ $dashboardRoute }}" class="nav-link {{ request()->routeIs('*.dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
                 </a>
             </li>
-            @endif
+
+            {{-- ========== MENU ADMIN ========== --}}
+            @if($isAdmin)
             
-            @if(routeExists('admin.roles.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.roles.index') }}">
-                    <i class="fas fa-user-tag"></i>Manajemen Role
-                </a>
-            </li>
-            @endif
+            <li class="nav-section">MASTER DATA</li>
             
+            {{-- Unit Kerja --}}
             @if(routeExists('admin.unit-kerja.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.unit-kerja.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.unit-kerja.index') }}">
-                    <i class="fas fa-building"></i>Unit Kerja
+                <a href="{{ route('admin.unit-kerja.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.unit-kerja.*') ? 'active' : '' }}">
+                    <i class="fas fa-building"></i>
+                    <span>Unit Kerja</span>
                 </a>
             </li>
             @endif
 
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">KONTEN & BERITA</small>
-            </li>
-            
-            @if(routeExists('admin.berita.index'))
+            {{-- IKU --}}
+            @if(routeExists('admin.iku.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.berita.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.berita.index') }}">
-                    <i class="fas fa-newspaper"></i>Kelola Berita
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('admin.kategori-berita.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.kategori-berita.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.kategori-berita.index') }}">
-                    <i class="fas fa-tags"></i>Kategori Berita
+                <a href="{{ route('admin.iku.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.iku.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>IKU</span>
                 </a>
             </li>
             @endif
 
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">MANAJEMEN JADWAL</small>
-            </li>
+            <li class="nav-section">MANAJEMEN</li>
             
-            @if(routeExists('admin.jadwal.index'))
+            {{-- Kelola Akun/User --}}
+            @if(routeExists('admin.users.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.jadwal.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.jadwal.index') }}">
-                    <i class="fas fa-calendar-alt"></i>Kelola Jadwal
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('admin.kalender.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.kalender.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.kalender.index') }}">
-                    <i class="fas fa-calendar-check"></i>Kalender Akademik
+                <a href="{{ route('admin.users.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Kelola Akun</span>
                 </a>
             </li>
             @endif
 
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">MANAJEMEN DOKUMEN</small>
-            </li>
-            
+            {{-- Kelola Dokumen --}}
             @if(routeExists('admin.dokumen.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('.dokumen.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.dokumen.index') }}">
-                    <i class="fas fa-file"></i>Semua Dokumen
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('admin.dokumen.statistik'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.dokumen.statistik') ? 'active' : '' }}" 
-                   href="{{ route('admin.dokumen.statistik') }}">
-                    <i class="fas fa-chart-line"></i>Statistik Dokumen
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('admin.kategori-dokumen.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.kategori-dokumen.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.kategori-dokumen.index') }}">
-                    <i class="fas fa-folder"></i>Kategori Dokumen
+                <a href="{{ route('admin.dokumen.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.dokumen.*') ? 'active' : '' }}">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Kelola Dokumen</span>
                 </a>
             </li>
             @endif
 
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">LAPORAN & AUDIT</small>
-            </li>
+            <li class="nav-section">KONTEN</li>
             
-            @if(routeExists('admin.laporan.index'))
+            {{-- Kelola Berita --}}
+            @if(routeExists('admin.berita.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.laporan.index') }}">
-                    <i class="fas fa-file-pdf"></i>Generate Laporan
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('admin.audit-log.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.audit-log.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.audit-log.index') }}">
-                    <i class="fas fa-history"></i>Audit Log
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('admin.backup.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.backup.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.backup.index') }}">
-                    <i class="fas fa-database"></i>Backup Database
+                <a href="{{ route('admin.berita.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.berita.*') ? 'active' : '' }}">
+                    <i class="fas fa-newspaper"></i>
+                    <span>Kelola Berita</span>
                 </a>
             </li>
             @endif
 
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">PENGATURAN</small>
-            </li>
-            
-            @if(routeExists('admin.settings.index'))
+            {{-- Kelola Jadwal --}}
+            @if(routeExists('admin.jadwal.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" 
-                   href="{{ route('admin.settings.index') }}">
-                    <i class="fas fa-cog"></i>Pengaturan Sistem
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('admin.profile.edit'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.profile.edit') ? 'active' : '' }}" 
-                   href="{{ route('admin.profile.edit') }}">
-                    <i class="fas fa-user-circle"></i>Profil Admin
-                </a>
-            </li>
-            @endif
-            @endif
-
-            {{-- MENU SPMI (UNTUK SEMUA ROLE) --}}
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">SIKLUS PPEPP</small>
-            </li>
-            
-            @if(routeExists('spmi.penetapan.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('spmi.penetapan.*') ? 'active' : '' }}" 
-                   href="{{ route('spmi.penetapan.index') }}">
-                    <i class="fas fa-pen-fancy"></i>Penetapan
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('spmi.pelaksanaan.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('spmi.pelaksanaan.*') ? 'active' : '' }}" 
-                   href="{{ route('spmi.pelaksanaan.index') }}">
-                    <i class="fas fa-play"></i>Pelaksanaan
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('spmi.evaluasi.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('spmi.evaluasi.*') ? 'active' : '' }}" 
-                   href="{{ route('spmi.evaluasi.index') }}">
-                    <i class="fas fa-chart-simple"></i>Evaluasi
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('spmi.pengendalian.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('spmi.pengendalian.*') ? 'active' : '' }}" 
-                   href="{{ route('spmi.pengendalian.index') }}">
-                    <i class="fas fa-sliders"></i>Pengendalian
-                </a>
-            </li>
-            @endif
-            
-            @if(routeExists('spmi.peningkatan.index'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('spmi.peningkatan.*') ? 'active' : '' }}" 
-                   href="{{ route('spmi.peningkatan.index') }}">
-                    <i class="fas fa-arrow-up"></i>Peningkatan
+                <a href="{{ route('admin.jadwal.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.jadwal.*') ? 'active' : '' }}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Kelola Jadwal</span>
                 </a>
             </li>
             @endif
 
-            {{-- MENU BANTUAN (UNTUK SEMUA ROLE) --}}
-            <li class="nav-item mt-3">
-                <small class="text-muted px-3">BANTUAN</small>
-            </li>
-            
-            @if(routeExists('help.index'))
+            {{-- Kelola IKU --}}
+            @if(routeExists('admin.settings.iku.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('help.*') ? 'active' : '' }}" 
-                   href="{{ route('help.index') }}">
-                    <i class="fas fa-question-circle"></i>Panduan Pengguna
+                <a href="{{ route('admin.settings.iku.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.settings.iku.*') ? 'active' : '' }}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Kelola IKU</span>
                 </a>
             </li>
             @endif
-            
-            @if(routeExists('faq.index'))
+
+             {{-- Kelola Unit Kerja --}}
+            @if(routeExists('admin.settings.unit-kerja.index'))
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('faq.*') ? 'active' : '' }}" 
-                   href="{{ route('faq.index') }}">
-                    <i class="fas fa-comments"></i>FAQ
+                <a href="{{ route('admin.settings.unit-kerja.index') }}" 
+                   class="nav-link {{ request()->routeIs('admin.settings.unit-kerja.*') ? 'active' : '' }}">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Kelola Unit Kerja</span>
                 </a>
             </li>
             @endif
+
+            @endif {{-- End Admin --}}
+
+            {{-- ========== MENU VERIFIKATOR ========== --}}
+            @if($isVerifikator)
+            
+            <li class="nav-section">VERIFIKASI</li>
+            
+            {{-- Perlu Verifikasi --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('verifikator.review.pending') ? route('verifikator.review.pending') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('verifikator.review.*') ? 'active' : '' }}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Perlu Verifikasi</span>
+                    @if($pendingCount > 0)
+                        <span class="badge warning">{{ $pendingCount }}</span>
+                    @endif
+                </a>
+            </li>
+
+            {{-- Semua Dokumen --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('verifikator.dokumen.index') ? route('verifikator.dokumen.index') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('verifikator.dokumen.index') ? 'active' : '' }}">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Semua Dokumen</span>
+                </a>
+            </li>
+
+            @endif {{-- End Verifikator --}}
+
+            {{-- ========== MENU USER ========== --}}
+            @if($isUser)
+            
+            <li class="nav-section">DOKUMEN SAYA</li>
+            
+            {{-- Upload Dokumen --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('user.upload-dokumen.create') ? route('user.upload-dokumen.create') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('user.upload-dokumen.create') ? 'active' : '' }}">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Upload Dokumen</span>
+                </a>
+            </li>
+
+            {{-- Daftar Dokumen --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('user.dokumen-saya.index') ? route('user.dokumen-saya.index') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('user.dokumen-saya.*') ? 'active' : '' }}">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Dokumen Saya</span>
+                    @if($userDocumentsCount > 0)
+                        <span class="badge">{{ $userDocumentsCount }}</span>
+                    @endif
+                </a>
+            </li>
+
+            @endif {{-- End User --}}
+
+            {{-- ========== MENU SPMI UNTUK SEMUA ========== --}}
+            <li class="nav-section">SIKLUS PPEPP</li>
+            
+            {{-- Penetapan --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('spmi.penetapan.index') ? route('spmi.penetapan.index') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('spmi.penetapan.*') ? 'active' : '' }}">
+                    <i class="fas fa-pen-fancy"></i>
+                    <span>Penetapan</span>
+                </a>
+            </li>
+
+            {{-- Pelaksanaan --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('spmi.pelaksanaan.index') ? route('spmi.pelaksanaan.index') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('spmi.pelaksanaan.*') ? 'active' : '' }}">
+                    <i class="fas fa-play"></i>
+                    <span>Pelaksanaan</span>
+                </a>
+            </li>
+
+            {{-- Evaluasi --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('spmi.evaluasi.index') ? route('spmi.evaluasi.index') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('spmi.evaluasi.*') ? 'active' : '' }}">
+                    <i class="fas fa-chart-simple"></i>
+                    <span>Evaluasi</span>
+                </a>
+            </li>
+
+            {{-- Pengendalian --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('spmi.pengendalian.index') ? route('spmi.pengendalian.index') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('spmi.pengendalian.*') ? 'active' : '' }}">
+                    <i class="fas fa-sliders"></i>
+                    <span>Pengendalian</span>
+                </a>
+            </li>
+
+            {{-- Peningkatan --}}
+            <li class="nav-item">
+                <a href="{{ routeExists('spmi.peningkatan.index') ? route('spmi.peningkatan.index') : '#' }}" 
+                   class="nav-link {{ request()->routeIs('spmi.peningkatan.*') ? 'active' : '' }}">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>Peningkatan</span>
+                </a>
+            </li>
         </ul>
-    </nav>
-    
-    <!-- Sidebar Footer with Logout -->
+    </div>
+
+    <!-- Sidebar Footer -->
     <div class="sidebar-footer">
         <ul class="nav flex-column">
             <li class="nav-item">
-                <a class="nav-link text-danger" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fas fa-sign-out-alt"></i>Keluar
+                <a href="#" class="nav-link text-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Keluar</span>
                 </a>
                 <form id="logout-form" action="{{ routeExists('logout') ? route('logout') : '#' }}" method="POST" class="d-none">
                     @csrf
