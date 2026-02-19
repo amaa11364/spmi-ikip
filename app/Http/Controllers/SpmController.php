@@ -3,16 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\PenetapanSPM;
+use App\Models\PelaksanaanSPMI;
 use App\Models\Dokumen;
 use App\Models\UnitKerja;
 use App\Models\Iku;
+<<<<<<< HEAD
 use App\Models\PelaksanaanSPMI;
 use App\Models\EvaluasiSPMI;
+=======
+>>>>>>> f8e6174a674526a1b0b7478b1409db59b148ada9
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class SpmController extends Controller
 {
@@ -556,161 +558,18 @@ class SpmController extends Controller
         }
     }
 
-    // ==================== AJAX METHODS PENETAPAN ====================
-    
-    /**
-     * Get data for view modal
-     */
-    public function getPenetapanData($id)
-    {
-        try {
-            $penetapan = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
-            
-            // Get all documents related to this penetapan
-            $allDokumen = $penetapan->getAllDokumen();
-            
-            $html = view('dashboard.spmi.penetapan.partials.detail-modal', compact('penetapan', 'allDokumen'))->render();
-            
-            return response()->json([
-                'success' => true,
-                'html' => $html
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
-            ], 404);
-        }
-    }
+    // ==================== DOKUMEN TERKAIT PENETAPAN ====================
 
     /**
-     * Get form for edit modal
+     * Tambahkan fungsi untuk menampilkan dokumen terkait penetapan
      */
-    public function getEditForm($id)
+    public function dokumenTerkaitPenetapan($id)
     {
-        try {
-            $penetapan = PenetapanSPM::findOrFail($id);
-            $unitKerjas = UnitKerja::where('status', true)->get();
-            $ikus = Iku::where('status', true)->get();
-            
-            $html = view('dashboard.spmi.penetapan.partials.edit-form', compact('penetapan', 'unitKerjas', 'ikus'))->render();
-            
-            return response()->json([
-                'success' => true,
-                'html' => $html
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
-            ], 404);
-        }
-    }
-
-    /**
-     * Update via AJAX
-     */
-    public function updateAjax(Request $request, $id)
-    {
-        try {
-            $penetapan = PenetapanSPM::findOrFail($id);
-            
-            $request->validate([
-                'nama_komponen' => 'required|string|max:255',
-                'tipe_penetapan' => 'required|in:pengelolaan,organisasi,pelaksanaan,evaluasi,pengendalian,peningkatan',
-                'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
-                'status' => 'required|in:aktif,nonaktif,revisi',
-                'deskripsi' => 'nullable|string',
-                'penanggung_jawab' => 'nullable|string|max:255',
-                'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-                'iku_id' => 'nullable|exists:ikus,id',
-            ]);
-            
-            $penetapan->update($request->all());
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Data berhasil diperbarui',
-                'data' => $penetapan
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui data: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get dokumen list for penetapan
-     */
-    public function getDokumenList($id)
-    {
-        try {
-            $penetapan = PenetapanSPM::findOrFail($id);
-            $allDokumen = $penetapan->getAllDokumen();
-            
-            $html = view('dashboard.spmi.penetapan.partials.dokumen-list', compact('allDokumen'))->render();
-            
-            return response()->json([
-                'success' => true,
-                'html' => $html,
-                'count' => $allDokumen->count()
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data dokumen: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get statistics for dashboard
-     */
-    public function getPenetapanStatistics()
-    {
-        try {
-            $total = PenetapanSPM::count();
-            $aktif = PenetapanSPM::where('status', 'aktif')->count();
-            $valid = PenetapanSPM::where('status_dokumen', 'valid')->count();
-            $belumValid = PenetapanSPM::where('status_dokumen', 'belum_valid')->count();
-            
-            // Group by tipe_penetapan
-            $byTipe = PenetapanSPM::select('tipe_penetapan', \DB::raw('count(*) as count'))
-                ->groupBy('tipe_penetapan')
-                ->get()
-                ->pluck('count', 'tipe_penetapan');
-            
-            // Group by tahun
-            $byTahun = PenetapanSPM::select('tahun', \DB::raw('count(*) as count'))
-                ->groupBy('tahun')
-                ->orderBy('tahun', 'desc')
-                ->take(5)
-                ->get();
-            
-            return response()->json([
-                'success' => true,
-                'statistics' => [
-                    'total' => $total,
-                    'aktif' => $aktif,
-                    'valid' => $valid,
-                    'belum_valid' => $belumValid,
-                    'by_tipe' => $byTipe,
-                    'by_tahun' => $byTahun
-                ]
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil statistik: ' . $e->getMessage()
-            ], 500);
-        }
+        $penetapan = PenetapanSPM::with(['dokumen' => function($query) {
+            $query->orderBy('created_at', 'desc');
+        }])->findOrFail($id);
+        
+        return view('spmi.penetapan.dokumen-terkait', compact('penetapan'));
     }
 
     // ==================== PELAKSANAAN SPMI (CRUD LENGKAP) ====================
@@ -1227,6 +1086,177 @@ class SpmController extends Controller
         }
     }
 
+    // ==================== DOKUMEN TERKAIT PELAKSANAAN ====================
+
+    /**
+     * Tambahkan fungsi untuk menampilkan dokumen terkait pelaksanaan
+     */
+    public function dokumenTerkaitPelaksanaan($id)
+    {
+        $pelaksanaan = PelaksanaanSPMI::with(['dokumen' => function($query) {
+            $query->orderBy('created_at', 'desc');
+        }])->findOrFail($id);
+        
+        return view('spmi.pelaksanaan.dokumen-terkait', compact('pelaksanaan'));
+    }
+
+    // ==================== AJAX METHODS PENETAPAN ====================
+    
+    /**
+     * Get data for view modal
+     */
+    public function getPenetapanData($id)
+    {
+        try {
+            $penetapan = PenetapanSPM::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
+            
+            // Get all documents related to this penetapan
+            $allDokumen = $penetapan->getAllDokumen();
+            
+            $html = view('dashboard.spmi.penetapan.partials.detail-modal', compact('penetapan', 'allDokumen'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Get form for edit modal
+     */
+    public function getEditForm($id)
+    {
+        try {
+            $penetapan = PenetapanSPM::findOrFail($id);
+            $unitKerjas = UnitKerja::where('status', true)->get();
+            $ikus = Iku::where('status', true)->get();
+            
+            $html = view('dashboard.spmi.penetapan.partials.edit-form', compact('penetapan', 'unitKerjas', 'ikus'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak ditemukan: ' . $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
+     * Update via AJAX
+     */
+    public function updateAjax(Request $request, $id)
+    {
+        try {
+            $penetapan = PenetapanSPM::findOrFail($id);
+            
+            $request->validate([
+                'nama_komponen' => 'required|string|max:255',
+                'tipe_penetapan' => 'required|in:pengelolaan,organisasi,pelaksanaan,evaluasi,pengendalian,peningkatan',
+                'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
+                'status' => 'required|in:aktif,nonaktif,revisi',
+                'deskripsi' => 'nullable|string',
+                'penanggung_jawab' => 'nullable|string|max:255',
+                'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
+                'iku_id' => 'nullable|exists:ikus,id',
+            ]);
+            
+            $penetapan->update($request->all());
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Data berhasil diperbarui',
+                'data' => $penetapan
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get dokumen list for penetapan
+     */
+    public function getDokumenList($id)
+    {
+        try {
+            $penetapan = PenetapanSPM::findOrFail($id);
+            $allDokumen = $penetapan->getAllDokumen();
+            
+            $html = view('dashboard.spmi.penetapan.partials.dokumen-list', compact('allDokumen'))->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'count' => $allDokumen->count()
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data dokumen: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics for dashboard
+     */
+    public function getPenetapanStatistics()
+    {
+        try {
+            $total = PenetapanSPM::count();
+            $aktif = PenetapanSPM::where('status', 'aktif')->count();
+            $valid = PenetapanSPM::where('status_dokumen', 'valid')->count();
+            $belumValid = PenetapanSPM::where('status_dokumen', 'belum_valid')->count();
+            
+            // Group by tipe_penetapan
+            $byTipe = PenetapanSPM::select('tipe_penetapan', \DB::raw('count(*) as count'))
+                ->groupBy('tipe_penetapan')
+                ->get()
+                ->pluck('count', 'tipe_penetapan');
+            
+            // Group by tahun
+            $byTahun = PenetapanSPM::select('tahun', \DB::raw('count(*) as count'))
+                ->groupBy('tahun')
+                ->orderBy('tahun', 'desc')
+                ->take(5)
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'statistics' => [
+                    'total' => $total,
+                    'aktif' => $aktif,
+                    'valid' => $valid,
+                    'belum_valid' => $belumValid,
+                    'by_tipe' => $byTipe,
+                    'by_tahun' => $byTahun
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil statistik: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     // ==================== AJAX METHODS PELAKSANAAN ====================
     
     /**
@@ -1391,599 +1421,6 @@ class SpmController extends Controller
         return $this->uploadDokumenPenetapan($uploadRequest, $penetapanId);
     }
 
-
-    // ==================== EVALUASI SPMI (CRUD LENGKAP) ====================
-
-/**
- * Display a listing of evaluasi.
- */
-public function indexEvaluasiFull(Request $request)
-{
-    // Query dengan filter
-    $query = EvaluasiSPMI::with(['dokumen', 'unitKerja', 'iku']);
-    
-    // Filter pencarian
-    if ($request->has('search') && $request->search != '') {
-        $search = $request->search;
-        $query->where(function($q) use ($search) {
-            $q->where('nama_evaluasi', 'like', '%' . $search . '%')
-              ->orWhere('deskripsi', 'like', '%' . $search . '%')
-              ->orWhere('kode_evaluasi', 'like', '%' . $search . '%')
-              ->orWhere('penanggung_jawab', 'like', '%' . $search . '%');
-        });
-    }
-    
-    // Filter tipe
-    if ($request->has('tipe') && $request->tipe != '' && $request->tipe != 'all') {
-        $query->where('tipe_evaluasi', $request->tipe);
-    }
-    
-    // Filter status
-    if ($request->has('status') && $request->status != '' && $request->status != 'all') {
-        $query->where('status', $request->status);
-    }
-    
-    // Filter status dokumen
-    if ($request->has('status_dokumen') && $request->status_dokumen != '' && $request->status_dokumen != 'all') {
-        $query->where('status_dokumen', $request->status_dokumen);
-    }
-    
-    // Filter tahun
-    if ($request->has('tahun') && $request->tahun != '' && $request->tahun != 'all') {
-        $query->where('tahun', $request->tahun);
-    }
-    
-    // Filter unit kerja
-    if ($request->has('unit_kerja_id') && $request->unit_kerja_id != '' && $request->unit_kerja_id != 'all') {
-        $query->where('unit_kerja_id', $request->unit_kerja_id);
-    }
-    
-    // Sorting
-    $sortBy = $request->get('sort_by', 'created_at');
-    $sortOrder = $request->get('sort_order', 'desc');
-    $query->orderBy($sortBy, $sortOrder);
-    
-    $evaluasi = $query->paginate(20);
-    
-    // Data untuk filter dropdown
-    $tahunList = EvaluasiSPMI::select('tahun')->distinct()->orderBy('tahun', 'desc')->get();
-    $unitKerjaList = UnitKerja::where('status', true)->get();
-    
-    // Statistics
-    $totalEvaluasi = EvaluasiSPMI::count();
-    $evaluasiAktif = EvaluasiSPMI::where('status', 'aktif')->orWhere('status', 'selesai')->count();
-    $dokumenValid = EvaluasiSPMI::where('status_dokumen', 'valid')->count();
-    $dokumenBelumValid = EvaluasiSPMI::where('status_dokumen', 'belum_valid')->count();
-    
-    // Kelompokkan untuk tabs
-    $kelompok = [
-        'ami' => EvaluasiSPMI::where('tipe_evaluasi', 'ami')->orderBy('created_at', 'desc')->get(),
-        'edom' => EvaluasiSPMI::where('tipe_evaluasi', 'edom')->orderBy('created_at', 'desc')->get(),
-        'evaluasi_layanan' => EvaluasiSPMI::where('tipe_evaluasi', 'evaluasi_layanan')->orderBy('created_at', 'desc')->get(),
-        'evaluasi_kinerja' => EvaluasiSPMI::where('tipe_evaluasi', 'evaluasi_kinerja')->orderBy('created_at', 'desc')->get(),
-    ];
-    
-    return view('dashboard.spmi.evaluasi.index', compact(
-        'evaluasi', 
-        'kelompok', 
-        'tahunList', 
-        'unitKerjaList',
-        'totalEvaluasi',
-        'evaluasiAktif',
-        'dokumenValid',
-        'dokumenBelumValid'
-    ));
-}
-
-/**
- * Show the form for creating a new evaluasi.
- */
-public function createEvaluasiFull()
-{
-    $unitKerjas = UnitKerja::where('status', true)->get();
-    $ikus = Iku::where('status', true)->get();
-    
-    return view('dashboard.spmi.evaluasi.create', compact('unitKerjas', 'ikus'));
-}
-
-/**
- * Store a newly created evaluasi in storage.
- */
-public function storeEvaluasiFull(Request $request)
-{
-    try {
-        // Validasi
-        $request->validate([
-            'nama_evaluasi' => 'required|string|max:255',
-            'tipe_evaluasi' => 'required|in:ami,edom,evaluasi_layanan,evaluasi_kinerja',
-            'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
-            'periode' => 'nullable|string|max:100',
-            'status' => 'required|in:aktif,nonaktif,selesai,berjalan',
-            'status_dokumen' => 'in:valid,belum_valid,dalam_review',
-            'deskripsi' => 'nullable|string',
-            'penanggung_jawab' => 'nullable|string|max:255',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'iku_id' => 'nullable|exists:ikus,id',
-        ]);
-        
-        // Generate kode otomatis
-        $tipe = $request->tipe_evaluasi;
-        $tahun = $request->tahun;
-        $kode = EvaluasiSPMI::generateKode($tipe, $tahun);
-        
-        // Create evaluasi
-        $evaluasi = EvaluasiSPMI::create([
-            'nama_evaluasi' => $request->nama_evaluasi,
-            'tipe_evaluasi' => $tipe,
-            'tahun' => $tahun,
-            'periode' => $request->periode,
-            'status' => $request->status,
-            'status_dokumen' => $request->status_dokumen ?? 'belum_valid',
-            'deskripsi' => $request->deskripsi,
-            'penanggung_jawab' => $request->penanggung_jawab,
-            'kode_evaluasi' => $kode,
-            'unit_kerja_id' => $request->unit_kerja_id,
-            'iku_id' => $request->iku_id,
-        ]);
-        
-        // Jika request AJAX, return JSON
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data evaluasi berhasil ditambahkan.',
-                'data' => $evaluasi
-            ]);
-        }
-        
-        return redirect()->route('spmi.evaluasi-full.index')
-            ->with('success', 'Data evaluasi berhasil ditambahkan.');
-            
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan data: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return back()->with('error', 'Gagal menyimpan data: ' . $e->getMessage())
-                     ->withInput();
-    }
-}
-
-/**
- * Display the specified evaluasi.
- */
-public function showEvaluasiFull($id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
-        
-        // Get all documents related to this evaluasi
-        $allDokumen = $evaluasi->getAllDokumen();
-        
-        return view('dashboard.spmi.evaluasi-full.show', compact('evaluasi', 'allDokumen'));
-        
-    } catch (\Exception $e) {
-        return redirect()->route('spmi.evaluasi-full.index')
-            ->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
-    }
-}
-
-/**
- * Show the form for editing the specified evaluasi.
- */
-public function editEvaluasiFull($id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::findOrFail($id);
-        $unitKerjas = UnitKerja::where('status', true)->get();
-        $ikus = Iku::where('status', true)->get();
-        
-        return view('dashboard.spmi.evaluasi-full.edit', compact('evaluasi', 'unitKerjas', 'ikus'));
-        
-    } catch (\Exception $e) {
-        return redirect()->route('spmi.evaluasi-full.index')
-            ->with('error', 'Data tidak ditemukan: ' . $e->getMessage());
-    }
-}
-
-/**
- * Update the specified evaluasi in storage.
- */
-public function updateEvaluasiFull(Request $request, $id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::findOrFail($id);
-        
-        // Validasi
-        $request->validate([
-            'nama_evaluasi' => 'required|string|max:255',
-            'tipe_evaluasi' => 'required|in:ami,edom,evaluasi_layanan,evaluasi_kinerja',
-            'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
-            'periode' => 'nullable|string|max:100',
-            'status' => 'required|in:aktif,nonaktif,selesai,berjalan',
-            'status_dokumen' => 'in:valid,belum_valid,dalam_review',
-            'deskripsi' => 'nullable|string',
-            'penanggung_jawab' => 'nullable|string|max:255',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'iku_id' => 'nullable|exists:ikus,id',
-        ]);
-        
-        // Update data
-        $evaluasi->update([
-            'nama_evaluasi' => $request->nama_evaluasi,
-            'tipe_evaluasi' => $request->tipe_evaluasi,
-            'tahun' => $request->tahun,
-            'periode' => $request->periode,
-            'status' => $request->status,
-            'status_dokumen' => $request->status_dokumen ?? $evaluasi->status_dokumen,
-            'deskripsi' => $request->deskripsi,
-            'penanggung_jawab' => $request->penanggung_jawab,
-            'unit_kerja_id' => $request->unit_kerja_id,
-            'iku_id' => $request->iku_id,
-            'tanggal_review' => now(),
-        ]);
-        
-        // Jika request AJAX
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Data evaluasi berhasil diperbarui.',
-                'data' => $evaluasi
-            ]);
-        }
-        
-        return redirect()->route('spmi.evaluasi-full.index')
-            ->with('success', 'Data evaluasi berhasil diperbarui.');
-            
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memperbarui data: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage())
-                     ->withInput();
-    }
-}
-
-/**
- * Remove the specified evaluasi from storage.
- */
-public function destroyEvaluasiFull($id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::findOrFail($id);
-        
-        // Soft delete evaluasi
-        $evaluasi->delete();
-        
-        return redirect()->route('spmi.evaluasi-full.index')
-            ->with('success', 'Data evaluasi berhasil dihapus.');
-            
-    } catch (\Exception $e) {
-        return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
-    }
-}
-
-/**
- * Upload dokumen untuk evaluasi.
- */
-public function uploadDokumenEvaluasi(Request $request, $id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::findOrFail($id);
-        
-        // Validasi file
-        $request->validate([
-            'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png',
-            'keterangan' => 'nullable|string|max:500',
-            'jenis_dokumen' => 'nullable|string|max:100',
-            'nama_dokumen' => 'nullable|string|max:255',
-        ]);
-        
-        // Upload file
-        if ($request->hasFile('file_dokumen') && $request->file('file_dokumen')->isValid()) {
-            $file = $request->file('file_dokumen');
-            $originalName = $file->getClientOriginalName();
-            $extension = $file->getClientOriginalExtension();
-            
-            // Generate folder path based on tahun and tipe_evaluasi
-            $folderPath = 'dokumen/spmi/evaluasi/' . $evaluasi->tipe_evaluasi . '/' . $evaluasi->tahun;
-            
-            // Generate unique filename
-            $fileName = Str::slug($evaluasi->nama_evaluasi) . '_' . time() . '_' . Str::random(5) . '.' . $extension;
-            
-            // Store file
-            $filePath = $file->storeAs($folderPath, $fileName, 'public');
-            
-            // Unit kerja default (LPM) jika tidak ada
-            $unitKerjaId = $evaluasi->unit_kerja_id ?? 1;
-            $ikuId = $evaluasi->iku_id ?? 1;
-            
-            // Generate nama dokumen
-            $namaDokumen = $request->nama_dokumen ?? ($evaluasi->nama_evaluasi . ' - ' . ($request->jenis_dokumen ?? 'Dokumen Evaluasi'));
-            
-            // Create dokumen record
-            $dokumen = Dokumen::create([
-                'unit_kerja_id' => $unitKerjaId,
-                'iku_id' => $ikuId,
-                'jenis_dokumen' => $request->jenis_dokumen ?? 'Evaluasi SPMI',
-                'nama_dokumen' => $namaDokumen,
-                'keterangan' => $request->keterangan ?? 'Dokumen evaluasi SPMI',
-                'file_path' => $filePath,
-                'file_name' => $originalName,
-                'file_size' => $file->getSize(),
-                'file_extension' => $extension,
-                'jenis_upload' => 'file',
-                'uploaded_by' => auth()->id(),
-                'is_public' => true,
-                'tahapan' => 'evaluasi',
-                'metadata' => json_encode([
-                    'evaluasi_id' => $evaluasi->id,
-                    'nama_evaluasi' => $evaluasi->nama_evaluasi,
-                    'tipe_evaluasi' => $evaluasi->tipe_evaluasi,
-                    'tahun' => $evaluasi->tahun,
-                    'kode_evaluasi' => $evaluasi->kode_evaluasi,
-                    'upload_source' => $request->has('upload_source') ? $request->upload_source : 'inline_form'
-                ])
-            ]);
-            
-            // Update evaluasi status dokumen
-            $evaluasi->update([
-                'status_dokumen' => 'valid',
-                'tanggal_evaluasi' => now(),
-                'dokumen_id' => $evaluasi->dokumen_id ?? $dokumen->id,
-            ]);
-            
-            // Jika request AJAX
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Dokumen berhasil diupload.',
-                    'dokumen' => $dokumen,
-                    'evaluasi' => $evaluasi
-                ]);
-            }
-            
-            return redirect()->route('spmi.evaluasi-full.show', $evaluasi->id)
-                ->with('success', 'Dokumen berhasil diupload dan terkait dengan evaluasi.');
-        }
-        
-        return back()->with('error', 'File tidak valid.');
-        
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengupload dokumen: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage());
-    }
-}
-
-/**
- * AJAX get evaluasi data for modal
- */
-public function getEvaluasiData($id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::with(['dokumen', 'unitKerja', 'iku'])->findOrFail($id);
-        
-        // Get all documents related to this evaluasi
-        $allDokumen = $evaluasi->getAllDokumen();
-        
-        $html = view('dashboard.spmi.evaluasi-full.partials.detail-modal', compact('evaluasi', 'allDokumen'))->render();
-        
-        return response()->json([
-            'success' => true,
-            'html' => $html
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Data tidak ditemukan: ' . $e->getMessage()
-        ], 404);
-    }
-}
-
-/**
- * AJAX get edit form
- */
-public function getEvaluasiEditForm($id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::findOrFail($id);
-        $unitKerjas = UnitKerja::where('status', true)->get();
-        $ikus = Iku::where('status', true)->get();
-        
-        $html = view('dashboard.spmi.evaluasi-full.partials.edit-form', compact('evaluasi', 'unitKerjas', 'ikus'))->render();
-        
-        return response()->json([
-            'success' => true,
-            'html' => $html
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Data tidak ditemukan: ' . $e->getMessage()
-        ], 404);
-    }
-}
-
-/**
- * AJAX update evaluasi
- */
-public function updateEvaluasiAjax(Request $request, $id)
-{
-    try {
-        $evaluasi = EvaluasiSPMI::findOrFail($id);
-        
-        $request->validate([
-            'nama_evaluasi' => 'required|string|max:255',
-            'tipe_evaluasi' => 'required|in:ami,edom,evaluasi_layanan,evaluasi_kinerja',
-            'tahun' => 'required|integer|min:2000|max:' . (date('Y') + 5),
-            'status' => 'required|in:aktif,nonaktif,selesai,berjalan',
-            'deskripsi' => 'nullable|string',
-            'penanggung_jawab' => 'nullable|string|max:255',
-            'unit_kerja_id' => 'nullable|exists:unit_kerjas,id',
-            'iku_id' => 'nullable|exists:ikus,id',
-        ]);
-        
-        $evaluasi->update($request->all());
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Data berhasil diperbarui',
-            'data' => $evaluasi
-        ]);
-        
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Gagal memperbarui data: ' . $e->getMessage()
-        ], 500);
-    }
-}
-    // ==================== PENGENDALIAN ====================
-    public function indexPengendalian()
-    {
-        $controls = [
-            [
-                'id' => 1, 
-                'tindakan' => 'Perbaikan Kurikulum Prodi Ilmu Pendidikan', 
-                'deskripsi' => 'Revisi kurikulum berdasarkan hasil evaluasi',
-                'status' => 'Selesai', 
-                'deadline' => '2024-03-15',
-                'penanggung_jawab' => 'Ketua Prodi',
-                'progress' => 100
-            ],
-            [
-                'id' => 2, 
-                'tindakan' => 'Pelatihan Dosen tentang Pembelajaran Aktif', 
-                'deskripsi' => 'Workshop peningkatan kompetensi dosen',
-                'status' => 'Berjalan', 
-                'deadline' => '2024-04-30',
-                'penanggung_jawab' => 'LPM',
-                'progress' => 60
-            ],
-            [
-                'id' => 3, 
-                'tindakan' => 'Penambahan Fasilitas Laboratorium', 
-                'deskripsi' => 'Pengadaan alat laboratorium baru',
-                'status' => 'Tertunda', 
-                'deadline' => '2024-05-15',
-                'penanggung_jawab' => 'Bagian Umum',
-                'progress' => 20
-            ],
-        ];
-        
-        $statusSummary = [
-            'selesai' => 1,
-            'berjalan' => 1,
-            'tertunda' => 1,
-        ];
-        
-        return view('dashboard.spmi.pengendalian.index', compact('controls', 'statusSummary'));
-    }
-
-    // ==================== PENINGKATAN ====================
-    public function indexPeningkatan()
-    {
-        $improvements = [
-            [
-                'id' => 1, 
-                'program' => 'Peningkatan Kualitas Pembelajaran Daring', 
-                'deskripsi' => 'Pengembangan platform e-learning dan pelatihan dosen',
-                'status' => 'Berjalan',
-                'tahun' => '2024',
-                'anggaran' => 'Rp 150.000.000',
-                'penanggung_jawab' => 'LPM & TIK'
-            ],
-            [
-                'id' => 2, 
-                'program' => 'Digitalisasi Layanan Administrasi', 
-                'deskripsi' => 'Transformasi layanan administrasi ke digital',
-                'status' => 'Selesai',
-                'tahun' => '2023',
-                'anggaran' => 'Rp 200.000.000',
-                'penanggung_jawab' => 'TIK & Bagian Umum'
-            ],
-            [
-                'id' => 3, 
-                'program' => 'Pengembangan Pusat Karir Mahasiswa', 
-                'deskripsi' => 'Pembuatan pusat karir dan inkubasi bisnis',
-                'status' => 'Berjalan',
-                'tahun' => '2024',
-                'anggaran' => 'Rp 100.000.000',
-                'penanggung_jawab' => 'BAAK & LPM'
-            ],
-        ];
-        
-        return view('dashboard.spmi.peningkatan.index', compact('improvements'));
-    }
-
-    // ==================== AKREDITASI ====================
-    public function indexAkreditasi()
-    {
-        $akreditasi = [
-            'prodi' => [
-                [
-                    'id' => 1,
-                    'nama' => 'Ilmu Pendidikan', 
-                    'jenjang' => 'S1',
-                    'akreditasi' => 'A', 
-                    'masa_berlaku' => '2027',
-                    'badan_akreditasi' => 'BAN-PT',
-                    'status' => 'Aktif'
-                ],
-                [
-                    'id' => 2,
-                    'nama' => 'Pendidikan Bahasa Indonesia', 
-                    'jenjang' => 'S1',
-                    'akreditasi' => 'B', 
-                    'masa_berlaku' => '2026',
-                    'badan_akreditasi' => 'BAN-PT',
-                    'status' => 'Aktif'
-                ],
-                [
-                    'id' => 3,
-                    'nama' => 'Pendidikan Matematika', 
-                    'jenjang' => 'S1',
-                    'akreditasi' => 'A', 
-                    'masa_berlaku' => '2028',
-                    'badan_akreditasi' => 'BAN-PT',
-                    'status' => 'Aktif'
-                ],
-            ],
-            'institusi' => [
-                [
-                    'id' => 4,
-                    'nama' => 'Akreditasi Institusi', 
-                    'jenjang' => 'Perguruan Tinggi',
-                    'akreditasi' => 'B', 
-                    'masa_berlaku' => '2025',
-                    'badan_akreditasi' => 'BAN-PT',
-                    'status' => 'Aktif'
-                ],
-            ]
-        ];
-        
-        $instruments = [
-            ['id' => 1, 'nama' => 'Instrumen Akreditasi Prodi', 'versi' => '2023', 'file' => 'instrument-prodi-2023.pdf'],
-            ['id' => 2, 'nama' => 'Instrumen Akreditasi Institusi', 'versi' => '2024', 'file' => 'instrument-institusi-2024.pdf'],
-        ];
-        
-        return view('dashboard.spmi.akreditasi.index', compact('akreditasi', 'instruments'));
-    }
-    
     // ==================== REPORT METHODS ====================
     
     public function reportPenetapan()
@@ -1993,9 +1430,16 @@ public function updateEvaluasiAjax(Request $request, $id)
         return view('dashboard.spmi.reports.penetapan', compact('penetapan'));
     }
     
+    public function reportPelaksanaan()
+    {
+        $pelaksanaan = PelaksanaanSPMI::with(['unitKerja', 'iku', 'dokumen'])->get();
+        
+        return view('dashboard.spmi.reports.pelaksanaan', compact('pelaksanaan'));
+    }
+    
     public function reportSummary()
     {
-        $statistics = [
+        $statisticsPenetapan = [
             'total' => PenetapanSPM::count(),
             'aktif' => PenetapanSPM::where('status', 'aktif')->count(),
             'nonaktif' => PenetapanSPM::where('status', 'nonaktif')->count(),
@@ -2005,15 +1449,36 @@ public function updateEvaluasiAjax(Request $request, $id)
             'dalam_review' => PenetapanSPM::where('status_dokumen', 'dalam_review')->count(),
         ];
         
+        $statisticsPelaksanaan = [
+            'total' => PelaksanaanSPMI::count(),
+            'aktif' => PelaksanaanSPMI::where('status', 'aktif')->count(),
+            'nonaktif' => PelaksanaanSPMI::where('status', 'nonaktif')->count(),
+            'revisi' => PelaksanaanSPMI::where('status', 'revisi')->count(),
+            'valid' => PelaksanaanSPMI::where('status_dokumen', 'valid')->count(),
+            'belum_valid' => PelaksanaanSPMI::where('status_dokumen', 'belum_valid')->count(),
+            'dalam_review' => PelaksanaanSPMI::where('status_dokumen', 'dalam_review')->count(),
+        ];
+        
         $byTipe = PenetapanSPM::select('tipe_penetapan', \DB::raw('count(*) as count'))
             ->groupBy('tipe_penetapan')
             ->get();
             
-        $byTahun = PenetapanSPM::select('tahun', \DB::raw('count(*) as count'))
+        $byTahunPenetapan = PenetapanSPM::select('tahun', \DB::raw('count(*) as count'))
+            ->groupBy('tahun')
+            ->orderBy('tahun', 'desc')
+            ->get();
+            
+        $byTahunPelaksanaan = PelaksanaanSPMI::select('tahun', \DB::raw('count(*) as count'))
             ->groupBy('tahun')
             ->orderBy('tahun', 'desc')
             ->get();
         
-        return view('dashboard.spmi.reports.summary', compact('statistics', 'byTipe', 'byTahun'));
+        return view('dashboard.spmi.reports.summary', compact(
+            'statisticsPenetapan', 
+            'statisticsPelaksanaan', 
+            'byTipe', 
+            'byTahunPenetapan', 
+            'byTahunPelaksanaan'
+        ));
     }
 }

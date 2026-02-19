@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('penetapan')->name('penetapan.')->group(function () {
             Route::get('/', [SpmController::class, 'indexPenetapan'])->name('index');
             Route::get('/create', [SpmController::class, 'createPenetapan'])->name('create');
+            Route::get('/{id}/dokumen-terkait', [SpmController::class, 'dokumenTerkait'])->name('dokumen-terkait');
             Route::post('/', [SpmController::class, 'storePenetapan'])->name('store');
             Route::get('/{id}', [SpmController::class, 'showPenetapan'])->name('show');
             Route::get('/{id}/edit', [SpmController::class, 'editPenetapan'])->name('edit');

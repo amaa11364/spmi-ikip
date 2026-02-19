@@ -13,22 +13,33 @@
             <span class="badge bg-primary">{{ $allDokumen->count() }} dokumen</span>
         </div>
         
-        @if($evaluasi->periode)
-        <div class="mb-3">
-            <h6 class="text-muted mb-2">Periode:</h6>
-            <p class="mb-0">{{ $evaluasi->periode }}</p>
-        </div>
-        @endif
-        
         <div class="mb-4">
             <h6 class="text-muted mb-2">Deskripsi:</h6>
             <p class="mb-0">{{ $evaluasi->deskripsi ?? 'Tidak ada deskripsi' }}</p>
         </div>
         
+        @if($evaluasi->hasil_evaluasi)
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">Hasil Evaluasi:</h6>
+            <p class="mb-0">{{ $evaluasi->hasil_evaluasi }}</p>
+        </div>
+        @endif
+        
+        @if($evaluasi->rekomendasi)
+        <div class="mb-4">
+            <h6 class="text-muted mb-2">Rekomendasi:</h6>
+            <p class="mb-0">{{ $evaluasi->rekomendasi }}</p>
+        </div>
+        @endif
+        
         <div class="row mb-4">
             <div class="col-md-6">
                 <h6 class="text-muted mb-2">Informasi:</h6>
                 <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-tag me-2 text-primary"></i>
+                        <strong>Tipe:</strong> {{ $evaluasi->tipe_evaluasi_label }}
+                    </li>
                     <li class="mb-2">
                         <i class="fas fa-user-tie me-2 text-primary"></i>
                         <strong>Penanggung Jawab:</strong> {{ $evaluasi->penanggung_jawab ?? 'Tidak ditentukan' }}
@@ -48,18 +59,22 @@
                 <ul class="list-unstyled">
                     <li class="mb-2">
                         <i class="fas fa-calendar me-2 text-primary"></i>
+                        <strong>Periode:</strong> {{ $evaluasi->periode ?? 'Tidak ditentukan' }}
+                    </li>
+                    @if($evaluasi->target_waktu)
+                    <li class="mb-2">
+                        <i class="fas fa-clock me-2 text-primary"></i>
+                        <strong>Target Waktu:</strong> {{ \Carbon\Carbon::parse($evaluasi->target_waktu)->format('d/m/Y') }}
+                    </li>
+                    @endif
+                    <li class="mb-2">
+                        <i class="fas fa-calendar-plus me-2 text-primary"></i>
                         <strong>Dibuat:</strong> {{ $evaluasi->created_at->format('d/m/Y H:i') }}
                     </li>
                     <li class="mb-2">
                         <i class="fas fa-calendar-check me-2 text-primary"></i>
                         <strong>Diperbarui:</strong> {{ $evaluasi->updated_at->format('d/m/Y H:i') }}
                     </li>
-                    @if($evaluasi->tanggal_evaluasi)
-                    <li class="mb-2">
-                        <i class="fas fa-calendar-alt me-2 text-primary"></i>
-                        <strong>Tanggal Evaluasi:</strong> {{ $evaluasi->tanggal_evaluasi->format('d/m/Y') }}
-                    </li>
-                    @endif
                 </ul>
             </div>
         </div>
@@ -113,7 +128,7 @@
                 @endif
             </div>
             <div class="card-footer text-center">
-                <a href="{{ route('upload.spmi-evaluasi') }}?evaluasi_id={{ $evaluasi->id }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('upload.spmi-evaluasi', ['id' => $evaluasi->id]) }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-upload me-1"></i> Tambah Dokumen
                 </a>
             </div>

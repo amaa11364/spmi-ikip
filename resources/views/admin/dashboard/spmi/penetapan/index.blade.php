@@ -152,6 +152,7 @@
     .btn-edit { color: #ffc107; }
     .btn-upload { color: #28a745; }
     .btn-delete { color: #dc3545; }
+    .btn-dokumen { color: #6f42c1; }
     
     /* Upload Inline Modal */
     .upload-inline-modal {
