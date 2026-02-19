@@ -10,7 +10,7 @@
                 <h4 class="fw-bold"><i class="fas fa-building me-2"></i>Pengaturan Unit Kerja</h4> {{-- DIUBAH --}}
                 <p class="text-muted mb-0">Kelola data Unit Kerja</p> {{-- DIUBAH --}}
             </div>
-            <a href="{{ route('settings.unit-kerja.create') }}" class="btn btn-primary"> {{-- DIUBAH --}}
+            <a href="{{ route('admin.settings.unit-kerja.create') }}" class="btn btn-primary"> {{-- DIUBAH --}}
                 <i class="fas fa-plus me-2"></i>Tambah Unit Kerja {{-- DIUBAH --}}
             </a>
         </div>
@@ -67,11 +67,11 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="{{ route('settings.unit-kerja.edit', $unit->id) }}" class="btn btn-outline-primary"> {{-- DIUBAH --}}
+                                <a href="{{ route('admin.settings.unit-kerja.edit', $unit->id) }}" class="btn btn-outline-primary"> {{-- DIUBAH --}}
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button type="button" class="btn btn-outline-danger" 
-                                        onclick="confirmDelete('{{ route('settings.unit-kerja.destroy', $unit->id) }}', '{{ $unit->nama }}')"> {{-- DIUBAH --}}
+                                        onclick="confirmDelete('{{ route('admin.settings.unit-kerja.destroy', $unit->id) }}', '{{ $unit->nama }}')"> {{-- DIUBAH --}}
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -82,7 +82,7 @@
                         <td colspan="5" class="text-center py-4">
                             <i class="fas fa-building fa-3x text-muted mb-3"></i> {{-- DIUBAH --}}
                             <p class="text-muted">Belum ada Unit Kerja yang ditambahkan</p> {{-- DIUBAH --}}
-                            <a href="{{ route('settings.unit-kerja.create') }}" class="btn btn-primary"> {{-- DIUBAH --}}
+                            <a href="{{ route('admin.settings.unit-kerja.create') }}" class="btn btn-primary"> {{-- DIUBAH --}}
                                 <i class="fas fa-plus me-2"></i>Tambah Unit Kerja Pertama {{-- DIUBAH --}}
                             </a>
                         </td>

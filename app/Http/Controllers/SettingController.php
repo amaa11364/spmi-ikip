@@ -38,7 +38,7 @@ class SettingController extends Controller
                 'status' => $request->has('status'),
             ]);
 
-            return redirect()->route('settings.iku.index')
+            return redirect()->route('admin.settings.iku.index')
                 ->with('success', 'IKU berhasil ditambahkan!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menambahkan IKU: ' . $e->getMessage());
@@ -101,12 +101,12 @@ class SettingController extends Controller
     public function indexUnitKerja()
     {
         $unitKerjas = UnitKerja::orderBy('kode')->get();
-        return view('settings.unit-kerja-index', compact('unitKerjas'));
+        return view('admin.settings.unit-kerja-index', compact('unitKerjas'));
     }
 
     public function createUnitKerja()
     {
-        return view('settings.unit-kerja-form');
+        return view('admin.settings.unit-kerja-form');
     }
 
     public function storeUnitKerja(Request $request)
@@ -125,7 +125,7 @@ class SettingController extends Controller
                 'status' => $request->has('status'),
             ]);
 
-            return redirect()->route('settings.unit-kerja.index')
+            return redirect()->route('admin.settings.unit-kerja.index')
                 ->with('success', 'Unit Kerja berhasil ditambahkan!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menambahkan Unit Kerja: ' . $e->getMessage());
@@ -135,7 +135,7 @@ class SettingController extends Controller
     public function editUnitKerja($id)
     {
         $unitKerja = UnitKerja::findOrFail($id);
-        return view('settings.unit-kerja-form', compact('unitKerja'));
+        return view('admin.settings.unit-kerja-form', compact('unitKerja'));
     }
 
     public function updateUnitKerja(Request $request, $id)
@@ -155,7 +155,7 @@ class SettingController extends Controller
                 'status' => $request->has('status'),
             ]);
 
-            return redirect()->route('settings.unit-kerja.index')
+            return redirect()->route('admin.settings.unit-kerja.index')
                 ->with('success', 'Unit Kerja berhasil diperbarui!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal memperbarui Unit Kerja: ' . $e->getMessage());
@@ -176,7 +176,7 @@ class SettingController extends Controller
             
             $unitKerja->delete();
 
-            return redirect()->route('settings.unit-kerja.index')
+            return redirect()->route('admin.settings.unit-kerja.index')
                 ->with('success', 'Unit Kerja berhasil dihapus!');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menghapus Unit Kerja: ' . $e->getMessage());

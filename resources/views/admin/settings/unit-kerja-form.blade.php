@@ -15,7 +15,7 @@
                     {{ isset($unitKerja) ? 'Perbarui data Unit Kerja' : 'Tambahkan Unit Kerja baru' }} {{-- DIUBAH --}}
                 </p>
             </div>
-            <a href="{{ route('settings.unit-kerja.index') }}" class="btn btn-outline-secondary"> {{-- DIUBAH --}}
+            <a href="{{ route('admin.settings.unit-kerja.index') }}" class="btn btn-outline-secondary"> {{-- DIUBAH --}}
                 <i class="fas fa-arrow-left me-2"></i>Kembali
             </a>
         </div>
@@ -26,7 +26,7 @@
     <div class="col-12 col-lg-8">
         <div class="card">
             <div class="card-body">
-                <form action="{{ isset($unitKerja) ? route('settings.unit-kerja.update', $unitKerja->id) : route('settings.unit-kerja.store') }}" method="POST"> {{-- DIUBAH --}}
+                <form action="{{ isset($unitKerja) ? route('admin.settings.unit-kerja.update', $unitKerja->id) : route('admin.settings.unit-kerja.store') }}" method="POST"> {{-- DIUBAH --}}
                     @csrf
                     @if(isset($unitKerja)) {{-- DIUBAH --}}
                         @method('PUT')
@@ -74,7 +74,7 @@
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('settings.unit-kerja.index') }}" class="btn btn-outline-secondary"> {{-- DIUBAH --}}
+                        <a href="{{ route('admin.settings.unit-kerja.index') }}" class="btn btn-outline-secondary"> {{-- DIUBAH --}}
                             <i class="fas fa-times me-2"></i>Batal
                         </a>
                         <button type="submit" class="btn btn-primary">

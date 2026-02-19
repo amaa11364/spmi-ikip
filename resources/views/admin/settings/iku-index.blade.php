@@ -10,7 +10,7 @@
                 <h4 class="fw-bold"><i class="fas fa-chart-line me-2"></i>Pengaturan IKU</h4>
                 <p class="text-muted mb-0">Kelola Indikator Kinerja Utama (IKU)</p>
             </div>
-            <a href="{{ route('settings.iku.create') }}" class="btn btn-primary">
+            <a href="{{ route('admin.settings.iku.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Tambah IKU
             </a>
         </div>
@@ -67,11 +67,11 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                <a href="{{ route('settings.iku.edit', $iku->id) }}" class="btn btn-outline-primary">
+                                <a href="{{ route('admin.settings.iku.edit', $iku->id) }}" class="btn btn-outline-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button type="button" class="btn btn-outline-danger" 
-                                        onclick="confirmDelete('{{ route('settings.iku.destroy', $iku->id) }}', '{{ $iku->nama }}')">
+                                        onclick="confirmDelete('{{ route('admin.settings.iku.destroy', $iku->id) }}', '{{ $iku->nama }}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -82,7 +82,7 @@
                         <td colspan="5" class="text-center py-4">
                             <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
                             <p class="text-muted">Belum ada IKU yang ditambahkan</p>
-                            <a href="{{ route('settings.iku.create') }}" class="btn btn-primary">
+                            <a href="{{ route('admin.settings.iku.create') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>Tambah IKU Pertama
                             </a>
                         </td>

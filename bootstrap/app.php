@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'verifikator' => \App\Http\Middleware\VerifikatorMiddleware::class,
             'user' => \App\Http\Middleware\UserMiddleware::class,
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
