@@ -11,11 +11,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ProgramStudiSeeder::class,
-            UnitKerjaSeeder::class,
             IkuSeeder::class,
             HeroContentSeeder::class,
             LoginTestingSeeder::class,
             BeritaSeeder::class,
+            UnitKerjaSeeder::class,
         ]);
     }
 }

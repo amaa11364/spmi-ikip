@@ -65,7 +65,7 @@ class BeritaSeeder extends Seeder
                 'is_published' => $berita['is_published'],
                 'published_at' => $berita['published_at'],
                 'views' => rand(50, 500),
-                'user_id' => 1, // ID admin
+                'user_id' => 1,
             ]);
         }
 
