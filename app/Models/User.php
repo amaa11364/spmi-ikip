@@ -13,7 +13,6 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'username',
         'password',
         'phone',
         'role',
@@ -48,6 +47,11 @@ class User extends Authenticatable
     public function unitKerja()
     {
         return $this->belongsTo(UnitKerja::class);
+    }
+
+    public function programStudi()
+    {
+        return $this->belongsTo(ProgramStudi::class);
     }
 
     public function dokumens()
@@ -170,10 +174,33 @@ class User extends Authenticatable
     {
         $labels = [
             'admin' => 'Administrator',
-            'Verifikator' => 'Verifikator',
+            'verifikator' => 'Verifikator',
             'user' => 'Pengguna'
         ];
         
-        return $labels[$this->role] ?? $this->role;
+        return $labels[$this->role] ?? ucfirst($this->role);
+    }
+
+    // Get status label
+    public function getStatusLabelAttribute()
+    {
+        return $this->is_active ? 'Aktif' : 'Tidak Aktif';
+    }
+
+    // Get status class for badge
+    public function getStatusClassAttribute()
+    {
+        return $this->is_active ? 'success' : 'danger';
+    }
+
+    // Get role class for badge
+    public function getRoleClassAttribute()
+    {
+        return match($this->role) {
+            'admin' => 'danger',
+            'verifikator' => 'warning',
+            'user' => 'info',
+            default => 'secondary'
+        };
     }
 }

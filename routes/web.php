@@ -268,6 +268,7 @@ Route::middleware(['auth'])->prefix('verifikator')->name('verifikator.')->group(
         Route::get('/{id}/download', [VerifikatorController::class, 'downloadDokumen'])->name('download');
         Route::post('/{id}/verify', [VerifikatorController::class, 'verifyDokumen'])->name('verify');
         Route::get('/pending-count', [VerifikatorController::class, 'getPendingCount'])->name('pending-count');
+        Route::post('/{id}/comment', [VerifikatorController::class, 'addComment'])->name('comment');
         
         // HALAMAN STATISTIK VERIFIKATOR
         Route::get('/statistics', [VerifikatorController::class, 'statistik'])->name('statistics');
