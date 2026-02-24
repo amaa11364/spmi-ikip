@@ -359,6 +359,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             Route::delete('/{id}', [SettingController::class, 'destroyUnitKerja'])->name('destroy');
         });
         
+        
         // Prodi Management
         Route::prefix('prodi')->name('prodi.')->group(function () {
             Route::get('/', [SettingController::class, 'indexProdi'])->name('index');
