@@ -50,6 +50,27 @@ class DokumenController extends Controller
         return view('verifikator.dokumen.index', compact('dokumens', 'statuses'));
     }
 
+    public function update(Request $request, $id)
+    {
+    $dokumen = Dokumen::findOrFail($id);
+    
+    // Cek akses unit kerja
+    if ($dokumen->unit_kerja_id != Auth::user()->unit_kerja_id) {
+        abort(403);
+    }
+    
+    // ✅ PROTEKSI: Verifikator tidak boleh mengubah tahapan
+    if ($request->has('tahapan') && $request->tahapan != $dokumen->tahapan) {
+        return back()->with('error', 'Verifikator tidak dapat mengubah tahapan dokumen.');
+    }
+    
+    // Hanya update status dan komentar
+    $dokumen->update([
+        'status' => $request->status,
+        // field lain yang boleh diupdate verifikator
+    ]);
+    }
+
     // Detail dokumen untuk review
     public function show($id)
     {

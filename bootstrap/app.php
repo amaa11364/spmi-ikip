@@ -27,6 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'verifikator' => \App\Http\Middleware\VerifikatorMiddleware::class,
             'user' => \App\Http\Middleware\UserMiddleware::class,
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'unit.kerja.access' => \App\Http\Middleware\VerifyUnitKerjaAccess::class,
+            'tahapan.not.modified' => \App\Http\Middleware\EnsureTahapanNotModified::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

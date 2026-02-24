@@ -237,18 +237,21 @@ Route::middleware(['auth'])->prefix('verifikator')->name('verifikator.')->group(
     Route::get('/statistics/pending', [VerifikatorDashboardController::class, 'getPendingStatistics'])
         ->name('dokumen.pending-count');
     
-    // Review Dokumen
-    Route::prefix('review')->name('review.')->group(function () {
-        Route::get('/', [VerifikatorController::class, 'reviewDokumen'])->name('index');
-        Route::get('/pending', [VerifikatorController::class, 'reviewDokumen'])
-            ->defaults('status', 'pending')->name('pending');
-        Route::get('/approved', [VerifikatorController::class, 'reviewDokumen'])
-            ->defaults('status', 'approved')->name('approved');
-        Route::get('/rejected', [VerifikatorController::class, 'reviewDokumen'])
-            ->defaults('status', 'rejected')->name('rejected');
-        Route::get('/revision', [VerifikatorController::class, 'reviewDokumen'])
-            ->defaults('status', 'revision')->name('revision');
-        Route::get('/{id}/detail', [VerifikatorController::class, 'reviewDetail'])->name('detail');
+     // ==================== DOKUMEN REVIEW (MENGGUNAKAN CONTROLLER BARU) ====================
+    Route::prefix('dokumen')->name('dokumen.')->group(function () {
+        Route::get('/', [DokumenReviewController::class, 'index'])->name('index');
+        Route::get('/statistics', [DokumenReviewController::class, 'statistics'])->name('statistics');
+        Route::get('/export', [DokumenReviewController::class, 'export'])->name('export');
+        
+        Route::get('/{id}', [DokumenReviewController::class, 'show'])->name('show');
+        Route::get('/{id}/download', [DokumenReviewController::class, 'download'])->name('download');
+        Route::get('/{id}/preview', [DokumenReviewController::class, 'preview'])->name('preview');
+        
+        Route::post('/{id}/approve', [DokumenReviewController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [DokumenReviewController::class, 'reject'])->name('reject');
+        Route::post('/{id}/revision', [DokumenReviewController::class, 'requestRevision'])->name('revision');
+        Route::post('/{id}/update-revision', [DokumenReviewController::class, 'updateAfterRevision'])->name('update-revision');
+        Route::post('/{id}/comment', [DokumenReviewController::class, 'addComment'])->name('comment');
     });
     
     // Dokumen Management
