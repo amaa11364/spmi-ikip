@@ -14,19 +14,29 @@
     <!-- Filter -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-3">
+            <form method="GET" action="{{ route('verifikator.dokumen.index') }}" class="row g-3">
+                <div class="col-md-2">
                     <label>Status</label>
                     <select name="status" class="form-select" onchange="this.form.submit()">
                         <option value="">Semua Status</option>
-                        @foreach($statuses as $status)
-                            <option value="{{ $status }}" {{ request('status') == $status ? 'selected' : '' }}>
-                                {{ ucfirst($status) }}
-                            </option>
-                        @endforeach
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        <option value="revision" {{ request('status') == 'revision' ? 'selected' : '' }}>Revision</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <label>Tahapan</label>
+                    <select name="tahapan" class="form-select" onchange="this.form.submit()">
+                        <option value="">Semua Tahapan</option>
+                        <option value="penetapan" {{ request('tahapan') == 'penetapan' ? 'selected' : '' }}>Penetapan</option>
+                        <option value="pelaksanaan" {{ request('tahapan') == 'pelaksanaan' ? 'selected' : '' }}>Pelaksanaan</option>
+                        <option value="evaluasi" {{ request('tahapan') == 'evaluasi' ? 'selected' : '' }}>Evaluasi</option>
+                        <option value="pengendalian" {{ request('tahapan') == 'pengendalian' ? 'selected' : '' }}>Pengendalian</option>
+                        <option value="peningkatan" {{ request('tahapan') == 'peningkatan' ? 'selected' : '' }}>Peningkatan</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label>Jenis Dokumen</label>
                     <input type="text" name="jenis" class="form-control" placeholder="Jenis dokumen" 
                            value="{{ request('jenis') }}">
@@ -58,7 +68,7 @@
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Total Dokumen</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $dokumens->total() }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $dokumens->total() ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-file-alt fa-2x text-gray-300"></i>
@@ -75,7 +85,7 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Menunggu Review</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $dokumens->where('status', 'pending')->count() }}
+                                {{ $statusStats['pending'] ?? 0 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -93,7 +103,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Disetujui</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $dokumens->where('status', 'approved')->count() }}
+                                {{ $statusStats['approved'] ?? 0 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -111,7 +121,7 @@
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Perlu Revisi</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $dokumens->where('status', 'revision')->count() }}
+                                {{ $statusStats['revision'] ?? 0 }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -132,6 +142,7 @@
                         <tr>
                             <th>#</th>
                             <th>Nama Dokumen</th>
+                            <th>Tahapan</th>
                             <th>Uploader</th>
                             <th>Jenis</th>
                             <th>Tanggal Upload</th>
@@ -142,18 +153,35 @@
                     <tbody>
                         @forelse($dokumens as $dokumen)
                         <tr>
-                            <td>{{ $loop->iteration + ($dokumens->perPage() * ($dokumens->currentPage() - 1)) }}</td>
+                            <td>{{ $loop->iteration + (($dokumens->currentPage() - 1) * $dokumens->perPage()) }}</td>
                             <td>
-                                <strong>{{ $dokumen->nama_dokumen }}</strong>
+                                <strong>{{ $dokumen->judul ?? $dokumen->nama_dokumen }}</strong>
                                 <br>
-                                <small class="text-muted">{{ Str::limit($dokumen->deskripsi, 50) }}</small>
+                                <small class="text-muted">{{ Str::limit($dokumen->deskripsi ?? '', 50) }}</small>
                             </td>
-                            <td>{{ $dokumen->user->name ?? '-' }}</td>
-                            <td>{{ $dokumen->jenis_dokumen }}</td>
-                            <td>{{ $dokumen->created_at->format('d/m/Y H:i') }}</td>
                             <td>
-                                <span class="badge bg-{{ $dokumen->status_badge }}">
-                                    {{ ucfirst($dokumen->status) }}
+                                @if($dokumen->tahapan)
+                                    <span class="badge bg-info">{{ ucfirst($dokumen->tahapan) }}</span>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td>{{ $dokumen->uploader->name ?? $dokumen->user->name ?? '-' }}</td>
+                            <td>{{ $dokumen->jenis_dokumen ?? 'Umum' }}</td>
+                            <td>{{ $dokumen->created_at ? $dokumen->created_at->format('d/m/Y H:i') : '-' }}</td>
+                            <td>
+                                @php
+                                    $status = $dokumen->status ?? 'unknown';
+                                    $badgeColor = match($status) {
+                                        'pending' => 'warning',
+                                        'approved' => 'success',
+                                        'rejected' => 'danger',
+                                        'revision' => 'info',
+                                        default => 'secondary'
+                                    };
+                                @endphp
+                                <span class="badge bg-{{ $badgeColor }}">
+                                    {{ ucfirst($status) }}
                                 </span>
                             </td>
                             <td>
@@ -162,7 +190,7 @@
                                     <i class="fas fa-eye"></i> Review
                                 </a>
                                 @if($dokumen->status == 'pending')
-                                <div class="btn-group btn-group-sm">
+                                <div class="btn-group btn-group-sm mt-1">
                                     <button type="button" class="btn btn-success" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#approveModal{{ $dokumen->id }}">
@@ -189,7 +217,7 @@
                         @include('verifikator.dokumen.modals.reject', ['dokumen' => $dokumen])
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center">
+                            <td colspan="8" class="text-center">
                                 <div class="py-4">
                                     <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
                                     <p class="text-muted">Tidak ada dokumen untuk direview</p>
@@ -202,10 +230,21 @@
             </div>
             
             <!-- Pagination -->
-            <div class="d-flex justify-content-center">
-                {{ $dokumens->links() }}
+            <div class="d-flex justify-content-center mt-4">
+                {{ $dokumens->withQueryString()->links() }}
             </div>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    // Auto submit form when filter changes
+    document.querySelectorAll('select[name="status"], select[name="tahapan"]').forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+</script>
+@endpush

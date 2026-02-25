@@ -35,9 +35,9 @@ Route::get('/', [LandingPageController::class, 'index'])->name('landing.page');
 Route::get('/dokumen-publik', [DokumenPublikController::class, 'index'])->name('dokumen-publik.index');
 Route::get('/dokumen-publik/{id}', [DokumenPublikController::class, 'show'])->name('dokumen-publik.show');
 
-// Berita Publik
-Route::get('/berita', [LandingPageController::class, 'beritaIndex'])->name('berita.index');
-Route::get('/berita/{slug}', [LandingPageController::class, 'beritaShow'])->name('berita.show');
+// Route untuk halaman berita publik (tanpa middleware auth)
+Route::get('/berita', [BeritaController::class, 'publikIndex'])->name('berita.publik.index');
+Route::get('/berita/{id}', [BeritaController::class, 'publikShow'])->name('berita.publik.show');
 
 // Halaman Statis
 Route::view('/upt', 'upt.index')->name('upt.index');

@@ -10,7 +10,7 @@
                 <div class="card-header">
                     <h3 class="card-title">Detail Dokumen</h3>
                     <div class="card-tools">
-                        <a href="{{ route('verifikator.review.index') }}" class="btn btn-sm btn-secondary">
+                        <a href="{{ route('verifikator.dokumen.index') }}" class="btn btn-sm btn-secondary">
                             <i class="fas fa-arrow-left"></i> Kembali
                         </a>
                     </div>
@@ -32,6 +32,16 @@
                                     <td>{{ $dokumen->jenis_dokumen ?? '-' }}</td>
                                 </tr>
                                 <tr>
+                                    <th>Tahapan PPEPP</th>
+                                    <td>
+                                        @if($dokumen->tahapan)
+                                            <span class="badge bg-info">{{ ucfirst($dokumen->tahapan) }}</span>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th>Status</th>
                                     <td>
                                         @if($dokumen->status == 'pending')
@@ -51,20 +61,20 @@
                             <table class="table table-bordered">
                                 <tr>
                                     <th width="30%">Pengupload</th>
-                                    <td>{{ $dokumen->user->name ?? '-' }}</td>
+                                    <td>{{ $dokumen->uploader->name ?? $dokumen->user->name ?? '-' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Unit Kerja</th>
-                                    <td>{{ $dokumen->unitKerja->nama ?? '-' }}</td>
+                                    <td>{{ $dokumen->unitKerja->nama ?? $dokumen->unitKerja->name ?? '-' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Tanggal Upload</th>
-                                    <td>{{ $dokumen->created_at->format('d/m/Y H:i') }}</td>
+                                    <td>{{ $dokumen->created_at ? $dokumen->created_at->format('d/m/Y H:i') : '-' }}</td>
                                 </tr>
                                 @if($dokumen->verified_at)
                                 <tr>
                                     <th>Diverifikasi Oleh</th>
-                                    <td>{{ $dokumen->verifikator->name ?? '-' }} ({{ $dokumen->verified_at->format('d/m/Y H:i') }})</td>
+                                    <td>{{ $dokumen->verifier->name ?? $dokumen->verified_by_name ?? '-' }} ({{ $dokumen->verified_at instanceof \Carbon\Carbon ? $dokumen->verified_at->format('d/m/Y H:i') : $dokumen->verified_at }})</td>
                                 </tr>
                                 @endif
                             </table>
@@ -104,7 +114,7 @@
                                 <h5><i class="fas fa-edit"></i> Instruksi Revisi:</h5>
                                 <p class="mb-0">{{ $dokumen->revision_instructions }}</p>
                                 @if($dokumen->revision_deadline)
-                                <small class="text-muted">Deadline: {{ $dokumen->revision_deadline->format('d/m/Y') }}</small>
+                                <small class="text-muted">Deadline: {{ $dokumen->revision_deadline instanceof \Carbon\Carbon ? $dokumen->revision_deadline->format('d/m/Y') : $dokumen->revision_deadline }}</small>
                                 @endif
                             </div>
                         </div>
@@ -119,14 +129,21 @@
                                     <h5 class="card-title mb-0">Preview Dokumen</h5>
                                 </div>
                                 <div class="card-body text-center">
-                                    @if(in_array(pathinfo($dokumen->file_path, PATHINFO_EXTENSION), ['jpg', 'jpeg', 'png', 'gif']))
-                                        <img src="{{ asset('storage/'.$dokumen->file_path) }}" 
-                                             class="img-fluid" style="max-height: 500px;" alt="Preview">
-                                    @elseif(pathinfo($dokumen->file_path, PATHINFO_EXTENSION) == 'pdf')
-                                        <iframe src="{{ asset('storage/'.$dokumen->file_path) }}" 
-                                                style="width:100%; height:600px;" frameborder="0"></iframe>
+                                    @if($dokumen->file_path)
+                                        @php
+                                            $extension = pathinfo($dokumen->file_path, PATHINFO_EXTENSION);
+                                        @endphp
+                                        @if(in_array($extension, ['jpg', 'jpeg', 'png', 'gif']))
+                                            <img src="{{ asset('storage/'.$dokumen->file_path) }}" 
+                                                 class="img-fluid" style="max-height: 500px;" alt="Preview">
+                                        @elseif($extension == 'pdf')
+                                            <iframe src="{{ asset('storage/'.$dokumen->file_path) }}" 
+                                                    style="width:100%; height:600px;" frameborder="0"></iframe>
+                                        @else
+                                            <p>Preview tidak tersedia untuk tipe file ini.</p>
+                                        @endif
                                     @else
-                                        <p>Preview tidak tersedia untuk tipe file ini.</p>
+                                        <p>Tidak ada file untuk dipreview.</p>
                                     @endif
                                     
                                     <div class="mt-3">
@@ -148,13 +165,13 @@
                                     <h5 class="card-title mb-0">Komentar</h5>
                                 </div>
                                 <div class="card-body">
-                                    @forelse($dokumen->comments as $comment)
+                                    @forelse($dokumen->comments ?? [] as $comment)
                                     <div class="mb-3 p-3 border rounded">
                                         <div class="d-flex justify-content-between">
                                             <strong>{{ $comment->user->name ?? 'System' }}</strong>
-                                            <small class="text-muted">{{ $comment->created_at->diffForHumans() }}</small>
+                                            <small class="text-muted">{{ $comment->created_at ? $comment->created_at->diffForHumans() : '' }}</small>
                                         </div>
-                                        <p class="mb-0 mt-2">{{ $comment->comment }}</p>
+                                        <p class="mb-0 mt-2">{{ $comment->comment ?? $comment->content }}</p>
                                         @if($comment->type)
                                         <small class="text-muted">Tipe: {{ $comment->type }}</small>
                                         @endif

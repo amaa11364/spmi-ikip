@@ -150,7 +150,7 @@
             </li>
             @endif
 
-            {{-- Kelola IKU --}}
+            {{-- Kelola IKU (Settings) --}}
             @if(routeExists('admin.settings.iku.index'))
             <li class="nav-item">
                 <a href="{{ route('admin.settings.iku.index') }}" 
@@ -161,12 +161,12 @@
             </li>
             @endif
 
-             {{-- Kelola Unit Kerja --}}
+            {{-- Kelola Unit Kerja (Settings) --}}
             @if(routeExists('admin.settings.unit-kerja.index'))
             <li class="nav-item">
                 <a href="{{ route('admin.settings.unit-kerja.index') }}" 
                    class="nav-link {{ request()->routeIs('admin.settings.unit-kerja.*') ? 'active' : '' }}">
-                    <i class="fas fa-calendar-alt"></i>
+                    <i class="fas fa-building"></i>
                     <span>Kelola Unit Kerja</span>
                 </a>
             </li>
@@ -179,10 +179,10 @@
             
             <li class="nav-section">VERIFIKASI</li>
             
-            {{-- Perlu Verifikasi --}}
+            {{-- Perlu Verifikasi (Pending) --}}
             <li class="nav-item">
-                <a href="{{ routeExists('verifikator.review.pending') ? route('verifikator.review.pending') : '#' }}" 
-                   class="nav-link {{ request()->routeIs('verifikator.review.*') ? 'active' : '' }}">
+                <a href="{{ routeExists('verifikator.dokumen.index') ? route('verifikator.dokumen.index', ['status' => 'pending']) : '#' }}" 
+                   class="nav-link {{ request()->routeIs('verifikator.dokumen.index') && request('status') == 'pending' ? 'active' : '' }}">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Perlu Verifikasi</span>
                     @if($pendingCount > 0)
@@ -194,11 +194,44 @@
             {{-- Semua Dokumen --}}
             <li class="nav-item">
                 <a href="{{ routeExists('verifikator.dokumen.index') ? route('verifikator.dokumen.index') : '#' }}" 
-                   class="nav-link {{ request()->routeIs('verifikator.dokumen.index') ? 'active' : '' }}">
+                   class="nav-link {{ request()->routeIs('verifikator.dokumen.index') && !request('status') ? 'active' : '' }}">
                     <i class="fas fa-file-alt"></i>
                     <span>Semua Dokumen</span>
                 </a>
             </li>
+
+            {{-- Dokumen Disetujui --}}
+            @if(routeExists('verifikator.dokumen.index'))
+            <li class="nav-item">
+                <a href="{{ route('verifikator.dokumen.index', ['status' => 'approved']) }}" 
+                   class="nav-link {{ request('status') == 'approved' ? 'active' : '' }}">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Disetujui</span>
+                </a>
+            </li>
+            @endif
+
+            {{-- Dokumen Ditolak --}}
+            @if(routeExists('verifikator.dokumen.index'))
+            <li class="nav-item">
+                <a href="{{ route('verifikator.dokumen.index', ['status' => 'rejected']) }}" 
+                   class="nav-link {{ request('status') == 'rejected' ? 'active' : '' }}">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Ditolak</span>
+                </a>
+            </li>
+            @endif
+
+            {{-- Dokumen Revisi --}}
+            @if(routeExists('verifikator.dokumen.index'))
+            <li class="nav-item">
+                <a href="{{ route('verifikator.dokumen.index', ['status' => 'revision']) }}" 
+                   class="nav-link {{ request('status') == 'revision' ? 'active' : '' }}">
+                    <i class="fas fa-edit"></i>
+                    <span>Perlu Revisi</span>
+                </a>
+            </li>
+            @endif
 
             @endif {{-- End Verifikator --}}
 

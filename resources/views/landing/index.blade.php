@@ -501,16 +501,16 @@
                     @if($beritas->count() > 0)
                         <div class="row g-4">
                            {{-- Update bagian looping berita --}}
-@foreach($beritas as $berita)
-<div class="col-md-6">
-    <a href="{{ $berita->link }}" target="_blank" class="text-decoration-none">
-        <div class="berita-card">
-            <img src="{{ $berita->gambar_url }}" alt="{{ $berita->judul }}" class="berita-image">
-            <div class="berita-content">
-                <h3 class="berita-title">{{ Str::limit($berita->judul, 60) }}</h3>
-                <div class="berita-meta">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>{{ $berita->created_at->format('d M Y') }}</span>
+        @foreach($beritas as $berita)
+            <div class="col-md-6">
+                <a href="{{ route('berita.publik.show', $berita->id) }}" class="text-decoration-none">
+                    <div class="berita-card">
+                        <img src="{{ $berita->gambar_url }}" alt="{{ $berita->judul }}" class="berita-image">
+                            <div class="berita-content">
+                        <h3 class="berita-title">{{ Str::limit($berita->judul, 60) }}</h3>
+                    <div class="berita-meta">
+                <i class="fas fa-calendar-alt"></i>
+            <span>{{ $berita->created_at->format('d M Y') }}</span>
                 </div>
             </div>
         </div>
@@ -520,7 +520,7 @@
                         </div>
                         
                         <div class="view-more">
-                            <a href="{{ route('berita.index') }}" class="btn btn-primary btn-lg">
+                            <a href="{{ route('admin.berita.index') }}" class="btn btn-primary btn-lg">
                                 <i class="fas fa-list me-2"></i>Lihat Semua Berita
                             </a>
                         </div>

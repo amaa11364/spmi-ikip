@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/UploadController.php
 
 namespace App\Http\Controllers;
 
@@ -8,13 +9,13 @@ use App\Models\Iku;
 use App\Models\PenetapanSPM;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class UploadController extends Controller
 {
     /**
-     * Show the form for creating a new resource.
+     * Show the upload form
      */
     public function create()
     {
@@ -23,7 +24,7 @@ class UploadController extends Controller
         
         return view('user.upload-dokumen', compact('unitKerjas', 'ikus'));
     }
-    
+
     /**
      * Show the form for creating with context.
      */
@@ -72,17 +73,19 @@ class UploadController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store uploaded document
      */
     public function store(Request $request)
     {
         try {
             // Validasi dasar
             $request->validate([
+                'tahapan' => 'nullable|in:penetapan,pelaksanaan,evaluasi,pengendalian,peningkatan',
                 'unit_kerja_id' => 'required|exists:unit_kerjas,id',
-                'iku_id' => 'required|exists:ikus,id',
+                'iku_id' => 'nullable|exists:ikus,id',
                 'jenis_upload' => 'required|in:file,link',
                 'nama_dokumen' => 'required|string|max:255',
+                'keterangan' => 'nullable|string|max:500',
                 'is_public' => 'boolean'
             ]);
 
@@ -93,13 +96,19 @@ class UploadController extends Controller
                 ]);
             } else {
                 $request->validate([
-                    'link_dokumen' => 'required|max:500'
+                    'link_dokumen' => 'required|url|max:500'
                 ]);
+            }
+
+            // Validasi dinamis berdasarkan tahapan
+            if ($request->tahapan) {
+                $dynamicRules = $this->getDynamicValidationRules($request->tahapan);
+                $request->validate($dynamicRules);
             }
 
             // Handle metadata berdasarkan konteks
             $metadata = [];
-            $tahapan = null;
+            $tahapan = $request->tahapan;
             
             // Konteks SPMI Penetapan
             if ($request->has('penetapan_id')) {
@@ -116,10 +125,9 @@ class UploadController extends Controller
                 }
             }
             
-            // Konteks tahapan SPMI lainnya
-            if ($request->has('tahapan') && in_array($request->tahapan, ['pelaksanaan', 'evaluasi', 'pengendalian', 'peningkatan'])) {
-                $tahapan = $request->tahapan;
-                $metadata['tahapan'] = $tahapan;
+            // Kumpulkan metadata dari field dinamis
+            if ($request->tahapan) {
+                $metadata = array_merge($metadata, $this->collectMetadata($request->tahapan, $request));
             }
             
             // Tambahkan metadata lainnya jika ada
@@ -135,28 +143,30 @@ class UploadController extends Controller
                     $originalName = $file->getClientOriginalName();
                     $extension = $file->getClientOriginalExtension();
                     
-                    // Generate folder path berdasarkan konteks
+                    // Generate folder path
                     $folderPath = 'dokumen';
                     if ($tahapan) {
                         $folderPath .= '/' . $tahapan;
                     }
                     if (isset($metadata['tipe_penetapan']) && isset($metadata['tahun'])) {
                         $folderPath .= '/' . $metadata['tipe_penetapan'] . '/' . $metadata['tahun'];
+                    } else {
+                        $folderPath .= '/' . date('Y');
                     }
                     
                     // Generate unique filename
                     $fileName = time() . '_' . Str::random(10) . '.' . $extension;
                     
-                    // Store file dengan path yang konsisten
+                    // Store file
                     $filePath = $file->storeAs($folderPath, $fileName, 'public');
                     
                     // Create dokumen record
                     $dokumen = Dokumen::create([
                         'unit_kerja_id' => $request->unit_kerja_id,
                         'iku_id' => $request->iku_id,
-                        'jenis_dokumen' => $request->jenis_dokumen ?? 'File Upload',
+                        'jenis_dokumen' => $request->jenis_dokumen ?? ($tahapan ? ucfirst($tahapan) . ' SPMI' : 'File Upload'),
                         'nama_dokumen' => $request->nama_dokumen,
-                        'keterangan' => $request->keterangan,
+                        'keterangan' => $request->keterangan ?? ($tahapan ? 'Dokumen ' . $tahapan . ' SPMI' : null),
                         'file_path' => $filePath,
                         'file_name' => $originalName,
                         'file_size' => $file->getSize(),
@@ -165,6 +175,7 @@ class UploadController extends Controller
                         'uploaded_by' => auth()->id(),
                         'is_public' => $request->is_public ?? false,
                         'tahapan' => $tahapan,
+                        'status' => 'pending',
                         'metadata' => !empty($metadata) ? json_encode($metadata) : null
                     ]);
 
@@ -185,17 +196,14 @@ class UploadController extends Controller
                             ->with('success', 'Dokumen berhasil diupload ke repository penetapan!');
                     } else {
                         return redirect()->route('user.dokumen-saya.index')
-                            ->with('success', 'Dokumen berhasil diupload!');
+                            ->with('success', 'Dokumen berhasil diupload dan menunggu verifikasi!');
                     }
                 } else {
-                    return back()->with('error', 'File tidak valid atau gagal diupload.');
+                    return back()->with('error', 'File tidak valid atau gagal diupload.')->withInput();
                 }
             } else {
-                // Upload link - tambahkan http:// jika tidak ada
+                // Upload link
                 $link = $request->link_dokumen;
-                if (!preg_match("~^(?:f|ht)tps?://~i", $link)) {
-                    $link = "http://" . $link;
-                }
 
                 // Create dokumen record untuk link
                 $dokumen = Dokumen::create([
@@ -212,6 +220,7 @@ class UploadController extends Controller
                     'uploaded_by' => auth()->id(),
                     'is_public' => $request->is_public ?? false,
                     'tahapan' => $tahapan,
+                    'status' => 'pending',
                     'metadata' => !empty($metadata) ? json_encode($metadata) : null
                 ]);
 
@@ -226,61 +235,142 @@ class UploadController extends Controller
             }
             
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage());
+            return back()->with('error', 'Gagal mengupload dokumen: ' . $e->getMessage())
+                         ->withInput();
         }
     }
 
+    /**
+     * Get dynamic validation rules based on tahapan
+     */
+    private function getDynamicValidationRules($tahapan)
+    {
+        $rules = [];
+        
+        switch ($tahapan) {
+            case 'penetapan':
+                $rules['kode_penetapan'] = 'required|string|max:50';
+                $rules['tahun_penetapan'] = 'required|integer|min:2000|max:' . (date('Y') + 5);
+                $rules['status_penetapan'] = 'required|in:aktif,revisi,kadaluarsa';
+                break;
+                
+            case 'pelaksanaan':
+                $rules['keterangan_pelaksanaan'] = 'required|string|max:500';
+                break;
+                
+            case 'evaluasi':
+                $rules['periode_evaluasi'] = 'required|string|max:100';
+                $rules['hasil_evaluasi'] = 'required|string|max:2000';
+                break;
+                
+            case 'pengendalian':
+                $rules['sumber_temuan'] = 'required|string|max:255';
+                $rules['prioritas'] = 'required|in:tinggi,sedang,rendah';
+                $rules['target_selesai'] = 'required|date|after:today';
+                break;
+                
+            case 'peningkatan':
+                $rules['program_peningkatan'] = 'required|string|max:255';
+                $rules['anggaran'] = 'required|numeric|min:0';
+                $rules['jenis_peningkatan'] = 'required|in:strategis,operasional,perbaikan';
+                break;
+        }
+        
+        return $rules;
+    }
+
+    /**
+     * Collect metadata from dynamic fields
+     */
+    private function collectMetadata($tahapan, Request $request)
+    {
+        $metadata = [];
+        
+        switch ($tahapan) {
+            case 'penetapan':
+                $metadata['kode_penetapan'] = $request->kode_penetapan;
+                $metadata['tahun_penetapan'] = $request->tahun_penetapan;
+                $metadata['status_penetapan'] = $request->status_penetapan;
+                break;
+                
+            case 'pelaksanaan':
+                $metadata['keterangan_dokumen'] = $request->keterangan_pelaksanaan;
+                break;
+                
+            case 'evaluasi':
+                $metadata['periode_evaluasi'] = $request->periode_evaluasi;
+                $metadata['hasil_evaluasi'] = $request->hasil_evaluasi;
+                break;
+                
+            case 'pengendalian':
+                $metadata['sumber_temuan'] = $request->sumber_temuan;
+                $metadata['prioritas'] = $request->prioritas;
+                $metadata['target_selesai'] = $request->target_selesai;
+                break;
+                
+            case 'peningkatan':
+                $metadata['program_peningkatan'] = $request->program_peningkatan;
+                $metadata['anggaran'] = $request->anggaran;
+                $metadata['jenis_peningkatan'] = $request->jenis_peningkatan;
+                break;
+        }
+        
+        return $metadata;
+    }
+
+    /**
+     * Index user's documents - DIPERBAIKI
+     */
     public function index(Request $request)
     {
         $query = Dokumen::with(['unitKerja', 'uploader', 'iku'])
                        ->where('uploaded_by', Auth::id());
 
-        if ($request->has('search') && $request->search != '') {
+        // Filter berdasarkan pencarian
+        if ($request->filled('search')) {
             $query->where('nama_dokumen', 'like', '%' . $request->search . '%');
         }
 
-        if ($request->has('unit_kerja') && $request->unit_kerja != '') {
+        // Filter berdasarkan unit kerja
+        if ($request->filled('unit_kerja')) {
             $query->where('unit_kerja_id', $request->unit_kerja);
         }
 
-        if ($request->has('iku_id') && $request->iku_id != '') {
+        // Filter berdasarkan IKU
+        if ($request->filled('iku_id')) {
             $query->where('iku_id', $request->iku_id);
         }
-        
-        if ($request->has('tahapan') && $request->tahapan != '') {
+
+        // Filter berdasarkan tahapan
+        if ($request->filled('tahapan')) {
             $query->where('tahapan', $request->tahapan);
         }
 
-        $dokumens = $query->orderBy('created_at', 'desc')->get();
+        // Filter berdasarkan status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Hitung statistik
+        $statistics = [
+            'total' => (clone $query)->count(),
+            'pending' => (clone $query)->where('status', 'pending')->count(),
+            'approved' => (clone $query)->where('status', 'approved')->count(),
+            'rejected' => (clone $query)->where('status', 'rejected')->count(),
+        ];
+
+        // Pagination - INI YANG DIPERBAIKI
+        $dokumens = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+        
         $unitKerjas = UnitKerja::where('status', true)->get();
         $ikus = Iku::where('status', true)->get();
 
-        $isAdmin = true;
-
-        return view('user.dokumen-saya', compact('dokumens', 'unitKerjas', 'ikus', 'isAdmin'));
+        return view('user.dokumen-saya', compact('dokumens', 'statistics', 'unitKerjas', 'ikus'));
     }
 
-    // Hapus dokumen
-    public function destroy($id)
-    {
-        try {
-            $dokumen = Dokumen::where('uploaded_by', Auth::id())->findOrFail($id);
-            
-            // Hanya hapus file fisik jika jenis upload adalah file
-            if ($dokumen->jenis_upload === 'file' && Storage::disk('public')->exists($dokumen->file_path)) {
-                Storage::disk('public')->delete($dokumen->file_path);
-            }
-            
-            // Hapus dari database
-            $dokumen->delete();
-
-            return redirect()->route('user.dokumen-saya.index')->with('success', 'Dokumen berhasil dihapus!');
-        } catch (\Exception $e) {
-            return redirect()->route('user.dokumen-saya.index')->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
-        }
-    }
-
-    // Download dokumen
+    /**
+     * Download document
+     */
     public function download($id)
     {
         try {
@@ -301,7 +391,9 @@ class UploadController extends Controller
         }
     }
 
-    // Preview dokumen
+    /**
+     * Preview document
+     */
     public function preview($id)
     {
         try {
@@ -316,7 +408,6 @@ class UploadController extends Controller
                 return back()->with('error', 'File tidak ditemukan.');
             }
 
-            // Hanya preview untuk PDF
             if ($dokumen->file_extension !== 'pdf') {
                 return back()->with('info', 'Preview hanya tersedia untuk file PDF.');
             }
@@ -326,6 +417,28 @@ class UploadController extends Controller
             return response()->file($filePath);
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal mempreview dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete document
+     */
+    public function destroy($id)
+    {
+        try {
+            $dokumen = Dokumen::where('uploaded_by', Auth::id())->findOrFail($id);
+            
+            if ($dokumen->jenis_upload === 'file' && Storage::disk('public')->exists($dokumen->file_path)) {
+                Storage::disk('public')->delete($dokumen->file_path);
+            }
+            
+            $dokumen->delete();
+
+            return redirect()->route('user.dokumen-saya.index')
+                ->with('success', 'Dokumen berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->route('user.dokumen-saya.index')
+                ->with('error', 'Gagal menghapus dokumen: ' . $e->getMessage());
         }
     }
 }

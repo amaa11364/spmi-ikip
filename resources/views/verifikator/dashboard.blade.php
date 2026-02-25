@@ -9,14 +9,14 @@
         <div class="mb-3 mb-md-0">
             <h1 class="h3 mb-1 mb-md-2">Dashboard Verifikator</h1>
             <div class="text-muted">
-                <small>Login sebagai: <strong>{{ auth()->user()->name }}</strong> | Unit: <strong>{{ auth()->user()->unit_kerja->nama ?? 'Tidak ada unit' }}</strong></small>
+                <small>Login sebagai: <strong>{{ auth()->user()->name ?? '' }}</strong> | Unit: <strong>{{ auth()->user()->unit_kerja->nama ?? auth()->user()->unit_kerja->name ?? 'Tidak ada unit' }}</strong></small>
             </div>
         </div>
         <div class="d-flex align-items-center">
-            <button class="btn btn-outline-primary btn-sm me-2" onclick="loadPendingCount()">
-                <i class="fas fa-sync-alt"></i>
-                <span class="d-none d-md-inline">Refresh</span>
-            </button>
+            <a href="{{ route('verifikator.dokumen.index', ['status' => 'pending']) }}" class="btn btn-primary btn-sm me-2">
+                <i class="fas fa-clipboard-list"></i>
+                <span class="d-none d-md-inline">Lihat Antrian</span>
+            </a>
             <span class="badge bg-primary">Hari ini: {{ now()->format('d M Y') }}</span>
         </div>
     </div>
@@ -29,7 +29,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h5 class="text-muted mb-2 fs-6">Menunggu Verifikasi</h5>
-                        <h2 class="fw-bold mb-2 display-6">{{ $pendingCount ?? 0 }}</h2>
+                        <h2 class="fw-bold mb-2 display-6">{{ $statusStats['pending'] ?? 0 }}</h2>
                         <div class="d-flex align-items-center">
                             <small class="text-warning">
                                 <i class="fas fa-clock me-1"></i>
@@ -46,8 +46,8 @@
                     <div class="progress" style="height: 6px;">
                         <div class="progress-bar bg-warning" 
                              role="progressbar" 
-                             style="width: {{ $pendingPercent ?? 0 }}%"
-                             aria-valuenow="{{ $pendingPercent ?? 0 }}" 
+                             style="width: {{ $totalDocuments > 0 ? ($statusStats['pending'] / $totalDocuments * 100) : 0 }}%"
+                             aria-valuenow="{{ $statusStats['pending'] ?? 0 }}" 
                              aria-valuemin="0" 
                              aria-valuemax="100"></div>
                     </div>
@@ -61,7 +61,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h5 class="text-muted mb-2 fs-6">Disetujui</h5>
-                        <h2 class="fw-bold mb-2 display-6">{{ $approvedCount ?? 0 }}</h2>
+                        <h2 class="fw-bold mb-2 display-6">{{ $statusStats['approved'] ?? 0 }}</h2>
                         <div class="d-flex align-items-center">
                             <small class="text-success">
                                 <i class="fas fa-check me-1"></i>
@@ -78,8 +78,8 @@
                     <div class="progress" style="height: 6px;">
                         <div class="progress-bar bg-success" 
                              role="progressbar" 
-                             style="width: {{ $approvedPercent ?? 0 }}%"
-                             aria-valuenow="{{ $approvedPercent ?? 0 }}" 
+                             style="width: {{ $totalDocuments > 0 ? ($statusStats['approved'] / $totalDocuments * 100) : 0 }}%"
+                             aria-valuenow="{{ $statusStats['approved'] ?? 0 }}" 
                              aria-valuemin="0" 
                              aria-valuemax="100"></div>
                     </div>
@@ -93,7 +93,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h5 class="text-muted mb-2 fs-6">Ditolak</h5>
-                        <h2 class="fw-bold mb-2 display-6">{{ $rejectedCount ?? 0 }}</h2>
+                        <h2 class="fw-bold mb-2 display-6">{{ $statusStats['rejected'] ?? 0 }}</h2>
                         <div class="d-flex align-items-center">
                             <small class="text-danger">
                                 <i class="fas fa-times me-1"></i>
@@ -110,8 +110,8 @@
                     <div class="progress" style="height: 6px;">
                         <div class="progress-bar bg-danger" 
                              role="progressbar" 
-                             style="width: {{ $rejectedPercent ?? 0 }}%"
-                             aria-valuenow="{{ $rejectedPercent ?? 0 }}" 
+                             style="width: {{ $totalDocuments > 0 ? ($statusStats['rejected'] / $totalDocuments * 100) : 0 }}%"
+                             aria-valuenow="{{ $statusStats['rejected'] ?? 0 }}" 
                              aria-valuemin="0" 
                              aria-valuemax="100"></div>
                     </div>
@@ -125,7 +125,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <h5 class="text-muted mb-2 fs-6">Revisi</h5>
-                        <h2 class="fw-bold mb-2 display-6">{{ $revisionCount ?? 0 }}</h2>
+                        <h2 class="fw-bold mb-2 display-6">{{ $statusStats['revision'] ?? 0 }}</h2>
                         <div class="d-flex align-items-center">
                             <small class="text-info">
                                 <i class="fas fa-edit me-1"></i>
@@ -142,8 +142,8 @@
                     <div class="progress" style="height: 6px;">
                         <div class="progress-bar bg-info" 
                              role="progressbar" 
-                             style="width: {{ $revisionPercent ?? 0 }}%"
-                             aria-valuenow="{{ $revisionPercent ?? 0 }}" 
+                             style="width: {{ $totalDocuments > 0 ? ($statusStats['revision'] / $totalDocuments * 100) : 0 }}%"
+                             aria-valuenow="{{ $statusStats['revision'] ?? 0 }}" 
                              aria-valuemin="0" 
                              aria-valuemax="100"></div>
                     </div>
@@ -160,7 +160,7 @@
                 <div class="row g-3">
                     {{-- Review Dokumen --}}
                     <div class="col-12 col-md-6 col-lg-4">
-                        <a href="{{ route('verifikator.dokumen.pending') }}" 
+                        <a href="{{ route('verifikator.dokumen.index', ['status' => 'pending']) }}" 
                            class="btn btn-warning w-100 d-flex align-items-center p-2 p-md-3 h-100">
                             <div class="bg-white text-warning rounded-circle p-2 me-2 me-md-3 flex-shrink-0">
                                 <i class="fas fa-clock fa-2x"></i>
@@ -168,7 +168,7 @@
                             <div class="text-start flex-grow-1">
                                 <strong class="d-block fs-6">Review Dokumen</strong>
                                 <small class="d-block text-truncate">
-                                    {{ $pendingCount ?? 0 }} dokumen menunggu verifikasi
+                                    {{ $statusStats['pending'] ?? 0 }} dokumen menunggu verifikasi
                                 </small>
                                 <small class="text-muted d-none d-md-block">Verifikasi dokumen terbaru</small>
                             </div>
@@ -196,7 +196,7 @@
                     
                     {{-- Statistik --}}
                     <div class="col-12 col-md-6 col-lg-4">
-                        <a href="{{ route('verifikator.statistik.index') }}"
+                        <a href="{{ route('verifikator.statistik.index') ?? '#' }}"
                            class="btn btn-success w-100 d-flex align-items-center p-2 p-md-3 h-100">
                             <div class="bg-white text-success rounded-circle p-2 me-2 me-md-3 flex-shrink-0">
                                 <i class="fas fa-chart-bar fa-2x"></i>
@@ -216,7 +216,7 @@
         </div>
     </div>
 
-    {{-- Dokumen Perlu Verifikasi & Panduan --}}
+    {{-- Dokumen Perlu Verifikasi & Tahapan PPEPP --}}
     <div class="row g-4">
         {{-- Dokumen Perlu Verifikasi --}}
         <div class="col-12 col-lg-8">
@@ -224,25 +224,23 @@
                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 mb-md-4">
                     <h5 class="mb-2 mb-md-0">Dokumen Perlu Verifikasi</h5>
                     <div class="d-flex">
-                        <a href="{{ route('verifikator.dokumen.pending') }}" 
+                        <a href="{{ route('verifikator.dokumen.index', ['status' => 'pending']) }}" 
                            class="btn btn-outline-primary btn-sm me-2">
                             <i class="fas fa-list me-1"></i>
                             <span class="d-none d-md-inline">Lihat Semua</span>
                             <span class="d-inline d-md-none">Semua</span>
                         </a>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="refreshTable()">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
                     </div>
                 </div>
                 
-                @if($pendingDocuments && $pendingDocuments->count() > 0)
+                @if(isset($pendingDocuments) && $pendingDocuments->count() > 0)
                     <div class="table-responsive">
                         <table class="table table-hover table-sm mb-0">
                             <thead class="table-light d-none d-md-table-header-group">
                                 <tr>
                                     <th width="50">#</th>
                                     <th>Judul Dokumen</th>
+                                    <th>Tahapan</th>
                                     <th width="150">Pengunggah</th>
                                     <th width="120">Tanggal</th>
                                     <th width="120" class="text-end">Aksi</th>
@@ -257,78 +255,88 @@
                                         <td class="py-3">
                                             <div class="d-flex flex-column">
                                                 <strong class="mb-1 text-break">
-                                                    {{ Str::limit($dokumen->judul, 60) }}
+                                                    {{ Str::limit($dokumen->judul ?? $dokumen->nama_dokumen, 60) }}
                                                 </strong>
                                                 <div class="d-flex align-items-center">
-                                                    <small class="text-muted me-2">
-                                                        <i class="fas fa-tag me-1"></i>{{ $dokumen->kategori ?? 'Umum' }}
-                                                    </small>
+                                                    @if($dokumen->tahapan)
+                                                        <small class="text-muted me-2">
+                                                            <i class="fas fa-tag me-1"></i>{{ ucfirst($dokumen->tahapan) }}
+                                                        </small>
+                                                    @endif
+                                                    @if($dokumen->file_extension)
                                                     <small class="text-muted">
                                                         <i class="fas fa-file me-1"></i>{{ strtoupper($dokumen->file_extension) }}
                                                     </small>
+                                                    @endif
                                                 </div>
                                                 {{-- Mobile View --}}
                                                 <div class="d-flex d-md-none justify-content-between mt-2">
                                                     <div>
                                                         <small class="text-muted d-block">
                                                             <i class="fas fa-user me-1"></i>
-                                                            {{ Str::limit($dokumen->uploader->name ?? 'Tidak diketahui', 15) }}
+                                                            {{ Str::limit($dokumen->uploader->name ?? $dokumen->user->name ?? 'Tidak diketahui', 15) }}
                                                         </small>
                                                         <small class="text-muted">
                                                             <i class="fas fa-calendar me-1"></i>
-                                                            {{ $dokumen->created_at->format('d/m') }}
+                                                            {{ $dokumen->created_at ? $dokumen->created_at->format('d/m') : '-' }}
                                                         </small>
                                                     </div>
                                                     <div class="btn-group" role="group">
-                                                        <button onclick="viewDokumen('{{ $dokumen->id }}')" 
+                                                        <a href="{{ route('verifikator.dokumen.show', $dokumen->id) }}" 
                                                                 class="btn btn-sm btn-outline-primary">
                                                             <i class="fas fa-eye"></i>
-                                                        </button>
-                                                        <button onclick="downloadDokumen('{{ $dokumen->id }}')" 
+                                                        </a>
+                                                        <a href="{{ route('verifikator.dokumen.download', $dokumen->id) }}" 
                                                                 class="btn btn-sm btn-outline-info">
                                                             <i class="fas fa-download"></i>
-                                                        </button>
+                                                        </a>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="d-none d-md-table-cell align-middle">
+                                            @if($dokumen->tahapan)
+                                                <span class="badge bg-info">{{ ucfirst($dokumen->tahapan) }}</span>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td class="d-none d-md-table-cell align-middle">
                                             <div class="d-flex align-items-center">
                                                 <div class="avatar-sm bg-light-primary rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                    <span class="fw-bold">{{ strtoupper(substr($dokumen->uploader->name ?? 'U', 0, 1)) }}</span>
+                                                    <span class="fw-bold">{{ strtoupper(substr($dokumen->uploader->name ?? $dokumen->user->name ?? 'U', 0, 1)) }}</span>
                                                 </div>
                                                 <div>
-                                                    <div class="fw-medium">{{ $dokumen->uploader->name ?? 'Tidak diketahui' }}</div>
-                                                    <small class="text-muted">{{ $dokumen->uploader->unit_kerja ?? '' }}</small>
+                                                    <div class="fw-medium">{{ $dokumen->uploader->name ?? $dokumen->user->name ?? 'Tidak diketahui' }}</div>
+                                                    <small class="text-muted">{{ $dokumen->uploader->unit_kerja ?? $dokumen->user->unit_kerja ?? '' }}</small>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="d-none d-md-table-cell align-middle">
                                             <div class="text-nowrap">
-                                                <div>{{ $dokumen->created_at->format('d/m/Y') }}</div>
-                                                <small class="text-muted">{{ $dokumen->created_at->format('H:i') }}</small>
+                                                <div>{{ $dokumen->created_at ? $dokumen->created_at->format('d/m/Y') : '-' }}</div>
+                                                <small class="text-muted">{{ $dokumen->created_at ? $dokumen->created_at->format('H:i') : '' }}</small>
                                             </div>
                                         </td>
                                         <td class="d-none d-md-table-cell align-middle">
                                             <div class="d-flex justify-content-end">
                                                 <div class="btn-group btn-group-sm" role="group">
-                                                    <button onclick="viewDokumen('{{ $dokumen->id }}')" 
+                                                    <a href="{{ route('verifikator.dokumen.show', $dokumen->id) }}" 
                                                             class="btn btn-outline-primary" 
                                                             data-bs-toggle="tooltip" 
                                                             title="Lihat Detail">
                                                         <i class="fas fa-eye"></i>
-                                                    </button>
-                                                    <button onclick="downloadDokumen('{{ $dokumen->id }}')" 
+                                                    </a>
+                                                    <a href="{{ route('verifikator.dokumen.download', $dokumen->id) }}" 
                                                             class="btn btn-outline-info" 
                                                             data-bs-toggle="tooltip" 
                                                             title="Download">
                                                         <i class="fas fa-download"></i>
-                                                    </button>
+                                                    </a>
                                                     <div class="dropdown">
                                                         <button class="btn btn-outline-success dropdown-toggle" 
                                                                 type="button" 
                                                                 data-bs-toggle="dropdown"
-                                                                data-bs-toggle="tooltip"
                                                                 title="Verifikasi">
                                                             <i class="fas fa-check"></i>
                                                         </button>
@@ -364,16 +372,6 @@
                             </tbody>
                         </table>
                     </div>
-                    
-                    {{-- Mobile Only: Quick Actions for Pending --}}
-                    <div class="d-block d-md-none mt-3">
-                        <div class="alert alert-info py-2">
-                            <small>
-                                <i class="fas fa-info-circle me-1"></i>
-                                Geser ke kiri untuk melihat semua aksi
-                            </small>
-                        </div>
-                    </div>
                 @else
                     <div class="text-center py-5">
                         <div class="mb-3">
@@ -389,81 +387,73 @@
             </div>
         </div>
         
-        {{-- Panel Panduan & Statistik --}}
+        {{-- Statistik Per Tahapan --}}
         <div class="col-12 col-lg-4">
             <div class="custom-card h-100 p-3 p-md-4">
-                <h5 class="mb-3 mb-md-4">Panduan Verifikasi</h5>
-                <div class="list-group list-group-flush mb-4">
-                    {{-- Setujui --}}
-                    <div class="list-group-item px-0 py-2 border-0">
-                        <div class="d-flex align-items-center mb-1">
-                            <div class="bg-success text-white rounded-circle p-2 me-3">
-                                <i class="fas fa-check"></i>
-                            </div>
+                <h5 class="mb-3 mb-md-4">Statistik Per Tahapan PPEPP</h5>
+                
+                @if(isset($tahapanStats) && count($tahapanStats) > 0)
+                    @foreach($tahapanStats as $tahapan => $stats)
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
                             <div>
-                                <strong class="d-block">Setujui Dokumen</strong>
+                                <span class="badge bg-{{ $stats['color'] ?? 'secondary' }} me-2">
+                                    <i class="fas {{ $stats['icon'] ?? 'fa-file' }}"></i>
+                                </span>
+                                <strong>{{ $stats['label'] ?? ucfirst($tahapan) }}</strong>
                             </div>
+                            <span class="badge bg-secondary">{{ $stats['total'] ?? 0 }} Total</span>
                         </div>
-                        <small class="text-muted ps-5">
-                            Dokumen sudah sesuai dengan standar dan persyaratan yang ditetapkan.
-                        </small>
-                    </div>
-                    
-                    {{-- Tolak --}}
-                    <div class="list-group-item px-0 py-2 border-0">
-                        <div class="d-flex align-items-center mb-1">
-                            <div class="bg-danger text-white rounded-circle p-2 me-3">
-                                <i class="fas fa-times"></i>
+                        <div class="progress mb-2" style="height: 20px;">
+                            @if(($stats['approved'] ?? 0) > 0)
+                            <div class="progress-bar bg-success" 
+                                 role="progressbar" 
+                                 style="width: {{ $stats['total'] > 0 ? ($stats['approved'] / $stats['total'] * 100) : 0 }}%"
+                                 title="Disetujui: {{ $stats['approved'] }}">
+                                {{ $stats['approved'] }}
                             </div>
-                            <div>
-                                <strong class="d-block">Tolak Dokumen</strong>
+                            @endif
+                            @if(($stats['pending'] ?? 0) > 0)
+                            <div class="progress-bar bg-warning" 
+                                 role="progressbar" 
+                                 style="width: {{ $stats['total'] > 0 ? ($stats['pending'] / $stats['total'] * 100) : 0 }}%"
+                                 title="Pending: {{ $stats['pending'] }}">
+                                {{ $stats['pending'] }}
                             </div>
+                            @endif
+                            @if(($stats['revision'] ?? 0) > 0)
+                            <div class="progress-bar bg-info" 
+                                 role="progressbar" 
+                                 style="width: {{ $stats['total'] > 0 ? ($stats['revision'] / $stats['total'] * 100) : 0 }}%"
+                                 title="Revisi: {{ $stats['revision'] }}">
+                                {{ $stats['revision'] }}
+                            </div>
+                            @endif
+                            @if(($stats['rejected'] ?? 0) > 0)
+                            <div class="progress-bar bg-danger" 
+                                 role="progressbar" 
+                                 style="width: {{ $stats['total'] > 0 ? ($stats['rejected'] / $stats['total'] * 100) : 0 }}%"
+                                 title="Ditolak: {{ $stats['rejected'] }}">
+                                {{ $stats['rejected'] }}
+                            </div>
+                            @endif
                         </div>
-                        <small class="text-muted ps-5">
-                            Dokumen tidak memenuhi persyaratan dengan alasan yang jelas dan spesifik.
-                        </small>
-                    </div>
-                    
-                    {{-- Revisi --}}
-                    <div class="list-group-item px-0 py-2 border-0">
-                        <div class="d-flex align-items-center mb-1">
-                            <div class="bg-warning text-white rounded-circle p-2 me-3">
-                                <i class="fas fa-edit"></i>
-                            </div>
-                            <div>
-                                <strong class="d-block">Minta Revisi</strong>
-                            </div>
+                        <div class="d-flex justify-content-between small text-muted">
+                            <span>✅ {{ $stats['approved'] ?? 0 }}</span>
+                            <span>⏳ {{ $stats['pending'] ?? 0 }}</span>
+                            <span>📝 {{ $stats['revision'] ?? 0 }}</span>
+                            <span>❌ {{ $stats['rejected'] ?? 0 }}</span>
                         </div>
-                        <small class="text-muted ps-5">
-                            Dokumen perlu perbaikan atau tambahan informasi sebelum dapat disetujui.
-                        </small>
                     </div>
-                </div>
+                    @endforeach
+                @else
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Belum ada data statistik</p>
+                    </div>
+                @endif
                 
                 <hr class="my-4">
-                
-                {{-- Statistik Cepat --}}
-                <h6 class="mb-3">Statistik Mingguan</h6>
-                <div class="row g-2 text-center mb-4">
-                    <div class="col-4">
-                        <div class="border rounded p-2">
-                            <div class="fw-bold text-primary display-6">{{ $weeklyApproved ?? 0 }}</div>
-                            <small class="text-muted">Disetujui</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="border rounded p-2">
-                            <div class="fw-bold text-warning display-6">{{ $weeklyPending ?? 0 }}</div>
-                            <small class="text-muted">Menunggu</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="border rounded p-2">
-                            <div class="fw-bold text-danger display-6">{{ $weeklyRejected ?? 0 }}</div>
-                            <small class="text-muted">Ditolak</small>
-                        </div>
-                    </div>
-                </div>
                 
                 {{-- Info Tambahan --}}
                 <div class="alert alert-light border">
@@ -486,6 +476,43 @@
 
 @push('scripts')
 <script>
+    // Simple verification via AJAX
+    function simpleVerification(id, action) {
+        let message = '';
+        let title = '';
+        
+        switch(action) {
+            case 'approved':
+                title = 'Setujui Dokumen';
+                message = 'Apakah Anda yakin ingin menyetujui dokumen ini?';
+                break;
+            case 'rejected':
+                title = 'Tolak Dokumen';
+                message = 'Apakah Anda yakin ingin menolak dokumen ini?';
+                break;
+            case 'revision':
+                title = 'Minta Revisi';
+                message = 'Apakah Anda yakin ingin meminta revisi dokumen ini?';
+                break;
+        }
+        
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: action === 'approved' ? '#28a745' : (action === 'revision' ? '#ffc107' : '#dc3545'),
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Lanjutkan',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirect to verification page with action
+                window.location.href = "{{ url('verifikator/dokumen') }}/" + id + "/" + action;
+            }
+        });
+    }
+    
     // Initialize tooltips
     document.addEventListener('DOMContentLoaded', function() {
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
@@ -493,70 +520,6 @@
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
-    
-    // Refresh table data
-    function refreshTable() {
-        $.ajax({
-            url: '{{ route("verifikator.dashboard") }}',
-            type: 'GET',
-            beforeSend: function() {
-                // Show loading indicator
-                Swal.fire({
-                    title: 'Memuat ulang...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-            },
-            success: function(response) {
-                Swal.close();
-                // You can update specific parts of the page here
-                location.reload(); // Simple reload for now
-            },
-            error: function() {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal memuat',
-                    text: 'Terjadi kesalahan saat memuat data'
-                });
-            }
-        });
-    }
-    
-    // Load pending count via AJAX
-    function loadPendingCount() {
-        $.ajax({
-            url: '{{ route("verifikator.dokumen.pending-count") }}',
-            type: 'GET',
-            success: function(response) {
-                if (response.count > 0) {
-                    // Update badge in sidebar
-                    const badge = document.querySelector('.sidebar-link .badge');
-                    if (badge) {
-                        badge.textContent = response.count;
-                        badge.classList.remove('d-none');
-                    }
-                    
-                    // Show notification
-                    if (response.count > {{ $pendingCount ?? 0 }}) {
-                        Swal.fire({
-                            icon: 'info',
-                            title: 'Update',
-                            text: 'Ada ' + response.count + ' dokumen menunggu verifikasi',
-                            timer: 3000,
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false
-                        });
-                    }
-                }
-            }
-        });
-    }
-    
-    // Auto refresh every 2 minutes
-    setInterval(loadPendingCount, 120000);
 </script>
 
 <style>
@@ -610,13 +573,16 @@
         background-color: rgba(0, 0, 0, 0.02);
     }
     
-    /* Border radius for progress bars */
+    /* Progress bar styling */
     .progress {
         border-radius: 3px;
+        background-color: #e9ecef;
     }
     
     .progress-bar {
         border-radius: 3px;
+        font-size: 10px;
+        line-height: 20px;
     }
 </style>
 @endpush

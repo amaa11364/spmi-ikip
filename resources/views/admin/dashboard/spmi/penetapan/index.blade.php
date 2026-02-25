@@ -807,75 +807,51 @@
     }
 
     // View Penetapan Detail
-    function viewPenetapan(id) {
-        // Cek jika jQuery tersedia
-        if (typeof jQuery === 'undefined') {
-            console.error('jQuery tidak tersedia untuk AJAX');
-            alert('Fitur ini memerlukan jQuery. Silakan refresh halaman.');
-            return;
-        }
-        
-        const url = '{{ route("spmi.penetapan.ajax.detail", ":id") }}'.replace(':id', id);
-        
-        jQuery.ajax({
-            url: url,
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    jQuery('#viewModalBody').html(response.html);
-                    jQuery('#viewModal').modal('show');
-                    
-                    // Re-initialize tooltips di modal
-                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#viewModal [title]'));
-                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
-                } else {
-                    alert(response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                alert('Gagal memuat data. Silakan coba lagi.');
-            }
-        });
-    }
+    // Fungsi untuk Penetapan
+function viewPenetapan(id) {
+    const url = '{{ route("spmi.penetapan.ajax.detail", ":id") }}'.replace(':id', id);
     
-    // Edit Penetapan
-    function editPenetapan(id) {
-        // Cek jika jQuery tersedia
-        if (typeof jQuery === 'undefined') {
-            console.error('jQuery tidak tersedia untuk AJAX');
-            alert('Fitur ini memerlukan jQuery. Silakan refresh halaman.');
-            return;
-        }
-        
-        const url = '{{ route("spmi.penetapan.ajax.edit-form", ":id") }}'.replace(':id', id);
-        
-        jQuery.ajax({
-            url: url,
-            method: 'GET',
-            success: function(response) {
-                if (response.success) {
-                    jQuery('#editModalBody').html(response.html);
-                    jQuery('#editForm').attr('action', '{{ route("spmi.penetapan.update", ":id") }}'.replace(':id', id));
-                    jQuery('#editModal').modal('show');
-                    
-                    // Re-initialize tooltips di modal
-                    var tooltipTriggerList = [].slice.call(document.querySelectorAll('#editModal [title]'));
-                    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
-                } else {
-                    alert(response.message);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', error);
-                alert('Gagal memuat form edit. Silakan coba lagi.');
+    jQuery.ajax({
+        url: url,
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                jQuery('#viewModalBody').html(response.html);
+                jQuery('#viewModal').modal('show');
+            } else {
+                alert('Gagal: ' + response.message);
             }
-        });
-    }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            alert('Gagal memuat data. Silakan coba lagi.');
+        }
+    });
+}
+
+function editPenetapan(id) {
+    const url = '{{ route("spmi.penetapan.ajax.edit-form", ":id") }}'.replace(':id', id);
+    
+    jQuery.ajax({
+        url: url,
+        method: 'GET',
+        dataType: 'json',
+        success: function(response) {
+            if (response.success) {
+                jQuery('#editModalBody').html(response.html);
+                jQuery('#editForm').attr('action', '{{ route("spmi.penetapan.update", ":id") }}'.replace(':id', id));
+                jQuery('#editModal').modal('show');
+            } else {
+                alert('Gagal: ' + response.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', error);
+            alert('Gagal memuat form edit. Silakan coba lagi.');
+        }
+    });
+}
     
     // Confirm Delete
     function confirmDelete(button) {

@@ -1,728 +1,813 @@
 @extends('layouts.main')
 
-@section('title', 'Upload Dokumen')
+@section('title', 'Upload Dokumen SPMI')
 
 @push('styles')
 <style>
+     :root {
+        --primary: #4361ee;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --info: #3b82f6;
+        --dark: #1e293b;
+        --light: #f8fafc;
+        --gray: #64748b;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: #f1f5f9;
+        font-family: 'Inter', sans-serif;
+    }
+
     .upload-container {
-        background: white;
-        border-radius: 15px;
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    /* Header Card */
+    .header-card {
+        background: linear-gradient(135deg, var(--primary), #3a0ca3);
+        border-radius: 24px;
         padding: 2rem;
-        box-shadow: 0 5px 25px rgba(0,0,0,0.1);
-        border: 2px dashed #e9ecef;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 20px 30px -10px rgba(67, 97, 238, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        z-index: 0;
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .header-title i {
+        font-size: 2.2rem;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.75rem;
+        border-radius: 18px;
+        backdrop-filter: blur(10px);
+    }
+
+    .header-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-left: 4rem;
+    }
+
+    /* Main Card */
+    .upload-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 2rem;
         transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
-    
-    .upload-container:hover {
-        border-color: var(--primary-brown);
+
+    .upload-card:hover {
+        box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.15);
     }
-    
-    .upload-icon {
-        font-size: 4rem;
-        color: var(--primary-brown);
-        margin-bottom: 1rem;
+
+    .card-header {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #f8fafc, #ffffff);
+        border-bottom: 2px solid #e2e8f0;
     }
-    
-    .file-info {
-        background: var(--light-brown);
-        border-radius: 10px;
-        padding: 1rem;
+
+    .card-header h3 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .card-header h3 i {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 0.5rem;
+        border-radius: 12px;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .form-label i {
+        margin-right: 0.5rem;
+        color: var(--primary);
+        font-size: 0.9rem;
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.85rem 1.2rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background: white;
+        color: var(--dark);
+    }
+
+    .form-control:focus, .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
+    }
+
+    .form-control::placeholder {
+        color: #94a3b8;
+    }
+
+    /* Tahapan Selector */
+    .tahapan-selector {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 2px solid #e2e8f0;
+    }
+
+    .tahapan-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
         margin-top: 1rem;
     }
-    
-    .form-label {
+
+    .tahapan-option {
+        position: relative;
+    }
+
+    .tahapan-option input[type="radio"] {
+        display: none;
+    }
+
+    .tahapan-option label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.25rem 1rem;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .tahapan-option input[type="radio"]:checked + label {
+        border-color: var(--primary);
+        background: linear-gradient(135deg, rgba(67, 97, 238, 0.05), rgba(67, 97, 238, 0.02));
+        box-shadow: 0 10px 20px -8px rgba(67, 97, 238, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .tahapan-option label i {
+        font-size: 1.8rem;
+        margin-bottom: 0.75rem;
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 0.75rem;
+        border-radius: 14px;
+        transition: all 0.2s ease;
+    }
+
+    .tahapan-option input[type="radio"]:checked + label i {
+        background: var(--primary);
+        color: white;
+    }
+
+    .tahapan-option label span {
         font-weight: 600;
-        color: #495057;
+        color: var(--dark);
+        font-size: 0.9rem;
     }
-    
-    .form-control, .form-select {
+
+    /* Dynamic Fields */
+    .dynamic-fields {
+        background: #f8fafc;
+        border-radius: 20px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        border: 2px dashed #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .dynamic-fields-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        color: var(--dark);
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .dynamic-fields-title i {
+        color: var(--primary);
+    }
+
+    .field-group {
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* File Upload */
+    .file-upload-area {
+        border: 3px dashed #e2e8f0;
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .file-upload-area:hover {
+        border-color: var(--primary);
+        background: rgba(67, 97, 238, 0.02);
+    }
+
+    .file-upload-area i {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        opacity: 0.7;
+    }
+
+    .file-upload-area h4 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .file-upload-area p {
+        color: var(--gray);
+        font-size: 0.9rem;
+    }
+
+    .file-info {
+        display: none;
+        background: #e8f0fe;
+        border-radius: 16px;
+        padding: 1rem;
+        margin-top: 1rem;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .file-info.show {
+        display: flex;
+    }
+
+    .file-info i {
+        font-size: 2rem;
+        color: var(--primary);
+        margin: 0;
+    }
+
+    .file-details {
+        flex: 1;
+    }
+
+    .file-name {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .file-size {
+        font-size: 0.8rem;
+        color: var(--gray);
+    }
+
+    .file-remove {
+        color: var(--danger);
+        cursor: pointer;
+        padding: 0.5rem;
         border-radius: 10px;
-        padding: 10px 15px;
-        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
     }
-    
-    .form-control:focus, .form-select:focus {
-        border-color: var(--primary-brown);
-        box-shadow: 0 0 0 0.2rem rgba(153, 102, 0, 0.25);
+
+    .file-remove:hover {
+        background: rgba(239, 68, 68, 0.1);
     }
-    
-    .btn-primary {
-        background: linear-gradient(135deg, var(--primary-brown) 0%, var(--secondary-brown) 100%);
+
+    /* Submit Button */
+    .submit-btn {
+        width: 100%;
+        padding: 1.2rem;
+        background: linear-gradient(135deg, var(--primary), #3a0ca3);
+        color: white;
         border: none;
-        border-radius: 10px;
-        padding: 10px 25px;
+        border-radius: 18px;
+        font-size: 1.1rem;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        box-shadow: 0 10px 20px -5px rgba(67, 97, 238, 0.4);
     }
-    
-    .btn-primary:hover {
-        background: linear-gradient(135deg, var(--dark-brown) 0%, var(--primary-brown) 100%);
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 25px -5px rgba(67, 97, 238, 0.5);
     }
-    
-    /* Alert Styling untuk Konteks */
-    .context-alert {
-        border-radius: 10px;
-        border-left: 5px solid;
-        animation: fadeIn 0.5s ease-in;
+
+    .submit-btn:active {
+        transform: translateY(0);
     }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+
+    .submit-btn i {
+        font-size: 1.2rem;
     }
-    
-    /* Hanya responsive */
+
+    /* Responsive */
     @media (max-width: 768px) {
         .upload-container {
+            margin: 1rem auto;
+            padding: 0 1rem;
+        }
+
+        .header-card {
             padding: 1.5rem;
         }
-        
-        .d-flex.justify-content-between {
-            flex-direction: column;
-            gap: 1rem;
+
+        .header-title {
+            font-size: 1.5rem;
+        }
+
+        .header-title i {
+            font-size: 1.8rem;
+            padding: 0.5rem;
+        }
+
+        .header-subtitle {
+            margin-left: 0;
+        }
+
+        .card-header, .card-body {
+            padding: 1.5rem;
+        }
+
+        .tahapan-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .file-upload-area {
+            padding: 1.5rem;
         }
     }
-    
-    @media (max-width: 576px) {
-        .upload-container {
+
+    @media (max-width: 480px) {
+        .tahapan-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dynamic-fields {
             padding: 1rem;
-        }
-        
-        .upload-icon {
-            font-size: 3rem;
-        }
-        
-        .d-grid.d-md-flex {
-            flex-direction: column;
-        }
-        
-        .d-grid.d-md-flex .btn {
-            width: 100%;
-            margin-bottom: 0.5rem;
         }
     }
 </style>
 @endpush
 
 @section('content')
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                @if(isset($context) && $context == 'spmi-penetapan')
-                    <a href="{{ route('spmi.penetapan.show', $penetapanId ?? '') }}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-arrow-left me-2"></i>Kembali ke Penetapan
-                    </a>
-                @else
-                    <a href="{{ route('dokumen-saya.index') }}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-folder me-2"></i>Dokumen Saya
-                    </a>
-                @endif
-                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-home me-2"></i>Dashboard
-                </a>
+<div class="upload-container">
+    <!-- Header Card -->
+    <div class="header-card">
+        <div class="header-content">
+            <div class="header-title">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Upload Dokumen SPMI</span>
             </div>
-            <div>
-                @if(isset($context))
-                    <span class="badge bg-primary fs-6 p-2">
-                        @switch($context)
-                            @case('spmi-penetapan')
-                                <i class="fas fa-folder-open me-1"></i> SPMI Penetapan
-                                @break
-                            @case('spmi-pelaksanaan')
-                                <i class="fas fa-play-circle me-1"></i> SPMI Pelaksanaan
-                                @break
-                            @case('spmi-evaluasi')
-                                <i class="fas fa-chart-line me-1"></i> SPMI Evaluasi
-                                @break
-                            @case('spmi-pengendalian')
-                                <i class="fas fa-tasks me-1"></i> SPMI Pengendalian
-                                @break
-                            @case('spmi-peningkatan')
-                                <i class="fas fa-chart-line me-1"></i> SPMI Peningkatan
-                                @break
-                        @endswitch
-                    </span>
-                @endif
+            <div class="header-subtitle">
+                Unggah dokumen mutu sesuai tahapan SPMI yang dipilih
             </div>
         </div>
     </div>
-</div>
 
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="fas fa-check-circle me-2"></i>
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i>
-        {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
-<div class="row justify-content-center">
-    <div class="col-lg-8 col-12">
-        <div class="upload-container">
-            <div class="upload-icon text-center">
-                @if(isset($context))
-                    @switch($context)
-                        @case('spmi-penetapan') <i class="fas fa-folder-open"></i> @break
-                        @case('spmi-pelaksanaan') <i class="fas fa-play-circle"></i> @break
-                        @case('spmi-evaluasi') <i class="fas fa-chart-line"></i> @break
-                        @case('spmi-pengendalian') <i class="fas fa-tasks"></i> @break
-                        @case('spmi-peningkatan') <i class="fas fa-chart-line"></i> @break
-                        @default <i class="fas fa-cloud-upload-alt"></i>
-                    @endswitch
-                @else
-                    <i class="fas fa-cloud-upload-alt"></i>
-                @endif
-            </div>
-            
-            <!-- ===================== BAGIAN KONTEKS ===================== -->
-            <!-- Ini adalah bagian yang harus ditambahkan di dalam form -->
-            
-            @if(isset($context) && $context == 'spmi-penetapan')
-                <div class="alert alert-info context-alert mb-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-folder-open fa-2x me-3"></i>
-                        <div>
-                            <h5 class="mb-1">
-                                <i class="fas fa-upload me-2"></i>Upload ke Repository Penetapan SPMI
-                            </h5>
-                            <div class="mb-2">
-                                <strong>Komponen:</strong> {{ $komponenNama ?? 'Tidak ditentukan' }}
-                            </div>
-                            <div class="mb-1">
-                                <strong>Lokasi Penyimpanan:</strong> 
-                                <code>storage/app/public/dokumen/spmi/penetapan/{{ $tipePenetapan ?? 'general' }}/{{ $tahun ?? date('Y') }}/</code>
-                            </div>
-                            <div class="small text-muted">
-                                Dokumen akan otomatis terkait dengan komponen ini dan metadata akan tersimpan
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if(isset($context) && $context == 'spmi-pelaksanaan')
-                <div class="alert alert-warning context-alert mb-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-play-circle fa-2x me-3"></i>
-                        <div>
-                            <h5 class="mb-1">
-                                <i class="fas fa-upload me-2"></i>Upload ke Tahap Pelaksanaan SPMI
-                            </h5>
-                            <p class="mb-0">Dokumen implementasi dan monitoring sistem penjaminan mutu</p>
-                            <div class="small text-muted mt-1">
-                                <strong>Lokasi:</strong> <code>storage/app/public/dokumen/spmi/pelaksanaan/</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if(isset($context) && $context == 'spmi-evaluasi')
-                <div class="alert alert-primary context-alert mb-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-chart-line fa-2x me-3"></i>
-                        <div>
-                            <h5 class="mb-1">
-                                <i class="fas fa-upload me-2"></i>Upload ke Tahap Evaluasi SPMI
-                            </h5>
-                            <p class="mb-0">Dokumen audit, evaluasi, dan penilaian mutu</p>
-                            <div class="small text-muted mt-1">
-                                <strong>Lokasi:</strong> <code>storage/app/public/dokumen/spmi/evaluasi/</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if(isset($context) && $context == 'spmi-pengendalian')
-                <div class="alert alert-success context-alert mb-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-tasks fa-2x me-3"></i>
-                        <div>
-                            <h5 class="mb-1">
-                                <i class="fas fa-upload me-2"></i>Upload ke Tahap Pengendalian SPMI
-                            </h5>
-                            <p class="mb-0">Dokumen tindakan korektif dan pengendalian mutu</p>
-                            <div class="small text-muted mt-1">
-                                <strong>Lokasi:</strong> <code>storage/app/public/dokumen/spmi/pengendalian/</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if(isset($context) && $context == 'spmi-peningkatan')
-                <div class="alert alert-danger context-alert mb-4">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-chart-line fa-2x me-3"></i>
-                        <div>
-                            <h5 class="mb-1">
-                                <i class="fas fa-upload me-2"></i>Upload ke Tahap Peningkatan SPMI
-                            </h5>
-                            <p class="mb-0">Dokumen program peningkatan dan pengembangan mutu berkelanjutan</p>
-                            <div class="small text-muted mt-1">
-                                <strong>Lokasi:</strong> <code>storage/app/public/dokumen/spmi/peningkatan/</code>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-            
-            <!-- ===================== AKHIR BAGIAN KONTEKS ===================== -->
-            
-            <form action="{{ route('user.upload-dokumen.store') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+    <!-- Upload Form Card -->
+    <div class="upload-card">
+        <div class="card-header">
+            <h3>
+                <i class="fas fa-file-alt"></i>
+                Form Upload Dokumen
+            </h3>
+        </div>
+        <div class="card-body">
+            <form id="uploadForm" action="{{ route('user.upload-dokumen.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                
-                <!-- Hidden Fields untuk Konteks -->
-                @if(isset($context) && $context == 'spmi-penetapan')
-                    <input type="hidden" name="penetapan_id" value="{{ $penetapanId ?? '' }}">
-                    <input type="hidden" name="tahapan" value="penetapan">
-                    @if(isset($tipePenetapan))
-                        <input type="hidden" name="metadata[tipe_penetapan]" value="{{ $tipePenetapan }}">
-                    @endif
-                    @if(isset($tahun))
-                        <input type="hidden" name="metadata[tahun]" value="{{ $tahun }}">
-                    @endif
-                    @if(isset($komponenNama))
-                        <input type="hidden" name="metadata[nama_komponen]" value="{{ $komponenNama }}">
-                    @endif
-                @endif
-                
-                @if(isset($context) && in_array($context, ['spmi-pelaksanaan', 'spmi-evaluasi', 'spmi-pengendalian', 'spmi-peningkatan']))
-                    <input type="hidden" name="tahapan" value="{{ str_replace('spmi-', '', $context) }}">
-                @endif
 
-                <!-- DROPDOWN UNIT KERJA -->
-                <div class="mb-4">
-                    <label for="unit_kerja_id" class="form-label">Unit Kerja <span class="text-danger">*</span></label>
-                    <select class="form-select" id="unit_kerja_id" name="unit_kerja_id" required>
-                        <option value="" selected disabled>Pilih Unit Kerja</option>
-                        @foreach($unitKerjas as $unit)
-                            <option value="{{ $unit->id }}" 
-                                @if(isset($context) && $context == 'spmi-penetapan' && $unit->kode == 'LPM') selected @endif>
-                                {{ $unit->nama }} ({{ $unit->kode }})
-                            </option>
-                        @endforeach
-                    </select>
-                    <div class="form-text">
-                        @if(isset($context) && $context == 'spmi-penetapan')
-                            <i class="fas fa-info-circle me-1"></i> Direkomendasikan: LPM (Lembaga Penjaminan Mutu)
-                        @else
-                            Pilih unit kerja Anda
-                        @endif
-                    </div>
-                </div>
+                <!-- TAMBAHKAN INI: Hidden field untuk jenis upload -->
+                <input type="hidden" name="jenis_upload" value="file">
 
-                <!-- DROPDOWN IKU -->
-                <div class="mb-4">
-                    <label for="iku_id" class="form-label">Indikator Kinerja Utama (IKU) <span class="text-danger">*</span></label>
-                    <select class="form-select" id="iku_id" name="iku_id" required>
-                        <option value="" selected disabled>Pilih IKU</option>
-                        @foreach($ikus as $iku)
-                            <option value="{{ $iku->id }}"
-                                @if(isset($context) && $iku->kode == 'IKU-SPMI') selected @endif>
-                                {{ $iku->kode }} - {{ $iku->nama }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <div class="form-text">
-                        @if(isset($context))
-                            <i class="fas fa-info-circle me-1"></i> Direkomendasikan: IKU-SPMI (Indikator Kinerja SPMI)
-                        @else
-                            Pilih IKU yang relevan dengan dokumen ini
-                        @endif
-                    </div>
-                </div>
-
-                <!-- JENIS DOKUMEN -->
-                <div class="mb-4">
-                    <label for="jenis_dokumen" class="form-label">Jenis Dokumen</label>
-                    <select class="form-select" id="jenis_dokumen" name="jenis_dokumen">
-                        <option value="">Pilih Jenis Dokumen</option>
-                        @if(isset($context) && $context == 'spmi-penetapan')
-                            <option value="Kebijakan">Kebijakan</option>
-                            <option value="Pedoman">Pedoman</option>
-                            <option value="Standar">Standar</option>
-                            <option value="Prosedur">Prosedur</option>
-                            <option value="Instruksi Kerja">Instruksi Kerja</option>
-                            <option value="Formulir">Formulir</option>
-                        @elseif(isset($context) && $context == 'spmi-pelaksanaan')
-                            <option value="Rencana Kerja">Rencana Kerja</option>
-                            <option value="Laporan Pelaksanaan">Laporan Pelaksanaan</option>
-                            <option value="Monitoring">Dokumen Monitoring</option>
-                            <option value="Checklist">Checklist</option>
-                        @elseif(isset($context) && $context == 'spmi-evaluasi')
-                            <option value="Instrumen Audit">Instrumen Audit</option>
-                            <option value="Laporan Audit">Laporan Audit</option>
-                            <option value="Evaluasi Dosen">Evaluasi Dosen</option>
-                            <option value="Survey Kepuasan">Survey Kepuasan</option>
-                        @elseif(isset($context))
-                            <option value="Laporan">Laporan</option>
-                            <option value="Formulir">Formulir</option>
-                            <option value="Checklist">Checklist</option>
-                            <option value="Template">Template</option>
-                        @else
-                            <option value="Laporan">Laporan</option>
-                            <option value="Dokumen">Dokumen</option>
-                            <option value="Formulir">Formulir</option>
-                            <option value="Presentasi">Presentasi</option>
-                        @endif
-                    </select>
-                    <div class="form-text">
-                        Pilih jenis dokumen (opsional, tapi direkomendasikan)
-                    </div>
-                </div>
-
-                <!-- RADIO BUTTON JENIS UPLOAD -->
-                <div class="mb-4">
-                    <label class="form-label">Jenis Upload <span class="text-danger">*</span></label>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="jenis_upload" id="jenis_file" value="file" checked>
-                        <label class="form-check-label" for="jenis_file">
-                            Upload File
-                        </label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="jenis_upload" id="jenis_link" value="link">
-                        <label class="form-check-label" for="jenis_link">
-                            Sertakan Link
-                        </label>
-                    </div>
-                    <div class="form-text">
-                        Pilih apakah akan mengupload file atau menyertakan link dokumen
-                    </div>
-                </div>
-
-                <!-- INPUT UPLOAD FILE -->
-                <div class="mb-4" id="fileUploadSection">
-                    <label for="file_dokumen" class="form-label">File Dokumen <span class="text-danger">*</span></label>
-                    <input type="file" class="form-control" id="file_dokumen" name="file_dokumen" 
-                           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
-                    <div class="form-text">
-                        Format file yang didukung: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG. Maksimal ukuran: 10MB.
-                    </div>
-                    @error('file_dokumen')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <!-- INPUT LINK DOKUMEN -->
-                <div class="mb-4 d-none" id="linkUploadSection">
-                    <label for="link_dokumen" class="form-label">Link Dokumen <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="link_dokumen" name="link_dokumen" 
-                           placeholder="https://example.com/dokumen.pdf">
-                    <div class="form-text">
-                        Masukkan URL lengkap dokumen (contoh: Google Drive, Dropbox, dll)
-                    </div>
-                    @error('link_dokumen')
-                        <div class="text-danger small">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <!-- INPUT NAMA DOKUMEN -->
-                <div class="mb-4">
-                    <label for="nama_dokumen" class="form-label">Nama Dokumen <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="nama_dokumen" name="nama_dokumen" 
-                           placeholder="Nama dokumen akan terisi otomatis" required>
-                    <div class="form-text">
-                        Beri nama yang jelas untuk dokumen ini
-                        @if(isset($context) && $context == 'spmi-penetapan')
-                            <br><small class="text-info">Contoh: "{{ $komponenNama ?? 'Komponen' }} - {{ date('Y-m-d') }}"</small>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- KETERANGAN -->
-                <div class="mb-4">
-                    <label for="keterangan" class="form-label">Keterangan</label>
-                    <textarea class="form-control" id="keterangan" name="keterangan" rows="3" 
-                              placeholder="Tambahkan keterangan tentang dokumen ini (opsional)"></textarea>
-                    <div class="form-text">
-                        Deskripsi singkat tentang isi atau tujuan dokumen
-                    </div>
-                </div>
-
-                <!-- File Info Preview -->
-                <div class="file-info d-none" id="fileInfo">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-file me-3" id="fileIcon"></i>
-                        <div class="text-start">
-                            <h6 class="mb-1" id="fileName"></h6>
-                            <small class="text-muted" id="fileSize"></small>
+                <!-- Tahapan Selector -->
+                <div class="tahapan-selector">
+                    <label class="form-label">
+                        <i class="fas fa-layer-group"></i>
+                        Pilih Tahapan SPMI
+                    </label>
+                    <div class="tahapan-grid">
+                        <div class="tahapan-option">
+                            <input type="radio" name="tahapan" id="tahapan-penetapan" value="penetapan" checked>
+                            <label for="tahapan-penetapan">
+                                <i class="fas fa-folder-open"></i>
+                                <span>Penetapan</span>
+                            </label>
+                        </div>
+                        <div class="tahapan-option">
+                            <input type="radio" name="tahapan" id="tahapan-pelaksanaan" value="pelaksanaan">
+                            <label for="tahapan-pelaksanaan">
+                                <i class="fas fa-play-circle"></i>
+                                <span>Pelaksanaan</span>
+                            </label>
+                        </div>
+                        <div class="tahapan-option">
+                            <input type="radio" name="tahapan" id="tahapan-evaluasi" value="evaluasi">
+                            <label for="tahapan-evaluasi">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Evaluasi</span>
+                            </label>
+                        </div>
+                        <div class="tahapan-option">
+                            <input type="radio" name="tahapan" id="tahapan-pengendalian" value="pengendalian">
+                            <label for="tahapan-pengendalian">
+                                <i class="fas fa-tasks"></i>
+                                <span>Pengendalian</span>
+                            </label>
+                        </div>
+                        <div class="tahapan-option">
+                            <input type="radio" name="tahapan" id="tahapan-peningkatan" value="peningkatan">
+                            <label for="tahapan-peningkatan">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Peningkatan</span>
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="is_public" id="is_public" value="1" checked>
-                        <label class="form-check-label" for="is_public">
-                            <strong>Jadikan dokumen publik</strong>
-                        </label>
+                <!-- Field Umum -->
+                <div class="form-group">
+                    <label class="form-label" for="nama_dokumen">
+                        <i class="fas fa-heading"></i>
+                        Nama Dokumen <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" id="nama_dokumen" name="nama_dokumen" 
+                           placeholder="Contoh: Kebijakan SPMI 2024" required>
+                </div>
+
+                <!-- Unit Kerja & IKU -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="unit_kerja_id">
+                                <i class="fas fa-building"></i>
+                                Unit Kerja <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="unit_kerja_id" name="unit_kerja_id" required>
+                                <option value="">Pilih Unit Kerja</option>
+                                @foreach($unitKerjas as $unit)
+                                    <option value="{{ $unit->id }}">{{ $unit->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-text">
-                        Dokumen dapat diakses oleh semua pengunjung tanpa login
-                        @if(isset($context))
-                            <br><small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i> 
-                            Untuk dokumen SPMI, sebaiknya tetap publik agar dapat diakses stakeholder</small>
-                        @endif
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label" for="iku_id">
+                                <i class="fas fa-chart-line"></i>
+                                IKU Terkait
+                            </label>
+                            <select class="form-select" id="iku_id" name="iku_id">
+                                <option value="">Pilih IKU</option>
+                                @foreach($ikus as $iku)
+                                    <option value="{{ $iku->id }}">{{ $iku->kode }} - {{ $iku->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4 mb-3">
-                    <button type="submit" class="btn btn-primary btn-lg px-5">
-                        @if(isset($context))
-                            <i class="fas fa-upload me-2"></i>Upload ke Repository
-                        @else
-                            <i class="fas fa-upload me-2"></i>Upload Dokumen
-                        @endif
-                    </button>
-                    @if(isset($context) && $context == 'spmi-penetapan')
-                        <a href="{{ route('spmi.penetapan.show', $penetapanId ?? '') }}" class="btn btn-outline-secondary btn-lg px-5">
-                            <i class="fas fa-times me-2"></i>Batal
-                        </a>
-                    @else
-                        <a href="{{ route('dokumen-saya.index') }}" class="btn btn-outline-secondary btn-lg px-5">
-                            <i class="fas fa-times me-2"></i>Batal
-                        </a>
-                    @endif
+
+                <!-- Dynamic Fields Container -->
+                <div class="dynamic-fields" id="dynamicFields">
+                    <div class="dynamic-fields-title">
+                        <i class="fas fa-cog"></i>
+                        <span>Field Tambahan <span id="tahapanLabel">(Penetapan)</span></span>
+                    </div>
+                    <div id="fieldContainer">
+                        {{-- Fields akan diisi oleh JavaScript --}}
+                    </div>
                 </div>
+
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fas fa-file"></i>
+                        Upload File <span class="text-danger">*</span>
+                    </label>
+                    <div class="file-upload-area" onclick="document.getElementById('file_dokumen').click()">
+                        <input type="file" id="file_dokumen" name="file_dokumen" style="display: none;" 
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png" required>
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h4>Klik untuk memilih file</h4>
+                        <p>atau drag and drop file di sini</p>
+                        <small>Maksimal 10MB. Format: PDF, DOC, XLS, PPT, JPG, PNG</small>
+                    </div>
+                    <div class="file-info" id="fileInfo">
+                        <i class="fas fa-file-pdf"></i>
+                        <div class="file-details">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                        <div class="file-remove" onclick="removeFile()">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden Field untuk Keterangan -->
+                <input type="hidden" name="keterangan" id="keterangan" value="Upload dokumen SPMI">
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="fas fa-upload"></i>
+                    <span>Upload Dokumen</span>
+                </button>
             </form>
         </div>
     </div>
 </div>
-@endsection
 
 @push('scripts')
 <script>
-    // Toggle antara file upload dan link
-    document.querySelectorAll('input[name="jenis_upload"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const fileSection = document.getElementById('fileUploadSection');
-            const linkSection = document.getElementById('linkUploadSection');
-            const fileInput = document.getElementById('file_dokumen');
-            const linkInput = document.getElementById('link_dokumen');
-            const namaDokumenInput = document.getElementById('nama_dokumen');
-            
-            if (this.value === 'file') {
-                fileSection.classList.remove('d-none');
-                linkSection.classList.add('d-none');
-                fileInput.required = true;
-                linkInput.required = false;
-                namaDokumenInput.placeholder = "Nama dokumen akan terisi otomatis";
-            } else {
-                fileSection.classList.add('d-none');
-                linkSection.classList.remove('d-none');
-                fileInput.required = false;
-                linkInput.required = true;
-                namaDokumenInput.placeholder = "Masukkan nama dokumen";
-                namaDokumenInput.value = ''; // Clear value ketika switch ke link
-            }
-        });
-    });
+    // Field definitions for each tahapan
+    const fieldDefinitions = {
+        penetapan: [
+            { type: 'select', name: 'kode_penetapan', label: 'Kode Penetapan', icon: 'fa-barcode', required: true,
+              options: [
+                { value: 'SPMI-PEN-001', label: 'SPMI-PEN-001 - Kebijakan Mutu' },
+                { value: 'SPMI-PEN-002', label: 'SPMI-PEN-002 - Manual Mutu' },
+                { value: 'SPMI-PEN-003', label: 'SPMI-PEN-003 - Standar Mutu' }
+              ] },
+            { type: 'number', name: 'tahun_penetapan', label: 'Tahun Penetapan', icon: 'fa-calendar', placeholder: '2024', required: true },
+            { type: 'select', name: 'status_penetapan', label: 'Status Penetapan', icon: 'fa-tag', required: true,
+              options: [
+                { value: 'aktif', label: 'Aktif' },
+                { value: 'revisi', label: 'Revisi' },
+                { value: 'kadaluarsa', label: 'Kadaluarsa' }
+              ] }
+        ],
+        pelaksanaan: [
+            { type: 'text', name: 'keterangan', label: 'Keterangan Dokumen', icon: 'fa-info-circle', placeholder: 'Deskripsi singkat tentang dokumen ini', required: true }
+        ],
+        evaluasi: [
+            { type: 'text', name: 'periode_evaluasi', label: 'Periode Evaluasi', icon: 'fa-clock', placeholder: 'Contoh: Semester Ganjil 2024', required: true },
+            { type: 'textarea', name: 'hasil_evaluasi', label: 'Hasil Evaluasi', icon: 'fa-chart-bar', placeholder: 'Ringkasan hasil evaluasi...', rows: 3, required: true }
+        ],
+        pengendalian: [
+            { type: 'text', name: 'sumber_temuan', label: 'Sumber Temuan', icon: 'fa-search', placeholder: 'Contoh: Audit Mutu Internal', required: true },
+            { type: 'select', name: 'prioritas', label: 'Prioritas', icon: 'fa-exclamation-triangle', required: true,
+              options: [
+                { value: 'tinggi', label: 'Tinggi' },
+                { value: 'sedang', label: 'Sedang' },
+                { value: 'rendah', label: 'Rendah' }
+              ] },
+            { type: 'date', name: 'target_selesai', label: 'Target Selesai', icon: 'fa-calendar-check', required: true }
+        ],
+        peningkatan: [
+            { type: 'text', name: 'program_peningkatan', label: 'Program Peningkatan', icon: 'fa-chart-line', placeholder: 'Nama program peningkatan', required: true },
+            { type: 'number', name: 'anggaran', label: 'Anggaran (Rp)', icon: 'fa-money-bill', placeholder: '0', required: true },
+            { type: 'select', name: 'jenis_peningkatan', label: 'Jenis Peningkatan', icon: 'fa-tag', required: true,
+              options: [
+                { value: 'strategis', label: 'Strategis' },
+                { value: 'operasional', label: 'Operasional' },
+                { value: 'perbaikan', label: 'Perbaikan' }
+              ] }
+        ]
+    };
 
-    // File info preview dan auto-fill nama dokumen (hanya untuk file upload)
-    document.getElementById('file_dokumen').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const fileSize = document.getElementById('fileSize');
-        const fileIcon = document.getElementById('fileIcon');
-        const namaDokumenInput = document.getElementById('nama_dokumen');
-        const jenisDokumenSelect = document.getElementById('jenis_dokumen');
+    // Element references
+    const tahapanRadios = document.querySelectorAll('input[name="tahapan"]');
+    const fieldContainer = document.getElementById('fieldContainer');
+    const tahapanLabel = document.getElementById('tahapanLabel');
+    const fileInput = document.getElementById('file_dokumen');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+
+    // Tahapan labels for display
+    const tahapanLabels = {
+        penetapan: 'Penetapan',
+        pelaksanaan: 'Pelaksanaan',
+        evaluasi: 'Evaluasi',
+        pengendalian: 'Pengendalian',
+        peningkatan: 'Peningkatan'
+    };
+
+    // Function to render dynamic fields
+    function renderFields(tahapan) {
+        const fields = fieldDefinitions[tahapan] || [];
+        tahapanLabel.textContent = `(${tahapanLabels[tahapan]})`;
         
-        if (file) {
-            // Validasi file type
-            const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png'];
-            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            
-            if (!allowedExtensions.includes(fileExtension)) {
-                alert('Format file tidak didukung. Hanya file PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG yang diperbolehkan.');
-                this.value = ''; // Clear input file
-                fileInfo.classList.add('d-none');
-                namaDokumenInput.value = '';
-                return;
-            }
-            
-            // Validasi file size (10MB)
-            if (file.size > 10 * 1024 * 1024) {
-                alert('Ukuran file terlalu besar. Maksimal 10MB.');
-                this.value = ''; // Clear input file
-                fileInfo.classList.add('d-none');
-                namaDokumenInput.value = '';
-                return;
-            }
-            
-            // Set file name untuk preview
-            fileName.textContent = file.name;
-            
-            // Auto-fill nama dokumen (tanpa ekstensi)
-            const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-            
-            // Jika ada konteks SPMI Penetapan, tambahkan prefix
-            @if(isset($context) && $context == 'spmi-penetapan' && isset($komponenNama))
-                namaDokumenInput.value = '{{ $komponenNama }} - ' + fileNameWithoutExt;
-            @else
-                namaDokumenInput.value = fileNameWithoutExt;
-            @endif
-            
-            // Set file size
-            const size = file.size;
-            let sizeText = '';
-            if (size >= 1048576) {
-                sizeText = (size / 1048576).toFixed(2) + ' MB';
-            } else if (size >= 1024) {
-                sizeText = (size / 1024).toFixed(2) + ' KB';
-            } else {
-                sizeText = size + ' bytes';
-            }
-            fileSize.textContent = sizeText;
-            
-            // Set file icon based on extension
-            const extension = file.name.split('.').pop().toLowerCase();
-            fileIcon.className = 'fas me-3 ' + getFileIconClass(extension);
-            
-            // Auto select jenis dokumen berdasarkan ekstensi (jika belum dipilih)
-            if (jenisDokumenSelect.value === '') {
-                if (extension === 'pdf') {
-                    jenisDokumenSelect.value = 'PDF Document';
-                } else if (['doc', 'docx'].includes(extension)) {
-                    jenisDokumenSelect.value = 'Word Document';
-                } else if (['xls', 'xlsx'].includes(extension)) {
-                    jenisDokumenSelect.value = 'Excel Document';
-                } else if (['ppt', 'pptx'].includes(extension)) {
-                    jenisDokumenSelect.value = 'PowerPoint';
-                } else if (['jpg', 'jpeg', 'png'].includes(extension)) {
-                    jenisDokumenSelect.value = 'Gambar';
-                }
-            }
-            
-            // Show file info
-            fileInfo.classList.remove('d-none');
-        } else {
-            fileInfo.classList.add('d-none');
-            namaDokumenInput.value = '';
+        if (fields.length === 0) {
+            fieldContainer.innerHTML = '';
+            return;
         }
-    });
 
-    function getFileIconClass(extension) {
-        switch(extension) {
-            case 'pdf': return 'fa-file-pdf text-danger';
-            case 'doc':
-            case 'docx': return 'fa-file-word text-primary';
-            case 'xls':
-            case 'xlsx': return 'fa-file-excel text-success';
-            case 'ppt':
-            case 'pptx': return 'fa-file-powerpoint text-warning';
-            case 'jpg':
-            case 'jpeg':
-            case 'png': return 'fa-file-image text-info';
-            default: return 'fa-file text-secondary';
-        }
+        let html = '<div class="field-group">';
+        
+        fields.forEach(field => {
+            html += `<div class="form-group">`;
+            html += `<label class="form-label" for="${field.name}">`;
+            html += `<i class="fas ${field.icon}"></i> ${field.label}`;
+            if (field.required) html += ` <span class="text-danger">*</span>`;
+            html += `</label>`;
+
+            if (field.type === 'select') {
+                html += `<select class="form-control" id="${field.name}" name="${field.name}" ${field.required ? 'required' : ''}>`;
+                html += `<option value="">Pilih ${field.label}</option>`;
+                field.options.forEach(option => {
+                    html += `<option value="${option.value}">${option.label}</option>`;
+                });
+                html += `</select>`;
+            } else if (field.type === 'textarea') {
+                html += `<textarea class="form-control" id="${field.name}" name="${field.name}" 
+                          placeholder="${field.placeholder}" rows="${field.rows || 3}" 
+                          ${field.required ? 'required' : ''}></textarea>`;
+            } else {
+                html += `<input type="${field.type}" class="form-control" id="${field.name}" 
+                          name="${field.name}" placeholder="${field.placeholder || ''}" 
+                          ${field.required ? 'required' : ''}>`;
+            }
+            
+            html += `</div>`;
+        });
+
+        html += '</div>';
+        fieldContainer.innerHTML = html;
     }
 
-    // Validasi sebelum submit form
-    document.getElementById('uploadForm').addEventListener('submit', function(e) {
-        const jenisUpload = document.querySelector('input[name="jenis_upload"]:checked').value;
-        
-        if (jenisUpload === 'file') {
-            const fileInput = document.getElementById('file_dokumen');
-            const file = fileInput.files[0];
-            
-            if (!file) {
-                e.preventDefault();
-                alert('Silakan pilih file untuk diupload.');
-                return false;
-            }
-            
-            const allowedExtensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png'];
-            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
-            
-            if (!allowedExtensions.includes(fileExtension)) {
-                e.preventDefault();
-                alert('Format file tidak didukung. Hanya file PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG yang diperbolehkan.');
-                return false;
-            }
-            
-            if (file.size > 10 * 1024 * 1024) {
-                e.preventDefault();
-                alert('Ukuran file terlalu besar. Maksimal 10MB.');
-                return false;
-            }
-        } else {
-            const linkInput = document.getElementById('link_dokumen');
-            if (!linkInput.value) {
-                e.preventDefault();
-                alert('Silakan masukkan link dokumen.');
-                return false;
-            }
-            
-            // Validasi format link
-            const linkPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-            if (!linkPattern.test(linkInput.value)) {
-                e.preventDefault();
-                alert('Format link tidak valid. Harap masukkan URL yang benar (contoh: https://example.com/dokumen.pdf)');
-                return false;
-            }
-        }
-
-        // Validasi nama dokumen
-        const namaDokumenInput = document.getElementById('nama_dokumen');
-        if (!namaDokumenInput.value.trim()) {
-            e.preventDefault();
-            alert('Silakan isi nama dokumen.');
-            return false;
-        }
-        
-        // Validasi unit kerja dan IKU
-        const unitKerjaSelect = document.getElementById('unit_kerja_id');
-        const ikuSelect = document.getElementById('iku_id');
-        
-        if (!unitKerjaSelect.value) {
-            e.preventDefault();
-            alert('Silakan pilih Unit Kerja.');
-            return false;
-        }
-        
-        if (!ikuSelect.value) {
-            e.preventDefault();
-            alert('Silakan pilih IKU.');
-            return false;
-        }
-        
-        // Tampilkan loading jika semua valid
-        const submitButton = this.querySelector('button[type="submit"]');
-        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mengupload...';
-        submitButton.disabled = true;
-    });
-    
-    // Auto-fill nama dokumen berdasarkan konteks jika file tidak diupload
-    @if(isset($context) && $context == 'spmi-penetapan' && isset($komponenNama))
-        document.addEventListener('DOMContentLoaded', function() {
-            const namaDokumenInput = document.getElementById('nama_dokumen');
-            const jenisUploadFile = document.getElementById('jenis_file');
-            const jenisUploadLink = document.getElementById('jenis_link');
-            
-            // Jika switch ke link, tetap isi dengan nama komponen
-            jenisUploadLink.addEventListener('change', function() {
-                if (this.checked) {
-                    namaDokumenInput.value = '{{ $komponenNama }} - Link Dokumen';
-                }
-            });
-            
-            // Jika belum ada file, isi dengan nama komponen
-            if (!document.getElementById('file_dokumen').files.length) {
-                namaDokumenInput.value = '{{ $komponenNama }} - {{ date("Y-m-d") }}';
-            }
+    // Event listeners for tahapan changes
+    tahapanRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            renderFields(e.target.value);
         });
-    @endif
+    });
+
+    // File input handling
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            fileName.textContent = file.name;
+            
+            // Format file size
+            let size = file.size;
+            if (size < 1024) {
+                fileSize.textContent = size + ' bytes';
+            } else if (size < 1024 * 1024) {
+                fileSize.textContent = (size / 1024).toFixed(2) + ' KB';
+            } else {
+                fileSize.textContent = (size / (1024 * 1024)).toFixed(2) + ' MB';
+            }
+            
+            fileInfo.classList.add('show');
+            
+            // Update icon based on file type
+            const icon = fileInfo.querySelector('i:first-child');
+            const extension = file.name.split('.').pop().toLowerCase();
+            
+            if (extension === 'pdf') {
+                icon.className = 'fas fa-file-pdf';
+                icon.style.color = '#ef4444';
+            } else if (['doc', 'docx'].includes(extension)) {
+                icon.className = 'fas fa-file-word';
+                icon.style.color = '#3b82f6';
+            } else if (['xls', 'xlsx'].includes(extension)) {
+                icon.className = 'fas fa-file-excel';
+                icon.style.color = '#10b981';
+            } else if (['ppt', 'pptx'].includes(extension)) {
+                icon.className = 'fas fa-file-powerpoint';
+                icon.style.color = '#f59e0b';
+            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+                icon.className = 'fas fa-file-image';
+                icon.style.color = '#8b5cf6';
+            } else {
+                icon.className = 'fas fa-file-alt';
+                icon.style.color = '#64748b';
+            }
+        }
+    });
+
+    // Remove file function
+    function removeFile() {
+        fileInput.value = '';
+        fileInfo.classList.remove('show');
+    }
+
+    // Drag and drop handling
+    const uploadArea = document.querySelector('.file-upload-area');
+    
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#4361ee';
+        uploadArea.style.background = 'rgba(67, 97, 238, 0.02)';
+    });
+
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#e2e8f0';
+        uploadArea.style.background = '#f8fafc';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#e2e8f0';
+        uploadArea.style.background = '#f8fafc';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    });
+
+    // Form submission with loading state
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengupload...';
+        submitBtn.disabled = true;
+        
+        // Form will submit normally, but we show loading state
+        // You can add AJAX submission here if needed
+    });
+
+    // Initialize with default tahapan (penetapan)
+    renderFields('penetapan');
 </script>
 @endpush
+@endsection

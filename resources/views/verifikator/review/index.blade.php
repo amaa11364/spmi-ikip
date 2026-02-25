@@ -11,15 +11,15 @@
                     <h3 class="card-title">Review Dokumen</h3>
                     <div class="card-tools">
                         <!-- Stats Badges -->
-                        <span class="badge bg-warning me-1">Pending: {{ $counts['pending'] }}</span>
-                        <span class="badge bg-success me-1">Approved: {{ $counts['approved'] }}</span>
-                        <span class="badge bg-danger me-1">Rejected: {{ $counts['rejected'] }}</span>
-                        <span class="badge bg-info me-1">Revision: {{ $counts['revision'] }}</span>
+                        <span class="badge bg-warning me-1">Pending: {{ $counts['pending'] ?? 0 }}</span>
+                        <span class="badge bg-success me-1">Approved: {{ $counts['approved'] ?? 0 }}</span>
+                        <span class="badge bg-danger me-1">Rejected: {{ $counts['rejected'] ?? 0 }}</span>
+                        <span class="badge bg-info me-1">Revision: {{ $counts['revision'] ?? 0 }}</span>
                     </div>
                 </div>
                 <div class="card-body">
                     <!-- Filter Form -->
-                    <form method="GET" action="{{ route('verifikator.review.index') }}" class="mb-4">
+                    <form method="GET" action="{{ route('verifikator.dokumen.index') }}" class="mb-4">
                         <div class="row">
                             <div class="col-md-3">
                                 <select name="status" class="form-control">
@@ -30,6 +30,16 @@
                                     <option value="revision" {{ request('status') == 'revision' ? 'selected' : '' }}>Revision</option>
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <select name="tahapan" class="form-control">
+                                    <option value="">Semua Tahapan</option>
+                                    <option value="penetapan" {{ request('tahapan') == 'penetapan' ? 'selected' : '' }}>Penetapan</option>
+                                    <option value="pelaksanaan" {{ request('tahapan') == 'pelaksanaan' ? 'selected' : '' }}>Pelaksanaan</option>
+                                    <option value="evaluasi" {{ request('tahapan') == 'evaluasi' ? 'selected' : '' }}>Evaluasi</option>
+                                    <option value="pengendalian" {{ request('tahapan') == 'pengendalian' ? 'selected' : '' }}>Pengendalian</option>
+                                    <option value="peningkatan" {{ request('tahapan') == 'peningkatan' ? 'selected' : '' }}>Peningkatan</option>
+                                </select>
+                            </div>
                             <div class="col-md-6">
                                 <div class="input-group">
                                     <input type="text" name="search" class="form-control" 
@@ -38,7 +48,7 @@
                                     <button class="btn btn-primary" type="submit">
                                         <i class="fas fa-search"></i> Cari
                                     </button>
-                                    <a href="{{ route('verifikator.review.index') }}" class="btn btn-secondary">
+                                    <a href="{{ route('verifikator.dokumen.index') }}" class="btn btn-secondary">
                                         <i class="fas fa-sync-alt"></i> Reset
                                     </a>
                                 </div>
@@ -53,11 +63,12 @@
                                 <tr>
                                     <th width="5%">No</th>
                                     <th width="15%">Nomor Dokumen</th>
-                                    <th width="25%">Judul</th>
+                                    <th width="20%">Judul</th>
+                                    <th width="10%">Tahapan</th>
                                     <th width="15%">Pengupload</th>
                                     <th width="10%">Tanggal</th>
                                     <th width="10%">Status</th>
-                                    <th width="20%">Aksi</th>
+                                    <th width="15%">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -66,8 +77,15 @@
                                     <td>{{ $dokumens->firstItem() + $index }}</td>
                                     <td>{{ $dokumen->nomor_dokumen ?? '-' }}</td>
                                     <td>{{ $dokumen->judul }}</td>
-                                    <td>{{ $dokumen->user->name ?? 'Unknown' }}</td>
-                                    <td>{{ $dokumen->created_at->format('d/m/Y') }}</td>
+                                    <td>
+                                        @if($dokumen->tahapan)
+                                            <span class="badge bg-info">{{ ucfirst($dokumen->tahapan) }}</span>
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td>{{ $dokumen->uploader->name ?? $dokumen->user->name ?? 'Unknown' }}</td>
+                                    <td>{{ $dokumen->created_at ? $dokumen->created_at->format('d/m/Y') : '-' }}</td>
                                     <td>
                                         @if($dokumen->status == 'pending')
                                             <span class="badge bg-warning">Pending</span>
@@ -80,7 +98,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <a href="{{ route('verifikator.review.detail', $dokumen->id) }}" 
+                                        <a href="{{ route('verifikator.dokumen.show', $dokumen->id) }}" 
                                            class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i> Detail
                                         </a>
@@ -98,7 +116,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">Tidak ada dokumen ditemukan</td>
+                                    <td colspan="8" class="text-center">Tidak ada dokumen ditemukan</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -176,17 +194,7 @@
 <script>
 function approveDokumen(id) {
     const form = document.getElementById('approveForm');
-    form.action = "{{ url('verifikator/dokumen') }}/" + id + "/verify";
-    
-    // Tambah input hidden untuk action
-    let actionInput = document.querySelector('input[name="action"]');
-    if (!actionInput) {
-        actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        form.appendChild(actionInput);
-    }
-    actionInput.value = 'approve';
+    form.action = "{{ url('verifikator/dokumen') }}/" + id + "/approve";
     
     const modal = new bootstrap.Modal(document.getElementById('approveModal'));
     modal.show();
@@ -194,17 +202,7 @@ function approveDokumen(id) {
 
 function rejectDokumen(id) {
     const form = document.getElementById('rejectForm');
-    form.action = "{{ url('verifikator/dokumen') }}/" + id + "/verify";
-    
-    // Tambah input hidden untuk action
-    let actionInput = document.querySelector('input[name="action"]');
-    if (!actionInput) {
-        actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        form.appendChild(actionInput);
-    }
-    actionInput.value = 'reject';
+    form.action = "{{ url('verifikator/dokumen') }}/" + id + "/reject";
     
     const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
     modal.show();

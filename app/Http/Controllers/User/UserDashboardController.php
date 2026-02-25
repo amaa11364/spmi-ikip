@@ -24,14 +24,22 @@ class UserDashboardController extends Controller
         if (!$user || !$user->isUser()) {
             abort(403, 'Unauthorized access');
         }
+
+         $pendingApprovals = $user->dokumens()->where('status', 'pending')->count();
         
         // ==================== STATISTIK UTAMA ====================
         
         $statistics = [
-            'my_documents' => $user->dokumens()->count(),
-            'storage_used' => $this->getFormattedStorageUsed($user->id),
-            'storage_raw' => Dokumen::where('uploaded_by', $user->id)->sum('file_size'),
-            'storage_limit' => 100 * 1024 * 1024, // 100 MB contoh
+        'my_documents' => $user->dokumens()->count(),
+        'pending_approvals' => $pendingApprovals, // SEKARANG VARIABEL INI SUDAH TERDEFINISI
+        'storage_used' => $this->getFormattedStorageUsed($user->id),
+        'storage_raw' => Dokumen::where('uploaded_by', $user->id)->sum('file_size'),
+        'storage_limit' => 100 * 1024 * 1024, // 100 MB contoh
+        'recent_uploads' => $user->dokumens() // TAMBAHKAN INI untuk card ke-4
+            ->with(['unitKerja', 'iku'])
+            ->latest()
+            ->take(5)
+            ->get()
         ];
         
         // ==================== ✅ STATISTIK PER TAHAPAN PPEPP ====================

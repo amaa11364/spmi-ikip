@@ -1,241 +1,115 @@
 <?php
+// app/Http/Controllers/Admin/DokumenController.php
 
-namespace App\Http\Controllers\Verifikator;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Dokumen;
 use App\Models\UnitKerja;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DokumenController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'verifikator']);
-    }
-
-    // Halaman utama dokumen yang perlu diverifikasi
+    /**
+     * Display a listing of documents for admin
+     */
     public function index(Request $request)
     {
-        $user = Auth::user();
-        $unitKerjaId = $user->unit_kerja_id;
+        $query = Dokumen::with(['unitKerja', 'uploader', 'iku'])
+                       ->orderBy('created_at', 'desc');
+
+        // Filter berdasarkan pencarian
+        if ($request->filled('search')) {
+            $query->where('nama_dokumen', 'like', '%' . $request->search . '%');
+        }
         
-        $query = Dokumen::where('unit_kerja_id', $unitKerjaId)
-            ->with(['user', 'unitKerja'])
-            ->latest();
+        // Filter berdasarkan tahapan
+        if ($request->filled('tahapan')) {
+            $query->where('tahapan', $request->tahapan);
+        }
         
         // Filter berdasarkan status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         
-        // Filter berdasarkan jenis dokumen
-        if ($request->filled('jenis')) {
-            $query->where('jenis_dokumen', $request->jenis);
-        }
+        $dokumens = $query->paginate(20)->withQueryString();
         
-        // Filter berdasarkan tanggal
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-        
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
-        
-        $dokumens = $query->paginate(20);
-        $statuses = ['pending', 'approved', 'rejected', 'revision'];
-        
-        return view('verifikator.dokumen.index', compact('dokumens', 'statuses'));
-    }
-
-    public function update(Request $request, $id)
-    {
-    $dokumen = Dokumen::findOrFail($id);
-    
-    // Cek akses unit kerja
-    if ($dokumen->unit_kerja_id != Auth::user()->unit_kerja_id) {
-        abort(403);
-    }
-    
-    // ✅ PROTEKSI: Verifikator tidak boleh mengubah tahapan
-    if ($request->has('tahapan') && $request->tahapan != $dokumen->tahapan) {
-        return back()->with('error', 'Verifikator tidak dapat mengubah tahapan dokumen.');
-    }
-    
-    // Hanya update status dan komentar
-    $dokumen->update([
-        'status' => $request->status,
-        // field lain yang boleh diupdate verifikator
-    ]);
-    }
-
-    // Detail dokumen untuk review
-    public function show($id)
-    {
-        $dokumen = Dokumen::with(['user', 'unitKerja', 'comments' => function($query) {
-            $query->orderBy('created_at', 'desc');
-        }])->findOrFail($id);
-        
-        // Cek apakah dokumen dari unit kerja verifikator
-        if ($dokumen->unit_kerja_id != Auth::user()->unit_kerja_id) {
-            abort(403, 'Anda tidak berhak mengakses dokumen ini.');
-        }
-        
-        return view('verifikator.dokumen.show', compact('dokumen'));
-    }
-
-    // Approve dokumen
-    public function approve(Request $request, $id)
-    {
-        $request->validate([
-            'komentar' => 'nullable|string|max:500'
-        ]);
-        
-        $dokumen = Dokumen::findOrFail($id);
-        
-        // Cek akses
-        if ($dokumen->unit_kerja_id != Auth::user()->unit_kerja_id) {
-            return back()->with('error', 'Akses ditolak.');
-        }
-        
-        $dokumen->update([
-            'status' => 'approved',
-            'verified_by' => Auth::id(),
-            'verified_at' => now(),
-            'rejection_reason' => null,
-        ]);
-        
-        // Tambahkan komentar jika ada
-        if ($request->komentar) {
-            $dokumen->comments()->create([
-                'user_id' => Auth::id(),
-                'comment' => $request->komentar,
-                'type' => 'verification'
-            ]);
-        }
-        
-        return redirect()->route('verifikator.dokumen.index')
-            ->with('success', 'Dokumen berhasil disetujui.');
-    }
-
-    // Reject dokumen
-    public function reject(Request $request, $id)
-    {
-        $request->validate([
-            'alasan_penolakan' => 'required|string|min:10|max:500',
-            'komentar' => 'nullable|string|max:500'
-        ]);
-        
-        $dokumen = Dokumen::findOrFail($id);
-        
-        // Cek akses
-        if ($dokumen->unit_kerja_id != Auth::user()->unit_kerja_id) {
-            return back()->with('error', 'Akses ditolak.');
-        }
-        
-        $dokumen->update([
-            'status' => 'rejected',
-            'verified_by' => Auth::id(),
-            'verified_at' => now(),
-            'rejection_reason' => $request->alasan_penolakan,
-        ]);
-        
-        // Tambahkan komentar jika ada
-        if ($request->komentar) {
-            $dokumen->comments()->create([
-                'user_id' => Auth::id(),
-                'comment' => $request->komentar,
-                'type' => 'rejection'
-            ]);
-        }
-        
-        return redirect()->route('verifikator.dokumen.index')
-            ->with('success', 'Dokumen telah ditolak.');
-    }
-
-    // Minta revisi dokumen
-    public function requestRevision(Request $request, $id)
-    {
-        $request->validate([
-            'instruksi_revisi' => 'required|string|min:10|max:500',
-            'deadline' => 'required|date|after:today',
-            'komentar' => 'nullable|string|max:500'
-        ]);
-        
-        $dokumen = Dokumen::findOrFail($id);
-        
-        // Cek akses
-        if ($dokumen->unit_kerja_id != Auth::user()->unit_kerja_id) {
-            return back()->with('error', 'Akses ditolak.');
-        }
-        
-        $dokumen->update([
-            'status' => 'revision',
-            'revision_instructions' => $request->instruksi_revisi,
-            'revision_deadline' => $request->deadline,
-            'verified_by' => Auth::id(),
-        ]);
-        
-        // Tambahkan komentar jika ada
-        if ($request->komentar) {
-            $dokumen->comments()->create([
-                'user_id' => Auth::id(),
-                'comment' => $request->komentar,
-                'type' => 'revision'
-            ]);
-        }
-        
-        return redirect()->route('verifikator.dokumen.index')
-            ->with('success', 'Permintaan revisi telah dikirim.');
-    }
-
-    // Tambah komentar
-    public function addComment(Request $request, $id)
-    {
-        $request->validate([
-            'comment' => 'required|string|min:5|max:500'
-        ]);
-        
-        $dokumen = Dokumen::findOrFail($id);
-        
-        $dokumen->comments()->create([
-            'user_id' => Auth::id(),
-            'comment' => $request->comment,
-            'type' => 'comment'
-        ]);
-        
-        return back()->with('success', 'Komentar berhasil ditambahkan.');
-    }
-
-    // Statistik dokumen
-    public function statistics()
-    {
-        $user = Auth::user();
-        $unitKerjaId = $user->unit_kerja_id;
-        
+        // Statistics
         $statistics = [
-            'total' => Dokumen::where('unit_kerja_id', $unitKerjaId)->count(),
-            'pending' => Dokumen::where('unit_kerja_id', $unitKerjaId)
-                ->where('status', 'pending')->count(),
-            'approved' => Dokumen::where('unit_kerja_id', $unitKerjaId)
-                ->where('status', 'approved')->count(),
-            'rejected' => Dokumen::where('unit_kerja_id', $unitKerjaId)
-                ->where('status', 'rejected')->count(),
-            'revision' => Dokumen::where('unit_kerja_id', $unitKerjaId)
-                ->where('status', 'revision')->count(),
-            'by_type' => Dokumen::where('unit_kerja_id', $unitKerjaId)
-                ->selectRaw('jenis_dokumen, count(*) as count')
-                ->groupBy('jenis_dokumen')
-                ->get(),
-            'by_month' => Dokumen::where('unit_kerja_id', $unitKerjaId)
-                ->selectRaw('MONTH(created_at) as month, COUNT(*) as count')
-                ->groupBy('month')
-                ->orderBy('month')
-                ->get(),
+            'total' => Dokumen::count(),
+            'pending' => Dokumen::where('status', 'pending')->count(),
+            'approved' => Dokumen::where('status', 'approved')->count(),
+            'rejected' => Dokumen::where('status', 'rejected')->count(),
         ];
         
-        return view('verifikator.dokumen.statistics', compact('statistics'));
+        return view('admin.dokumen.index', compact('dokumens', 'statistics'));
+    }
+
+    /**
+     * Verify document (approve/reject)
+     */
+    public function verify(Request $request, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $request->validate([
+                'status' => 'required|in:approved,rejected',
+                'catatan' => 'nullable|string|max:500',
+            ]);
+
+            $dokumen = Dokumen::findOrFail($id);
+            
+            $dokumen->update([
+                'status' => $request->status,
+                'verified_by' => auth()->id(),
+                'verified_at' => now(),
+                'rejection_reason' => $request->status === 'rejected' ? $request->catatan : null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dokumen berhasil diverifikasi.',
+                'status' => $request->status
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memverifikasi dokumen: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle public status
+     */
+    public function togglePublic($id)
+    {
+        try {
+            $dokumen = Dokumen::findOrFail($id);
+            
+            $dokumen->update([
+                'is_public' => !$dokumen->is_public
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status publik berhasil diubah.',
+                'is_public' => $dokumen->is_public
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status publik: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

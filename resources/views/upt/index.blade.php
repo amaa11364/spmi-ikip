@@ -34,20 +34,6 @@
             min-height: 100vh;
         }
         
-        /* Navbar */
-        .navbar {
-            background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-            padding: 1rem 0;
-        }
-        
-        .navbar-brand {
-            font-weight: 800;
-            color: var(--primary) !important;
-            font-size: 1.5rem;
-        }
-
         /* Hero Section */
         .hero-section {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
@@ -489,7 +475,7 @@
     </style>
 </head>
 <body>
-      @extends('layouts.app')
+    @extends('layouts.app')
 
     @section('title', 'unit Pelaksana Teknis')
 
@@ -818,21 +804,6 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                     <button type="button" class="btn btn-primary" style="background: linear-gradient(135deg, var(--primary-light), var(--primary)); border: none;">
                         <i class="fas fa-external-link-alt me-2"></i>Kunjungi Website
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CTA Section -->
-    <div class="container" id="kontak">
-        <div class="cta-section text-center">
-            <div class="row justify-content-center">
-                <div class="col-lg-8">
-                    <h2 class="cta-title">Butuh Informasi Lebih Lanjut?</h2>
-                    <p class="mb-4">Hubungi kami untuk konsultasi atau informasi lebih detail tentang layanan UPT</p>
-                    <button class="btn btn-cta" onclick="window.location.href='mailto:upt@ikipsiliwangi.ac.id'">
-                        <i class="fas fa-envelope me-2"></i>Kontak Kami
                     </button>
                 </div>
             </div>

@@ -21,6 +21,7 @@ class Dokumen extends Model
         'file_path',
         'file_name',
         'file_size',
+        'verified_at' => 'datetime', 
         'file_extension',
         'jenis_upload',
         'uploaded_by',

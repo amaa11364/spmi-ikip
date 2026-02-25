@@ -1,106 +1,146 @@
-{{-- resources/views/admin/berita/index.blade.php --}}
 @extends('layouts.main')
 
-@section('title', 'Kelola Berita')
+@section('title', 'Berita Terbaru')
 
 @section('content')
-<div class="container-fluid">
+<div class="container py-5">
     <!-- Breadcrumb -->
-    @include('components.breadcrumb')
-    
-    <!-- Header dengan Breadcrumb -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="mb-0">
-                <i class="fas fa-newspaper me-2"></i>Kelola Berita
-            </h4>
-            <small class="text-muted">Manajemen berita dan artikel SPMI</small>
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ route('landing.page') }}">Beranda</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Berita</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-5 fw-bold text-dark mb-3">Berita Terbaru</h1>
+            <p class="lead text-muted">Informasi dan kegiatan terbaru seputar SPMI</p>
+            <div class="divider mx-auto" style="width: 80px; height: 4px; background: linear-gradient(135deg, #996600, #cc9900);"></div>
         </div>
-        <a href="{{ route('admin.berita.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i>Tambah Berita
-        </a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+    <!-- Berita Grid -->
+    @if($beritas->count() > 0)
+        <div class="row g-4">
+            @foreach($beritas as $berita)
+            <div class="col-md-6 col-lg-4">
+                <a href="{{ route('berita.publik.show', $berita->id) }}" class="text-decoration-none">
+                    <div class="card h-100 border-0 shadow-sm berita-card">
+                        <!-- Gambar -->
+                        @if($berita->gambar)
+                        <img src="{{ asset('storage/' . $berita->gambar) }}" 
+                             class="card-img-top berita-image" 
+                             alt="{{ $berita->judul }}"
+                             style="height: 200px; object-fit: cover;">
+                        @else
+                        <div class="berita-image bg-light d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="fas fa-newspaper fa-4x text-muted opacity-50"></i>
+                        </div>
+                        @endif
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th width="50">#</th>
-                            <th>Judul</th>
-                            <th width="100">Status</th>
-                            <th width="120">Tanggal</th>
-                            <th width="80">Views</th>
-                            <th width="150">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($beritas as $berita)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>
-                                <strong>{{ $berita->judul }}</strong>
-                                <br>
-                                <small class="text-muted">Slug: {{ $berita->slug }}</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ $berita->status_class }}">
-                                    {{ $berita->status }}
+                        <!-- Content -->
+                        <div class="card-body">
+                            <h5 class="card-title text-dark fw-semibold mb-2" style="line-height: 1.4;">
+                                {{ Str::limit($berita->judul, 60) }}
+                            </h5>
+                            
+                            <!-- Cuplikan isi berita (limit karakter) -->
+                            <p class="card-text text-muted mb-3" style="font-size: 0.95rem;">
+                                {{ Str::limit(strip_tags($berita->isi), 120) }}
+                            </p>
+                            
+                            <!-- Meta info -->
+                            <div class="d-flex align-items-center text-muted small mb-3">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                <span>{{ $berita->created_at->format('d M Y') }}</span>
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-eye me-1"></i>
+                                <span>{{ $berita->views }} dilihat</span>
+                            </div>
+                            
+                            <!-- Tombol Baca Selengkapnya -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-primary fw-medium" style="color: #996600 !important;">
+                                    Baca Selengkapnya 
+                                    <i class="fas fa-arrow-right ms-1"></i>
                                 </span>
-                            </td>
-                            <td>{{ $berita->created_at->format('d/m/Y') }}</td>
-                            <td>{{ $berita->views }}</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a href="{{ route('berita.show', $berita->slug) }}" 
-                                       target="_blank" 
-                                       class="btn btn-outline-info" 
-                                       title="Lihat">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{{ route('admin.berita.edit', $berita) }}" 
-                                       class="btn btn-outline-warning" 
-                                       title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form action="{{ route('admin.berita.destroy', $berita) }}" 
-                                          method="POST" 
-                                          class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" 
-                                                class="btn btn-outline-danger" 
-                                                title="Hapus"
-                                                onclick="return confirm('Hapus berita ini?')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">
-                                <i class="fas fa-newspaper fa-2x mb-3"></i>
-                                <p>Belum ada berita</p>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                            </div>
+                        </div>
+                    </div>
+                </a>
             </div>
-            
-            @if($beritas->hasPages())
-            <div class="mt-3">
-                {{ $beritas->links() }}
-            </div>
-            @endif
+            @endforeach
         </div>
-    </div>
+
+        <!-- Pagination -->
+        @if($beritas->hasPages())
+        <div class="d-flex justify-content-center mt-5">
+            {{ $beritas->links() }}
+        </div>
+        @endif
+    @else
+        <div class="text-center py-5">
+            <i class="fas fa-newspaper fa-5x text-muted mb-4 opacity-50"></i>
+            <h4 class="text-muted">Belum ada berita</h4>
+            <p class="text-muted">Berita akan segera hadir. Silakan kunjungi kembali nanti.</p>
+        </div>
+    @endif
 </div>
+
+<style>
+.berita-card {
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.berita-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+}
+
+.berita-card:hover .text-primary {
+    color: #b37400 !important;
+}
+
+.berita-image {
+    transition: transform 0.5s ease;
+}
+
+.berita-card:hover .berita-image {
+    transform: scale(1.05);
+}
+
+.divider {
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Custom pagination style */
+.pagination {
+    gap: 5px;
+}
+
+.page-link {
+    border-radius: 8px;
+    color: #996600;
+    border: 1px solid #e9ecef;
+    padding: 0.5rem 1rem;
+}
+
+.page-link:hover {
+    background-color: #996600;
+    color: white;
+    border-color: #996600;
+}
+
+.page-item.active .page-link {
+    background-color: #996600;
+    border-color: #996600;
+}
+</style>
 @endsection
