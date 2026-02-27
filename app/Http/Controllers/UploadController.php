@@ -73,7 +73,7 @@ class UploadController extends Controller
     }
 
     /**
-     * Store uploaded document
+     * Store uploaded document - DIPERBAIKI
      */
     public function store(Request $request)
     {
@@ -81,7 +81,7 @@ class UploadController extends Controller
             // Validasi dasar
             $request->validate([
                 'tahapan' => 'nullable|in:penetapan,pelaksanaan,evaluasi,pengendalian,peningkatan',
-                'unit_kerja_id' => 'required|exists:unit_kerjas,id',
+                'unit_kerja_id' => 'nullable|exists:unit_kerjas,id', // Ubah jadi nullable
                 'iku_id' => 'nullable|exists:ikus,id',
                 'jenis_upload' => 'required|in:file,link',
                 'nama_dokumen' => 'required|string|max:255',
@@ -89,15 +89,25 @@ class UploadController extends Controller
                 'is_public' => 'boolean'
             ]);
 
-            // Validasi conditional berdasarkan jenis upload
+            // PERBAIKAN: Validasi conditional berdasarkan jenis upload
             if ($request->jenis_upload === 'file') {
                 $request->validate([
-                    'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png'
+                    'file_dokumen' => 'required|file|max:10240|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png'
                 ]);
+                
+                // Set unit kerja jika tidak dipilih
+                if (!$request->unit_kerja_id) {
+                    $request->merge(['unit_kerja_id' => auth()->user()->unit_kerja_id]);
+                }
             } else {
                 $request->validate([
                     'link_dokumen' => 'required|url|max:500'
                 ]);
+                
+                // Set unit kerja jika tidak dipilih
+                if (!$request->unit_kerja_id) {
+                    $request->merge(['unit_kerja_id' => auth()->user()->unit_kerja_id]);
+                }
             }
 
             // Validasi dinamis berdasarkan tahapan
@@ -319,7 +329,7 @@ class UploadController extends Controller
     }
 
     /**
-     * Index user's documents - DIPERBAIKI
+     * Index user's documents - SUDAH BENAR
      */
     public function index(Request $request)
     {
@@ -359,7 +369,7 @@ class UploadController extends Controller
             'rejected' => (clone $query)->where('status', 'rejected')->count(),
         ];
 
-        // Pagination - INI YANG DIPERBAIKI
+        // Pagination
         $dokumens = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         
         $unitKerjas = UnitKerja::where('status', true)->get();

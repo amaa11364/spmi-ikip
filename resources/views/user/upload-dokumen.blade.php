@@ -621,7 +621,7 @@
               ] }
         ],
         pelaksanaan: [
-            { type: 'text', name: 'keterangan', label: 'Keterangan Dokumen', icon: 'fa-info-circle', placeholder: 'Deskripsi singkat tentang dokumen ini', required: true }
+            { type: 'text', name: 'keterangan_pelaksanaan', label: 'Keterangan Dokumen', icon: 'fa-info-circle', placeholder: 'Deskripsi singkat tentang dokumen ini', required: true }
         ],
         evaluasi: [
             { type: 'text', name: 'periode_evaluasi', label: 'Periode Evaluasi', icon: 'fa-clock', placeholder: 'Contoh: Semester Ganjil 2024', required: true },

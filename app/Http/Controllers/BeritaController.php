@@ -170,7 +170,7 @@ class BeritaController extends Controller
                         ->orderBy('created_at', 'desc')
                         ->paginate(12);
         
-        return view('berita.index', compact('beritas'));
+        return view('admin.berita.index', compact('beritas'));
     }
 
     /**

@@ -1,4 +1,5 @@
 <?php
+// app/Services/DokumenWorkflowService.php
 
 namespace App\Services;
 
@@ -6,6 +7,7 @@ use App\Models\Dokumen;
 use App\Models\User;
 use App\Events\DokumenStatusChanged;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class DokumenWorkflowService
 {
@@ -40,6 +42,11 @@ class DokumenWorkflowService
 
     /**
      * Cek apakah transisi diizinkan
+     * 
+     * @param Dokumen $dokumen
+     * @param string $newStatus
+     * @param User $user
+     * @return array
      */
     public function canTransition(Dokumen $dokumen, string $newStatus, User $user): array
     {
@@ -115,66 +122,161 @@ class DokumenWorkflowService
 
     /**
      * Lakukan transisi status
+     * 
+     * @param Dokumen $dokumen
+     * @param string $newStatus
+     * @param User $user
+     * @param array|null $data
+     * @return Dokumen
+     * @throws Exception
      */
     public function transition(Dokumen $dokumen, string $newStatus, User $user, ?array $data = []): Dokumen
     {
-        // Cek apakah transisi diizinkan
-        $check = $this->canTransition($dokumen, $newStatus, $user);
-        
-        if (!$check['allowed']) {
-            throw new Exception($check['reason']);
-        }
+        try {
+            // Cek apakah transisi diizinkan
+            $check = $this->canTransition($dokumen, $newStatus, $user);
+            
+            if (!$check['allowed']) {
+                throw new Exception($check['reason']);
+            }
 
-        $oldStatus = $dokumen->status;
-        
-        // Simpan history transisi
-        $transitions = $dokumen->metadata['transitions'] ?? [];
-        $transitions[] = [
-            'from' => $oldStatus,
-            'to' => $newStatus,
-            'by' => $user->id,
-            'by_name' => $user->name,
-            'by_role' => $user->role,
-            'at' => now()->toDateTimeString(),
-            'reason' => $data['reason'] ?? null,
-            'notes' => $data['notes'] ?? null,
-        ];
+            $oldStatus = $dokumen->status;
+            
+            // AMBIL DATA METADATA DENGAN AMAN
+            // Handle berbagai tipe data metadata (array, string JSON, null)
+            $currentMetadata = $this->parseMetadata($dokumen->metadata);
+            
+            // Ambil history transisi yang sudah ada
+            $transitions = $currentMetadata['transitions'] ?? [];
+            
+            // Tambahkan transisi baru
+            $transitions[] = [
+                'from' => $oldStatus,
+                'to' => $newStatus,
+                'by' => $user->id,
+                'by_name' => $user->name,
+                'by_role' => $user->role,
+                'at' => now()->toDateTimeString(),
+                'reason' => $data['reason'] ?? $data['alasan_penolakan'] ?? null,
+                'notes' => $data['notes'] ?? $data['comment'] ?? null,
+                'instruksi' => $data['instructions'] ?? $data['instruksi_revisi'] ?? null,
+                'deadline' => $data['deadline'] ?? null,
+            ];
 
-        // Update dokumen
-        $updateData = [
-            'status' => $newStatus,
-            'metadata' => array_merge($dokumen->metadata ?? [], [
+            // Gabungkan metadata lama dengan yang baru
+            $newMetadata = array_merge($currentMetadata, [
                 'transitions' => $transitions,
                 'last_transition' => end($transitions)
-            ])
-        ];
+            ]);
 
-        // Jika di-approve atau di-reject oleh verifikator
-        if (in_array($newStatus, ['approved', 'rejected']) && $user->isVerifikator()) {
-            $updateData['verified_by'] = $user->id;
-            $updateData['verified_at'] = now();
-            
-            if ($newStatus === 'rejected' && isset($data['reason'])) {
-                $updateData['rejection_reason'] = $data['reason'];
+            // Siapkan data update
+            $updateData = [
+                'status' => $newStatus,
+                'metadata' => $newMetadata // Langsung simpan sebagai array, casting model akan handle JSON
+            ];
+
+            // Jika di-approve oleh verifikator
+            if ($newStatus === 'approved' && ($user->isVerifikator() || $user->isAdmin())) {
+                $updateData['verified_by'] = $user->id;
+                $updateData['verified_at'] = now();
+                $updateData['komentar'] = $data['comment'] ?? $data['notes'] ?? null;
             }
+
+            // Jika di-reject oleh verifikator
+            if ($newStatus === 'rejected' && ($user->isVerifikator() || $user->isAdmin())) {
+                $updateData['verified_by'] = $user->id;
+                $updateData['verified_at'] = now();
+                $updateData['status'] = 'rejected';
+                $updateData['komentar'] = $data['reason'] ?? $data['alasan_penolakan'] ?? $data['comment'] ?? 'Dokumen ditolak';
+            }
+
+            // Jika diminta revisi
+            if ($newStatus === 'revision' && ($user->isVerifikator() || $user->isAdmin())) {
+                $updateData['revision_instructions'] = $data['instructions'] ?? $data['instruksi_revisi'] ?? $data['reason'] ?? null;
+                $updateData['revision_deadline'] = $data['deadline'] ?? null;
+                $updateData['komentar'] = $data['comment'] ?? null;
+            }
+
+            // Log untuk debugging
+            Log::info('DokumenWorkflowService: Melakukan transisi status', [
+                'dokumen_id' => $dokumen->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'user_id' => $user->id,
+                'user_role' => $user->role,
+                'update_data' => $updateData
+            ]);
+
+            // Update dokumen
+            $dokumen->update($updateData);
+
+            // Refresh model untuk mendapatkan data terbaru
+            $dokumen = $dokumen->fresh();
+
+            // Dispatch event untuk notifikasi dan logging
+            event(new DokumenStatusChanged($dokumen, $oldStatus, $newStatus, $user));
+
+            return $dokumen;
+
+        } catch (Exception $e) {
+            Log::error('DokumenWorkflowService Error', [
+                'message' => $e->getMessage(),
+                'dokumen_id' => $dokumen->id,
+                'new_status' => $newStatus,
+                'user_id' => $user->id
+            ]);
+            
+            throw $e;
         }
+    }
 
-        // Jika diminta revisi
-        if ($newStatus === 'revision' && $user->isVerifikator()) {
-            $updateData['revision_instructions'] = $data['instructions'] ?? $data['reason'] ?? null;
-            $updateData['revision_deadline'] = $data['deadline'] ?? null;
+    /**
+     * Parse metadata dengan aman (bisa menangani string, array, atau null)
+     * 
+     * @param mixed $metadata
+     * @return array
+     */
+    protected function parseMetadata($metadata): array
+    {
+        // Jika null, kembalikan array kosong
+        if (is_null($metadata)) {
+            return [];
         }
-
-        $dokumen->update($updateData);
-
-        // Dispatch event untuk notifikasi dan logging
-        event(new DokumenStatusChanged($dokumen, $oldStatus, $newStatus, $user));
-
-        return $dokumen->fresh();
+        
+        // Jika sudah array, kembalikan langsung
+        if (is_array($metadata)) {
+            return $metadata;
+        }
+        
+        // Jika string, coba parse JSON
+        if (is_string($metadata)) {
+            // Jika string kosong
+            if (empty($metadata)) {
+                return [];
+            }
+            
+            // Coba decode JSON
+            $decoded = json_decode($metadata, true);
+            
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+            
+            // Jika bukan JSON valid, anggap sebagai string biasa
+            // Tapi karena metadata harusnya array, kita masukkan ke dalam array
+            return ['value' => $metadata];
+        }
+        
+        // Untuk tipe data lain, kembalikan array kosong
+        return [];
     }
 
     /**
      * Get all possible next statuses for a document based on user role
+     * 
+     * @param Dokumen $dokumen
+     * @param User $user
+     * @return array
      */
     public function getPossibleNextStatuses(Dokumen $dokumen, User $user): array
     {
@@ -193,6 +295,9 @@ class DokumenWorkflowService
 
     /**
      * Get status label with badge HTML
+     * 
+     * @param string $status
+     * @return string
      */
     public function getStatusBadge(string $status): string
     {
@@ -208,14 +313,21 @@ class DokumenWorkflowService
 
     /**
      * Get workflow history for a document
+     * 
+     * @param Dokumen $dokumen
+     * @return array
      */
     public function getWorkflowHistory(Dokumen $dokumen): array
     {
-        return $dokumen->metadata['transitions'] ?? [];
+        $metadata = $this->parseMetadata($dokumen->metadata);
+        return $metadata['transitions'] ?? [];
     }
 
     /**
      * Check if document is in a final state (cannot be changed by user)
+     * 
+     * @param string $status
+     * @return bool
      */
     public function isFinalState(string $status): bool
     {
@@ -224,9 +336,45 @@ class DokumenWorkflowService
 
     /**
      * Check if document needs user action
+     * 
+     * @param string $status
+     * @return bool
      */
     public function needsUserAction(string $status): bool
     {
         return $status === 'revision';
+    }
+
+    /**
+     * Get waktu tersisa untuk revisi
+     * 
+     * @param Dokumen $dokumen
+     * @return array|null
+     */
+    public function getRevisionTimeRemaining(Dokumen $dokumen): ?array
+    {
+        if ($dokumen->status !== 'revision' || !$dokumen->revision_deadline) {
+            return null;
+        }
+        
+        $now = now();
+        $deadline = $dokumen->revision_deadline;
+        
+        if ($now > $deadline) {
+            return [
+                'expired' => true,
+                'message' => 'Deadline revisi telah lewat'
+            ];
+        }
+        
+        $diff = $now->diff($deadline);
+        
+        return [
+            'expired' => false,
+            'days' => $diff->days,
+            'hours' => $diff->h,
+            'minutes' => $diff->i,
+            'message' => "Sisa waktu: {$diff->days} hari {$diff->h} jam"
+        ];
     }
 }

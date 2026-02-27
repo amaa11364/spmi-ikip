@@ -291,11 +291,8 @@
         </div>
         <div class="col-md-4 col-12 text-md-end text-center mt-2 mt-md-0">
             @auth
-                <a href="{{ route('dokumen-saya') }}" class="btn btn-light btn-responsive me-2 mb-2 mb-md-0">
+                <a href="{{ route('user.dokumen-saya.index') }}" class="btn btn-light btn-responsive me-2 mb-2 mb-md-0">
                     <i class="fas fa-folder me-2"></i>Dokumen Saya
-                </a>
-                <a href="{{ route('dashboard') }}" class="btn btn-outline-light btn-responsive">
-                    <i class="fas fa-home me-2"></i>Dashboard
                 </a>
             @else
                 <a href="{{ route('landing.page') }}" class="btn btn-light btn-responsive me-2 mb-2 mb-md-0">

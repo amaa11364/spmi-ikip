@@ -1,4 +1,4 @@
-@extends('layouts.verifikator')
+@extends('layouts.main')
 
 @section('title', 'Review Dokumen')
 
@@ -166,7 +166,7 @@
                                     -
                                 @endif
                             </td>
-                            <td>{{ $dokumen->uploader->name ?? $dokumen->user->name ?? '-' }}</td>
+                           <td>{{ $dokumen->uploader->name ?? '-' }}</td>
                             <td>{{ $dokumen->jenis_dokumen ?? 'Umum' }}</td>
                             <td>{{ $dokumen->created_at ? $dokumen->created_at->format('d/m/Y H:i') : '-' }}</td>
                             <td>

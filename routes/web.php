@@ -19,6 +19,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Verifikator\VerifikatorController;
 use App\Http\Controllers\Verifikator\VerifikatorDashboardController;
 use App\Http\Controllers\Verifikator\DokumenController as VerifikatorDokumenController;
+use App\Http\Controllers\Verifikator\DokumenReviewController;
 
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -286,6 +287,9 @@ Route::middleware(['auth'])->prefix('verifikator')->name('verifikator.')->group(
         Route::get('/export/pdf', [VerifikatorController::class, 'exportPdf'])->name('export.pdf');
         Route::get('/export/excel', [VerifikatorController::class, 'exportExcel'])->name('export.excel');
     });
+
+    // DEBUG ROUTE - Hapus setelah selesai debugging
+    Route::get('/debug-all', [DokumenReviewController::class, 'debug'])->name('debug');
 });
 
 // ==================== ROUTES UNTUK ROLE ADMIN ====================
@@ -413,6 +417,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/storage-link', [AdminToolController::class, 'storageLink'])->name('storage-link');
     });
 });
+
 // ==================== FALLBACK ROUTE ====================
 Route::fallback(function () {
     return response()->view('errors.404', [], 404);
